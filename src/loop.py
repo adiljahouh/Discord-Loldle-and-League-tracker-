@@ -20,7 +20,6 @@ class loops(commands.Cog):
 
         channel_id = self.bot.CHANNEL_ID  # Replace with the ID of the channel you want to send the message to
         channel = self.bot.get_channel(channel_id)
-        print('test. ', channel)
         if channel is not None:
             content = "Hello, Discord!"
             try:
