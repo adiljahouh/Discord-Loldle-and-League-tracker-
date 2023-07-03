@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    volumes:
+      - ./:/app
+    API_KEY: RIOTTOKEN
+    #FIXME 
+  redis:
+    image: redis
