@@ -13,11 +13,7 @@ class loops(commands.Cog):
         self.send_message.start()
 
     @tasks.loop(seconds=10)
-    async def send_message(self):
-        print("AAAAAAAAAH")
-        current_time = datetime.datetime.utcnow().time()
-        print(current_time)
-
+    async def send_message(self, ctx):
         channel_id = self.bot.CHANNEL_ID  # Replace with the ID of the channel you want to send the message to
         channel = self.bot.get_channel(channel_id)
         if channel is not None:

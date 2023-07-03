@@ -8,7 +8,9 @@ class discBot(commands.Bot):
         self.token = token
         self.hook = hook
         self.CHANNEL_ID = channel_id
-        super().__init__(command_prefix='?', intents=discord.Intents.default()) # initialize the bot
+        intents = discord.Intents.all()
+        # intents.messages = True
+        super().__init__(command_prefix='.', intents=intents) # initialize the bot
 
     async def start_bot(self):
         @self.event
@@ -21,7 +23,6 @@ class discBot(commands.Bot):
          print(self.hook, " = hook")
          payload = {"test": self.hook}
          requests.post(self.hook, json=payload)
-    
 
 async def add_cog(bot, files: list):
     await bot.load_extension(files)
