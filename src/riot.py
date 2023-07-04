@@ -86,11 +86,6 @@ class riotAPI():
         return text
             
             
-riotapi1 = riotAPI("RGAPI-0948687e-e67e-44c9-bf24-29a7f84ec248")
-kda_text = riotapi1.get_kda_by_user("meshh")
-
-# test = riotapi1.get_match_ids(method="puuid", credentials="")
-print(kda_text)
 
 # for i in users
 
