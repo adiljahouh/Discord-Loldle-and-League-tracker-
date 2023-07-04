@@ -12,7 +12,7 @@ class loops(commands.Cog):
     async def on_ready(self):
         self.send_message.start()
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=1000)
     async def send_message(self, ctx):
         channel_id = self.bot.CHANNEL_ID  # Replace with the ID of the channel you want to send the message to
         channel = self.bot.get_channel(channel_id)

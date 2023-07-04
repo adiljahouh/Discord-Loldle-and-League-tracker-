@@ -6,10 +6,15 @@
     #     await ctx.send(response)
 from discord.ext import commands, tasks
 from riot import riotAPI
-class leagueCommands(commands.Cog, riotAPI):
+import os
+from dotenv import load_dotenv
+class leagueCommands(riotAPI, commands.Cog):
     def __init__(self, bot) -> None:
+        load_dotenv()
         self.bot = bot
-        pass
+        self.RIOTTOKEN = os.getenv("RIOTTOKEN")
+        super().__init__(self.RIOTTOKEN)
+
     @commands.Cog.listener()
     async def on_ready(self):
         print("test")
@@ -21,9 +26,9 @@ class leagueCommands(commands.Cog, riotAPI):
         await ctx.send(response)
 
     @commands.command()
-    async def summary(self, ctx, riotid):
-        # super().
-        pass
+    async def summary(self, ctx, user):
+        message = super().get_kda_by_user(user)
+        await ctx.send(message)
         
 async def setup(bot):
     print("adding commands...")
