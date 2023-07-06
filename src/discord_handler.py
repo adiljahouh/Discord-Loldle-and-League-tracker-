@@ -17,7 +17,6 @@ class discBot(commands.Bot):
         async def on_ready():
             print("ready")
         await super().start(self.token)
-        print("HAHAHAHA")
 
     async def send_webhook_message(self):
          print(self.hook, " = hook")

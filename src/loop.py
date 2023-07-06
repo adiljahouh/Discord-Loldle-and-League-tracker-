@@ -10,14 +10,21 @@ class loops(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.send_message.start()
+        await self.send_message.start()
 
     @tasks.loop(seconds=1000)
-    async def send_message(self, ctx):
+    async def send_message(self):
+        print("⏰ ITS EXPOSING TIME ⏰\n\n\
+              ")
+        user = self.bot.users # get all users
         channel_id = self.bot.CHANNEL_ID  # Replace with the ID of the channel you want to send the message to
         channel = self.bot.get_channel(channel_id)
         if channel is not None:
-            content = "Hello, Discord!"
+            """
+            query redis db for all users, check recents kdas and retrieve the cumulative worst.
+            
+            """
+            content = ""
             try:
                 await channel.send(content)
                 print("Message sent successfully.")
@@ -27,4 +34,5 @@ class loops(commands.Cog):
                 print("Failed to send the message.")
 
 async def setup(bot):
+    print("adding loops..")
     await bot.add_cog(loops(bot))
