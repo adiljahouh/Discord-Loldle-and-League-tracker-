@@ -12,11 +12,13 @@ class discBot(commands.Bot):
         # intents.messages = True
         super().__init__(command_prefix='.', intents=intents) # initialize the bot
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        print("Ready")
+        await self.change_presence(activity=discord.Game(name="Type .help to view my commands"))
+
     async def start_bot(self):
-        @self.event
-        async def on_ready():
-            print("ready")
-        await super().start(self.token)
+        await self.start(self.token)
 
     async def send_webhook_message(self):
          print(self.hook, " = hook")

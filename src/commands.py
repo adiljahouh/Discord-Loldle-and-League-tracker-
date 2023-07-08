@@ -5,13 +5,13 @@ import requests
 from dotenv import load_dotenv
 from database import cacheDB
 from typing import Optional
+import discord
 class leagueCommands(riotAPI, commands.Cog):
     def __init__(self, bot, redisdb) -> None:
         load_dotenv()
         self.bot = bot
         self.redisdb = redisdb
         self.RIOTTOKEN = os.getenv("RIOTTOKEN")
-        print(self.RIOTTOKEN)
         super().__init__(self.RIOTTOKEN)
 
     @commands.Cog.listener()
@@ -34,8 +34,12 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(message)
             return
         self.redisdb.store_user(discord_userid, riot_name, puuid, author_discord_tag)
-        response = f"Registering Riot ID: {discord_userid}\nDiscord Tag: {author_discord_tag}\nriotID: {riot_name}\nPUUID: {puuid}"
-        await ctx.send(response)
+        response = f"**Riot ID**: {discord_userid}\
+        \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}"
+        embed = discord.Embed(title="📠Registering User📠\n\n", 
+                        description=f"{response}",
+                        color=0xFF0000)
+        await ctx.send(embed=embed)
 
 
     @commands.command()
@@ -43,22 +47,21 @@ class leagueCommands(riotAPI, commands.Cog):
         author_discord_tag = str(ctx.author)
         userid = str(ctx.author.id)
         self.redisdb.remove_user(userid)
-        response = f"Removing user from DB\nRiot ID: {riotid}\nDiscord Tag: {author_discord_tag}\nUserId {userid}"
-        await ctx.send(response)
+        response = f"**Riot ID**: {userid}\
+        \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {author_discord_tag}"
+        embed = discord.Embed(title="📠Unregistering User📠\n\n", 
+                description=f"{response}",
+                color=0xFF0000)
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def summary(self, ctx, *args):
-        print("yes")
-        print("length ", len(args))
         try:
             if len(args) != 0:
                 user = "".join(args)
                 message = super().get_kda_by_user(user)
             else:
-                print("nothing passed")
-                print(str(ctx.author.id))
                 puuid = self.redisdb.get_user_field(str(ctx.author.id), "puuid")
-                print(puuid.decode('utf-8'))
                 message = super().get_kda_by_puuid(puuid.decode('utf-8'))
         except requests.exceptions.HTTPError as e:
             if e.response.status_code >= 400 and e.response.status_code <=500:
@@ -66,7 +69,10 @@ class leagueCommands(riotAPI, commands.Cog):
             else:
                 message = "Internal Server Error"
         finally:
-            await ctx.send(message)
+            embed = discord.Embed(title="📓Summary of last 5 games📓\n\n", 
+            description=f"{message}",
+            color=0xFF0000)
+            await ctx.send(embed=embed)
         
 async def setup(bot):
     redisDB = cacheDB(os.getenv("REDISURL"))

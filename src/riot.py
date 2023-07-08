@@ -96,7 +96,6 @@ class riotAPI():
     def get_kda_by_puuid(self, puuid):
         print("getting kda")
         game_details_user = self.get_match_details_by_puuid(puuid)
-        print("game details", game_details_user)
         flame = False
         flame_text = 'Nice job \n\n'
         text = ''
@@ -112,7 +111,24 @@ class riotAPI():
             game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
             text += f'**{time_diff}** day(s) ago, {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]}; {game_mode} \n'
         return text if flame == False else flame_text + text
-            
+    
+    def get_bad_kda_by_puuid(self, puuid):
+        print("getting kda")
+        game_details_user = self.get_match_details_by_puuid(puuid)
+        text = ''
+        game_mode_mapping = {
+        420: "Ranked Solo/Duo",
+        440: "Ranked Flex",
+        400: "Normal"
+        }
+        for game in game_details_user:
+            details = game["match_details"]
+            if details['deaths'] > (details['kills'] + details['assists']):
+                time_diff = datetime.timedelta(seconds=game['time_diff']).days
+                game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
+                text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]} | {game_mode} \n'
+        return text    
+    
     def get_kda_by_user(self, user):
         game_details_user = self.get_match_details_by_user(user)
         flame = False
@@ -128,10 +144,8 @@ class riotAPI():
             print(game['game_type'])
             time_diff = datetime.timedelta(seconds=game['time_diff']).days
             game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
-            text += f'**{time_diff}** day(s) ago, {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]}; {game_mode} \n'
+            text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]} | {game_mode} \n'
         return text if flame == False else flame_text + text
             
             
-
-# for i in users
 

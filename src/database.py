@@ -9,7 +9,7 @@ class cacheDB():
 
     def connect(self) -> None:
         try:
-            self.client = redis.Redis.from_url(self.url, db=0)
+            self.client : redis.Redis[bytes] = redis.Redis.from_url(self.url, db=0)
         except ConnectionError:
             print("Cant connect to host")
 
@@ -21,10 +21,9 @@ class cacheDB():
         self.client.hset(discord_id, "puuid", puuid)
         self.client.hset(discord_id, "discord_tag", author_discord_tag)
     
-    def get_user_field(self, discord_id, field):
+    def get_user_field(self, discord_id, field) -> (bytes|None):
         # field can be riot_user or puuid
         # e.g.  121210930139 -> meshh -> 12132323
-        print("getting field")
         if self.client is None:
             self.connect()
         return self.client.hget(discord_id, field)
@@ -34,10 +33,10 @@ class cacheDB():
             self.connect()
         if self.client.exists(discord_id):
             self.client.delete(discord_id)
-    def get_all_users(self):
-        discord_ids:list[bytes] = self.client.keys('*')
-        pass
-
+    def get_all_users(self) -> list[str]:
+        if self.client is None:
+            self.connect()
+        return self.client.keys('*')
 
 
 
