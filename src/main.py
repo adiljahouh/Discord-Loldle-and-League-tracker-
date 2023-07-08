@@ -8,7 +8,6 @@ async def main():
     TOKEN = os.getenv("TOKEN")
     CHANNEL = int(os.getenv("CHANNEL_ID"))
     HOOK = os.getenv("WEBHOOK")
-    REDISURL = os.getenv("REDISURL")
     my_bot = discBot(token=TOKEN, hook=HOOK, channel_id=CHANNEL)
     my_cogs = ["loop", "commands"]
     for cog in my_cogs:

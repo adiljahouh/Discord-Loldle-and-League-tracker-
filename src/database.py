@@ -34,7 +34,8 @@ class cacheDB():
             self.connect()
         if self.client.exists(discord_id):
             self.client.delete(discord_id)
-    def check_user(self):
+    def get_all_users(self):
+        discord_ids:list[bytes] = self.client.keys('*')
         pass
 
 

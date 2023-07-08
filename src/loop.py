@@ -12,11 +12,9 @@ class loops(commands.Cog):
     async def on_ready(self):
         await self.send_message.start()
 
-    @tasks.loop(seconds=1000)
+    @tasks.loop(hours=24)
     async def send_message(self):
-        print("⏰ ITS EXPOSING TIME ⏰\n\n\
-              ")
-        user = self.bot.users # get all users
+        # user = self.bot.users # get all users
         channel_id = self.bot.CHANNEL_ID  # Replace with the ID of the channel you want to send the message to
         channel = self.bot.get_channel(channel_id)
         if channel is not None:
