@@ -33,22 +33,8 @@ class cacheDB():
             self.connect()
         if self.client.exists(discord_id):
             self.client.delete(discord_id)
+            
     def get_all_users(self) -> list[str]:
         if self.client is None:
             self.connect()
         return self.client.keys('*')
-
-
-
-# .register alazkav
-# get disc user id -> 1231290431049 (uid discord)
-# alazkav -> riot api -> wqerioewriewjjfnjdsfndskjfn (uid league)
-
-# alazkav == 1231290431049 == wqerioewriewjjfnjdsfndskjfn
-
-
-# .summary
-
-# db.get(alazkav) -> riot userid + discord uid
-# riot -> welke games heeft deze riot userid gespeeld?
-# @1231290431049 league games

@@ -2,30 +2,31 @@ from discord.ext import commands, tasks
 from riot import riotAPI
 import os
 import requests
-from dotenv import load_dotenv
+from config import Settings
 from database import cacheDB
 from typing import Optional
 import discord
 class leagueCommands(riotAPI, commands.Cog):
-    def __init__(self, bot, redisdb) -> None:
-        load_dotenv()
-        self.bot = bot
-        self.redisdb = redisdb
-        self.RIOTTOKEN = os.getenv("RIOTTOKEN")
-        super().__init__(self.RIOTTOKEN)
+    def __init__(self, bot, redisdb, riot_api) -> None:
+        self.bot: commands.bot.Bot = bot
+        self.redisdb: cacheDB= redisdb
+        self.riot_api: riotAPI = riot_api
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("test")
+        pass
         
     @commands.command()
     async def register(self, ctx, *args):
+        """ Register a user by calling .register <your_league_name>"""
         riot_name = "".join(args)
-        print(riot_name)
+        if len(riot_name) ==0:
+            await ctx.send("Specify a riot username")
+            return
         author_discord_tag = str(ctx.author)
         discord_userid = str(ctx.author.id)
         try:
-            puuid = super().get_puuid(riot_name)
+            puuid = self.riot_api.get_puuid(riot_name)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code >= 400 and e.response.status_code <=500:
                 message = "Bad request error, refresh the API key or re-register your user"
@@ -44,6 +45,7 @@ class leagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     async def unregister(self, ctx, riotid="undefined"):
+        """ Unregister a user by calling .unregister <your_league_name>"""
         author_discord_tag = str(ctx.author)
         userid = str(ctx.author.id)
         self.redisdb.remove_user(userid)
@@ -56,13 +58,15 @@ class leagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     async def summary(self, ctx, *args):
+        """ Summary of a user (or your registered user if nothing is passed)
+          by calling .summary <league_name> or just .summary"""
         try:
             if len(args) != 0:
                 user = "".join(args)
-                message = super().get_kda_by_user(user)
+                message = self.riot_api.get_kda_by_user(user)
             else:
                 puuid = self.redisdb.get_user_field(str(ctx.author.id), "puuid")
-                message = super().get_kda_by_puuid(puuid.decode('utf-8'))
+                message = self.riot_api.get_kda_by_puuid(puuid.decode('utf-8'))
         except requests.exceptions.HTTPError as e:
             if e.response.status_code >= 400 and e.response.status_code <=500:
                 message = "Bad request error, refresh the API key or re-register your user"
@@ -75,6 +79,8 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(embed=embed)
         
 async def setup(bot):
-    redisDB = cacheDB(os.getenv("REDISURL"))
+    settings = Settings()
+    redisDB = cacheDB(settings.REDISURL)
+    riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(leagueCommands(bot, redisDB))
+    await bot.add_cog(leagueCommands(bot, redisDB, riot_api))

@@ -1,14 +1,9 @@
-import os
 from discord_handler import discBot, add_cog
-from dotenv import load_dotenv
 import asyncio
-
+from config import Settings
 async def main():
-    load_dotenv()
-    TOKEN = os.getenv("TOKEN")
-    CHANNEL = int(os.getenv("CHANNEL_ID"))
-    HOOK = os.getenv("WEBHOOK")
-    my_bot = discBot(token=TOKEN, hook=HOOK, channel_id=CHANNEL)
+    settings = Settings()
+    my_bot = discBot(token=settings.DISCORDTOKEN, hook=settings.WEBHOOK, channel_id=settings.CHANNELID)
     my_cogs = ["loop", "commands"]
     for cog in my_cogs:
         await add_cog(my_bot, cog)

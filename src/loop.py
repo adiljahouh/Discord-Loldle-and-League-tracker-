@@ -1,29 +1,27 @@
 from discord.ext import commands, tasks
 import discord
-import os
 from riot import riotAPI
 from database import cacheDB
-from dotenv import load_dotenv
-class loops(riotAPI, commands.Cog):
-    def __init__(self, bot, redisdb) -> None:
-        self.bot = bot
-        load_dotenv()
-        self.redisdb: cacheDB = redisdb
-        self.RIOTTOKEN = os.getenv("RIOTTOKEN")
-        super().__init__(self.RIOTTOKEN)
+from config import Settings
+class loops(commands.Cog):
+    def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
+        self.bot: commands.bot.Bot = bot
+        self.redis_db: cacheDB = redis_db
+        self.riot_api: riotAPI = riot_api
+        self.channel_id: int = channel_id
     
 
     @commands.Cog.listener()
     async def on_ready(self):
         await self.send_message.start()
 
-    @tasks.loop(hours=10)
+    @tasks.loop(hours=24)
     async def send_message(self):
         print("looping")
         # user = self.bot.users # get all users
-        channel_id: int = self.bot.CHANNEL_ID 
+        channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
-        discord_ids: list[bytes] = self.redisdb.get_all_users()
+        discord_ids: list[bytes] = self.redis_db.get_all_users()
         if len(discord_ids) > 0:
             discord_ids = [id.decode('utf-8') for id in discord_ids]
         else:
@@ -31,12 +29,13 @@ class loops(riotAPI, commands.Cog):
         embed = discord.Embed(title="⏰ ITS EXPOSING TIME ⏰\n\n", 
                               description="BOTTOM G's WILL BE REPRIMANDED",
                               color=0xFF0000)
+        inters = 0
         for index, discord_id in enumerate(discord_ids):
-            print("discord id ", discord_id)
-            riot_id = self.redisdb.get_user_field(discord_id, "puuid")
-            flame_text = super().get_bad_kda_by_puuid(riot_id.decode('utf-8'))
+            riot_id = self.redis_db.get_user_field(discord_id, "puuid")
+            flame_text =self. riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'))
             if flame_text:
-                embed.add_field(name = f"SUSPECT #{index+1}", value=f"<@{discord_id}>\n {flame_text}\n")
+                inters+=1
+                embed.add_field(name = f"SUSPECT #{inters}", value=f"<@{discord_id}>\n {flame_text}\n")
 
 
         if channel is not None:
@@ -45,7 +44,7 @@ class loops(riotAPI, commands.Cog):
             
             """
             try:
-                # await channel.send(embed=embed)
+                await channel.send(embed=embed)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
@@ -53,6 +52,8 @@ class loops(riotAPI, commands.Cog):
                 print("Failed to send the message.")
 
 async def setup(bot):
-    redisDB: cacheDB = cacheDB(os.getenv("REDISURL"))
+    settings = Settings()
+    redis_db: cacheDB = cacheDB(settings.REDISURL)
+    riot: riotAPI = riotAPI(settings.RIOTTOKEN)
     print("adding loops..")
-    await bot.add_cog(loops(bot, redisDB))
+    await bot.add_cog(loops(bot, redis_db, riot, settings.CHANNELID))

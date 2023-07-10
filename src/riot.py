@@ -94,7 +94,6 @@ class riotAPI():
         return matchinfo
 
     def get_kda_by_puuid(self, puuid):
-        print("getting kda")
         game_details_user = self.get_match_details_by_puuid(puuid)
         flame = False
         flame_text = 'Nice job \n\n'
@@ -109,11 +108,10 @@ class riotAPI():
             print(game['game_type'])
             time_diff = datetime.timedelta(seconds=game['time_diff']).days
             game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
-            text += f'**{time_diff}** day(s) ago, {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]}; {game_mode} \n'
+            text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text if flame == False else flame_text + text
     
     def get_bad_kda_by_puuid(self, puuid):
-        print("getting kda")
         game_details_user = self.get_match_details_by_puuid(puuid)
         text = ''
         game_mode_mapping = {
@@ -126,7 +124,7 @@ class riotAPI():
             if details['deaths'] > (details['kills'] + details['assists']):
                 time_diff = datetime.timedelta(seconds=game['time_diff']).days
                 game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
-                text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]} | {game_mode} \n'
+                text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text    
     
     def get_kda_by_user(self, user):
@@ -141,10 +139,9 @@ class riotAPI():
         }
         for game in game_details_user:
             details = game["match_details"]
-            print(game['game_type'])
             time_diff = datetime.timedelta(seconds=game['time_diff']).days
             game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
-            text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on {details["championName"]} in {game["game_mode"]} | {game_mode} \n'
+            text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text if flame == False else flame_text + text
             
             

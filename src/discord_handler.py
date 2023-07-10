@@ -15,7 +15,7 @@ class discBot(commands.Bot):
     @commands.Cog.listener()
     async def on_ready(self):
         print("Ready")
-        await self.change_presence(activity=discord.Game(name="Type .help to view my commands"))
+        await self.change_presence(activity=discord.Game(name="Type .help"))
 
     async def start_bot(self):
         await self.start(self.token)
