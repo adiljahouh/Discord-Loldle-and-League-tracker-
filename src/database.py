@@ -32,8 +32,10 @@ class cacheDB():
         if self.client is None:
             self.connect()
         if self.client.exists(discord_id):
+            riot_name = self.get_user_field(discord_id=discord_id, field="riot_user")
             self.client.delete(discord_id)
-            
+            return riot_name
+
     def get_all_users(self) -> list[str]:
         if self.client is None:
             self.connect()

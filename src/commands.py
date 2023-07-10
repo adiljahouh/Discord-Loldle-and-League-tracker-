@@ -44,14 +44,17 @@ class leagueCommands(riotAPI, commands.Cog):
 
 
     @commands.command()
-    async def unregister(self, ctx, riotid="undefined"):
-        """ Unregister a user by calling .unregister <your_league_name>"""
+    async def deregister(self, ctx, riotid="undefined"):
+        """ deregister a user by calling .deregister <your_league_name>"""
         author_discord_tag = str(ctx.author)
         userid = str(ctx.author.id)
-        self.redisdb.remove_user(userid)
-        response = f"**Riot ID**: {userid}\
-        \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {author_discord_tag}"
-        embed = discord.Embed(title="📠Unregistering User📠\n\n", 
+        riot_name = self.redisdb.remove_user(userid)
+        if riot_name != None:
+            response = f"**Riot ID**: {userid}\
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name.decode('utf-8')}"
+        else:
+            response = "No user found for discord ID"
+        embed = discord.Embed(title="📠Deregistering User📠\n\n", 
                 description=f"{response}",
                 color=0xFF0000)
         await ctx.send(embed=embed)
