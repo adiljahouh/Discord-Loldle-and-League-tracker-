@@ -1,9 +1,10 @@
 services:
   app:
+    container_name: top_g
     build: .
     volumes:
-      - ./:/app
-    API_KEY: RIOTTOKEN
+      - /opt/top_g:/app
     #FIXME 
   redis:
+    port: 6379:6379
     image: redis
