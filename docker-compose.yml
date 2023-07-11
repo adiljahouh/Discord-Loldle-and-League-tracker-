@@ -1,10 +1,15 @@
+version: '3'
 services:
   app:
     container_name: top_g
     build: .
     volumes:
-      - /opt/top_g:/app
+      - /opt/discbot/.env:/app/.env
+    env_file:
+      - /opt/discbot/.env
     #FIXME 
   redis:
-    port: 6379:6379
+    container_name: redis
+    ports: 
+      - 6379:6379
     image: redis
