@@ -16,7 +16,17 @@ class leagueCommands(riotAPI, commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
-        
+    @commands.command()
+    async def leaderboard(self, ctx, *args):  
+        """
+            Keeps track of top 5 in each role of the leaderboard
+        """
+        description = f"Type .register to be able to participate"
+        embed = discord.Embed(title="📠TOPPEST G's📠\n\n", 
+                        description=f"{description}",
+                        color=0xFF0000)
+        embed.add_field(name="Damage taken")
+        await ctx.send(embed=embed)
     @commands.command()
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
