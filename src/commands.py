@@ -6,6 +6,7 @@ from config import Settings
 from database import cacheDB
 from typing import Optional
 import discord
+import json
 class leagueCommands(riotAPI, commands.Cog):
     def __init__(self, bot, redisdb, riot_api) -> None:
         self.bot: commands.bot.Bot = bot
@@ -66,11 +67,13 @@ class leagueCommands(riotAPI, commands.Cog):
         """
         try:
             response = requests.get("https://dog.ceo/api/breeds/image/random")
+            content = json.loads(response.content.decode("utf-8"))
+
             response.raise_for_status()
-            if response.content['status'] == 'success':
-                ctx.send(response.content[''])
+            if content['status'] == 'success':
+                await ctx.send(content['message'])
             else:
-                ctx.send("Internal API error")
+                await ctx.send("Internal API error")
         except requests.exceptions.HTTPError as e:
             await ctx.send("HTTP error, no dogs for you")
 
