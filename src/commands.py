@@ -61,6 +61,9 @@ class leagueCommands(riotAPI, commands.Cog):
     
     @commands.command()
     async def dog(self, ctx):
+        """
+            Returns a dog pic
+        """
         try:
             response = requests.get("https://dog.ceo/api/breeds/image/random")
             response.raise_for_status()
