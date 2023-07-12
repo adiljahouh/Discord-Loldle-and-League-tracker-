@@ -58,6 +58,20 @@ class leagueCommands(riotAPI, commands.Cog):
                 description=f"{response}",
                 color=0xFF0000)
         await ctx.send(embed=embed)
+    
+    @commands.command()
+    async def dog(self, ctx):
+        try:
+            response = requests.get("https://dog.ceo/api/breeds/image/random")
+            response.raise_for_status()
+            if response.content['status'] == 'success':
+                ctx.send(response.content[''])
+            else:
+                ctx.send("Internal API error")
+        except requests.exceptions.HTTPError as e:
+            await ctx.send("HTTP error, no dogs for you")
+
+
 
     @commands.command()
     async def summary(self, ctx, *args):
