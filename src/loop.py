@@ -25,7 +25,9 @@ class loops(commands.Cog):
         if len(discord_ids) > 0:
             discord_ids = [id.decode('utf-8') for id in discord_ids]
         else:
-            return
+            await channel.send("No users registered")
+
+        
         embed = discord.Embed(title="⏰ ITS EXPOSING TIME ⏰\n\n", 
                               description="BOTTOM G's WILL BE REPRIMANDED",
                               color=0xFF0000)

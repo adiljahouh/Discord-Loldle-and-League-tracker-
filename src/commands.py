@@ -17,16 +17,33 @@ class leagueCommands(riotAPI, commands.Cog):
     async def on_ready(self):
         pass
     @commands.command()
-    async def leaderboard(self, ctx, *args):  
+    async def leaderboard(self, ctx):  
         """
             Keeps track of top 5 in each role of the leaderboard
         """
+        discord_ids: list[bytes] = self.redisdb.get_all_users()
+        leaderboard_text = ''
+        all_players_info = []
+        if len(discord_ids) > 0:
+            discord_ids = [id.decode('utf-8') for id in discord_ids]
+        else:
+            await ctx.send("No users are registered.")
+        for index, discord_id in enumerate(discord_ids):
+            player_info = dict()
+            player_info['discord_id'] = discord_id
+            puuid = self.redisdb.get_user_field(discord_id, "puuid")
+            player_info["damage_taken"], player_info["champion"] = self.riot_api.get_highest_damage_taken_by_puuid(puuid.decode('utf-8'))
+            all_players_info.append(player_info)
+        top_10 = sorted(all_players_info, key=lambda x: x['damage_taken'], reverse=True)[:10]
+        for top_g in top_10:
+            leaderboard_text += f'\n{index+1}. <@{top_g["discord_id"]}> | {top_g["damage_taken"]} on **{top_g["champion"]}**'
         description = f"Type .register to be able to participate"
-        embed = discord.Embed(title="📠TOPPEST G's📠\n\n", 
+        embed = discord.Embed(title="💪🏽TOPPEST G's💪🏽\n\n", 
                         description=f"{description}",
                         color=0xFF0000)
-        embed.add_field(name="Damage taken")
+        embed.add_field(name="Top Damage Taken Past 10 Games", value = leaderboard_text)
         await ctx.send(embed=embed)
+        
     @commands.command()
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""

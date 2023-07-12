@@ -10,6 +10,7 @@ class riotAPI():
     """
         Simple functions to get matches, puuid and matchid's
     """
+    #FIXME: UNCOUPLE THIS
     def __init__(self, api_key) -> None:
         self.api_key = api_key 
         self.params = {
@@ -34,7 +35,7 @@ class riotAPI():
         if method == "puuid":
             puuid = credentials
             params = self.params
-            params['count'] = 5
+            params['count'] = count
             response =requests.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids", params= self.params)
             print(response.status_code)
             response.raise_for_status()
@@ -105,7 +106,6 @@ class riotAPI():
         }
         for game in game_details_user:
             details = game["match_details"]
-            print(game['game_type'])
             time_diff = datetime.timedelta(seconds=game['time_diff']).days
             game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
             text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
@@ -144,5 +144,13 @@ class riotAPI():
             text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text if flame == False else flame_text + text
             
+    def get_highest_damage_taken_by_puuid(self, puuid):
+        game_details_user = self.get_match_details_by_puuid(puuid)
+        highest_dmg_taken = 0
+        champion = ''
+        for game in game_details_user:
+            if game["match_details"]['totalDamageTaken'] > highest_dmg_taken:
+                highest_dmg_taken = game["match_details"]['totalDamageTaken']
+                champion = game["match_details"]["championName"]
+        return highest_dmg_taken, champion
             
-
