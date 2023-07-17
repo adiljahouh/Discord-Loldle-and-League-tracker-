@@ -24,7 +24,7 @@ class riotAPI():
         print(response.status_code)
         response.raise_for_status()
         return json.loads(response.content)['puuid']
-    def get_match_ids(self, method, credentials, count=10):
+    def get_match_ids(self, method, credentials, count=5):
         """
             Returns a list of matches by ID's in the form of:
             [

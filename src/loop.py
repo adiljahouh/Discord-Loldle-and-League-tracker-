@@ -3,6 +3,7 @@ import discord
 from riot import riotAPI
 from database import cacheDB
 from config import Settings
+from redis.exceptions import ConnectionError
 class loops(commands.Cog):
     def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
         self.bot: commands.bot.Bot = bot
@@ -21,7 +22,12 @@ class loops(commands.Cog):
         # user = self.bot.users # get all users
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
-        discord_ids: list[bytes] = self.redis_db.get_all_users()
+        try:
+            discord_ids: list[bytes] = self.redis_db.get_all_users()
+            print(discord_ids)
+        except ConnectionError as e:
+            print(e)
+
         if len(discord_ids) > 0:
             discord_ids = [id.decode('utf-8') for id in discord_ids]
         else:
