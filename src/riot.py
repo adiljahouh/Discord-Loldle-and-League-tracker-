@@ -54,9 +54,17 @@ class riotAPI():
         response = requests.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}", params= self.params)
         response.raise_for_status()
         content = json.loads(response.content)
+        if content['info']['teams'][0]['win']:
+            won_id = 100;
+        else:
+            won_id = 200;
         for player in content['info']['participants']:
             if player.get("puuid") == puuid:
-                return player, content['info']['gameEndTimestamp'], content['info']['gameMode'], content['info']['queueId']
+                if player['teamId'] == won_id:
+                    outcome = "Win"
+                else:
+                    outcome = "Lose"
+                return player, content['info']['gameEndTimestamp'], content['info']['gameMode'], content['info']['queueId'], outcome
         return PlayerMissingError("No recent games found..")
     
     def get_match_details_by_user(self, user) -> list:
@@ -65,14 +73,15 @@ class riotAPI():
 
         matchinfo: list = []
         for matchID in matchIDs:
-            match_details, game_end, game_mode, game_type= self.get_match_details_by_matchID_and_filter_for_puuid(matchID, puuid)
+            match_details, game_end, game_mode, game_type, game_outcome= self.get_match_details_by_matchID_and_filter_for_puuid(matchID, puuid)
             diff = datetime.datetime.now().timestamp() - game_end/1000
             # time_difference = datetime.timedelta(seconds=diff)
             full_details = {
                 "match_details": match_details,
                 "game_mode": game_mode,
                 "time_diff": diff,
-                "game_type":game_type
+                "game_type":game_type,
+                "game_outcome":game_outcome
             }
             matchinfo.append(full_details)
         return matchinfo
@@ -82,7 +91,7 @@ class riotAPI():
 
         matchinfo: list = []
         for matchID in matchIDs:
-            match_details, game_end, game_mode, game_type= self.get_match_details_by_matchID_and_filter_for_puuid(matchID, puuid)
+            match_details, game_end, game_mode, game_type, game_outcome = self.get_match_details_by_matchID_and_filter_for_puuid(matchID, puuid)
             diff = datetime.datetime.now().timestamp() - game_end/1000
             # time_difference = datetime.timedelta(seconds=diff)
             full_details = {
@@ -141,7 +150,7 @@ class riotAPI():
             details = game["match_details"]
             time_diff = datetime.timedelta(seconds=game['time_diff']).days
             game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
-            text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
+            text += f'**{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} | **{game["game_outcome"]}**\n'
         return text if flame == False else flame_text + text
             
     def get_highest_damage_taken_by_puuid(self, puuid):
