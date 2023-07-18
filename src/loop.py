@@ -4,6 +4,7 @@ from riot import riotAPI
 from database import cacheDB
 from config import Settings
 from redis.exceptions import ConnectionError
+import aiohttp
 class loops(commands.Cog):
     def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
         self.bot: commands.bot.Bot = bot
@@ -19,7 +20,6 @@ class loops(commands.Cog):
     @tasks.loop(hours=24)
     async def send_message(self):
         print("looping")
-        # user = self.bot.users # get all users
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
         try:
@@ -40,7 +40,11 @@ class loops(commands.Cog):
         inters = 0
         for index, discord_id in enumerate(discord_ids):
             riot_id = self.redis_db.get_user_field(discord_id, "puuid")
-            flame_text =self. riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'))
+            try:
+                flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 10)
+            except aiohttp.ClientResponseError as e:
+                print(e.message)
+
             if flame_text:
                 inters+=1
                 embed.add_field(name = f"SUSPECT #{inters}", value=f"<@{discord_id}>\n {flame_text}\n")
