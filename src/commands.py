@@ -20,7 +20,7 @@ class leagueCommands(riotAPI, commands.Cog):
         pass
 
     @commands.command()
-    @commands.cooldown(1, 15, commands.BucketType.guild)
+    @commands.cooldown(1, 20, commands.BucketType.guild)
     async def leaderboard(self, ctx):  
         """
             Keeps track of top 5 in each role of the leaderboard
@@ -37,10 +37,10 @@ class leagueCommands(riotAPI, commands.Cog):
             else:
                 await ctx.send("No users are registered.")
             tasks= []
-            delay = 0.5
+            delay = 1
             for discord_id in discord_ids:
                 puuid = self.redisdb.get_user_field(discord_id, "puuid")
-                tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=10, sleep_time=delay, discord_id = discord_id))
+                tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=5, sleep_time=delay, discord_id = discord_id))
                 delay += 1
             try:
                 result = await asyncio.gather(*tasks)
@@ -59,8 +59,7 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(embed=embed)
 
     @leaderboard.error
-    async def on_command_error(ctx, error):
-        print("triggered")
+    async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f'This command is actually on cooldown, you can use it in {round(error.retry_after, 2)} seconds.')
 
@@ -90,8 +89,21 @@ class leagueCommands(riotAPI, commands.Cog):
                             description=f"{response}",
                             color=0xFF0000)
             await ctx.send(embed=embed)
-
-
+    @commands.command()
+    async def count(self, ctx):
+        """
+            Returns amount of users registered
+        """
+        async with ctx.typing():
+            discord_ids: list[bytes] = self.redisdb.get_all_users()
+            response =''
+            for index, discord_id in enumerate(discord_ids):
+                id = discord_id.decode('utf-8')
+                response += f'\n{index+1}. <@{id}>'
+            embed = discord.Embed(title="📠Users Registered📠\n\n", 
+                    description=f"{response}",
+                    color=0xFF0000)
+            await ctx.send(embed=embed)
     @commands.command()
     async def deregister(self, ctx, riotid="undefined"):
         
@@ -137,7 +149,7 @@ class leagueCommands(riotAPI, commands.Cog):
           by calling .summary <league_name> or just .summary"""
         async with ctx.typing():
             try:
-                count = 10
+                count = 5
                 if len(args) != 0:
                     user = "".join(args)
                     message = await self.riot_api.get_kda_by_user(user, count)
