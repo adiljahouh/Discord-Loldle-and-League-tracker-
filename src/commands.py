@@ -18,7 +18,14 @@ class leagueCommands(riotAPI, commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
-
+    
+    @commands.command()
+    async def test(self, ctx,  *args):
+        members = ctx.message.mentions
+        riot_name = "".join(args)
+        print(riot_name)
+        print(members)
+        await ctx.send("test")
     @commands.command()
     @commands.cooldown(1, 20, commands.BucketType.guild)
     async def leaderboard(self, ctx):  

@@ -43,7 +43,7 @@ class loops(commands.Cog):
             for index, discord_id in enumerate(discord_ids):
                 riot_id = self.redis_db.get_user_field(discord_id, "puuid")
                 try:
-                    flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5)
+                    flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=5)
                 except aiohttp.ClientResponseError as e:
                     print(e.message)
                     channel.send(e.message)

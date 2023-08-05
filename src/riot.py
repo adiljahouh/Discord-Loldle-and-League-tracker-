@@ -102,7 +102,8 @@ class riotAPI():
             text += f'{result} **{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text if flame == False else flame_text + text
     
-    async def get_bad_kda_by_puuid(self, puuid, count=10):
+    async def get_bad_kda_by_puuid(self, puuid, count=10, sleep_time=2):
+        await asyncio.sleep(sleep_time)
         matchIDs: list = await self.get_match_ids("puuid", puuid, count=count)
         game_details_user: list = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
         text = ''
