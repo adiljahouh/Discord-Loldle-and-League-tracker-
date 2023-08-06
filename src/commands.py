@@ -143,7 +143,7 @@ class leagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send("Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+                await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
             else:
                 try:
                     response = requests.get("https://dog.ceo/api/breeds/image/random")
@@ -166,7 +166,7 @@ class leagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send("Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+                await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
             else:
                 try:
                     response = requests.get("https://api.thecatapi.com/v1/images/search")
@@ -188,7 +188,7 @@ class leagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send("Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+                await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
             else:
                 try:
                     response = requests.get("https://random-d.uk/api/v2/random")
