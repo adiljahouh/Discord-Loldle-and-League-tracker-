@@ -172,8 +172,8 @@ class leagueCommands(riotAPI, commands.Cog):
                     response = requests.get("https://api.thecatapi.com/v1/images/search")
                     content = json.loads(response.content.decode("utf-8"))
                     response.raise_for_status()
-                    if content['url']:
-                        await ctx.send(content['url'])
+                    if content[0]['url']:
+                        await ctx.send(content[0]['url'])
                     else:
                         await ctx.send("Internal API error")
                 except requests.exceptions.HTTPError as e:
