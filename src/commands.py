@@ -20,14 +20,6 @@ class leagueCommands(riotAPI, commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
-    #TODO: ADD MENTIONS POSSIBILITY
-    # @commands.command()
-    # async def test(self, ctx,  *args):
-    #     members = ctx.message.mentions
-    #     riot_name = "".join(args)
-    #     print(riot_name)
-    #     print(members)
-    #     await ctx.send("test")
 
     @commands.command()
     @commands.cooldown(1, 130, commands.BucketType.guild)
@@ -142,8 +134,8 @@ class leagueCommands(riotAPI, commands.Cog):
         #TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+                img = random.choice(os.listdir('../assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
                 try:
                     response = requests.get("https://dog.ceo/api/breeds/image/random")
@@ -165,8 +157,8 @@ class leagueCommands(riotAPI, commands.Cog):
         #TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+                img = random.choice(os.listdir('../assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
                 try:
                     response = requests.get("https://api.thecatapi.com/v1/images/search")
@@ -179,11 +171,11 @@ class leagueCommands(riotAPI, commands.Cog):
                 except requests.exceptions.HTTPError as e:
                     await ctx.send("HTTP error, no cats for you")
 
-    @commands.command()
-    async def test(self, ctx):
-        async with ctx.typing():
-            img = random.choice(os.listdir('./assets/menno_dogs'))
-            await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+    # @commands.command()
+    # async def test(self, ctx):
+    #     async with ctx.typing():
+    #         img = random.choice(os.listdir('/assets/menno_dogs'))
+    #         await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
 
     @commands.command()
     async def duck(self, ctx):
@@ -193,8 +185,8 @@ class leagueCommands(riotAPI, commands.Cog):
         #TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+                img = random.choice(os.listdir('../assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
                 try:
                     response = requests.get("https://random-d.uk/api/v2/random")
