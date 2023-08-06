@@ -5,9 +5,9 @@ services:
     build: .
     volumes:
       - /opt/discbot/.env:/app/.env
+      - /opt/discbot/assets:/assets
     env_file:
       - /opt/discbot/.env
-    #FIXME 
   redis:
     container_name: redis
     ports: 

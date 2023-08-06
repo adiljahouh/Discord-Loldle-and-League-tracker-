@@ -1,4 +1,3 @@
 .env
 __pycache__/
 *.sh
-src/test.py

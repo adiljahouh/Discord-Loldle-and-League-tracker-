@@ -143,7 +143,7 @@ class leagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('./assets/menno_dogs'))
-                await ctx.send(file=discord.File(f'./assets/{img}'))
+                await ctx.send("Very rare menno dog!", file=discord.File(f'./assets/{img}'))
             else:
                 try:
                     response = requests.get("https://dog.ceo/api/breeds/image/random")
@@ -173,7 +173,25 @@ class leagueCommands(riotAPI, commands.Cog):
                 else:
                     await ctx.send("Internal API error")
             except requests.exceptions.HTTPError as e:
-                await ctx.send("HTTP error, no dogs for you")
+                await ctx.send("HTTP error, no cats for you")
+
+    @commands.command()
+    async def duck(self, ctx):
+        """
+            Returns a duck pic or gif
+        """
+        #TODO: add retry logic
+        async with ctx.typing():
+            try:
+                response = requests.get("https://random-d.uk/api/v2/random")
+                content = json.loads(response.content.decode("utf-8"))
+                response.raise_for_status()
+                if content['url']:
+                    await ctx.send(content['url'])
+                else:
+                    await ctx.send("Internal API error")
+            except requests.exceptions.HTTPError as e:
+                await ctx.send("HTTP error, no ducks for you")
 
     @commands.command()
     async def summary(self, ctx, *args):
