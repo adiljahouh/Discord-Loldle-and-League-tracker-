@@ -180,6 +180,12 @@ class leagueCommands(riotAPI, commands.Cog):
                     await ctx.send("HTTP error, no cats for you")
 
     @commands.command()
+    async def test(self, ctx):
+        async with ctx.typing():
+            img = random.choice(os.listdir('./assets/menno_dogs'))
+            await ctx.send("@here Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+
+    @commands.command()
     async def duck(self, ctx):
         """
             Returns a duck pic or gif
