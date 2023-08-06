@@ -148,7 +148,7 @@ class riotAPI():
         player_details = {}
         player_details['taken'], player_details['champion'], player_details['disc_id'] = 0, '', discord_id
         for game in game_details_user:
-            if game["match_details"]['totalDamageTaken'] > player_details['taken']:
+            if game["match_details"]['totalDamageTaken'] > player_details['taken'] and game["game_mode"] not in ["ARAM", "URF", "CHERRY"]:
                 player_details['taken'] = game["match_details"]['totalDamageTaken']
                 player_details['champion'] = game["match_details"]["championName"]
         

@@ -17,7 +17,7 @@ class loops(commands.Cog):
     async def on_ready(self):
         await self.send_message.start()
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=72)
     async def send_message(self):
         print("looping")
         channel_id: int = self.channel_id

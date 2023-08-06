@@ -6,6 +6,8 @@ from config import Settings
 from database import cacheDB
 from typing import Optional
 import discord
+import os
+import random
 import json
 import asyncio
 from redis.exceptions import ConnectionError
@@ -18,16 +20,17 @@ class leagueCommands(riotAPI, commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
-    
+    #TODO: ADD MENTIONS POSSIBILITY
+    # @commands.command()
+    # async def test(self, ctx,  *args):
+    #     members = ctx.message.mentions
+    #     riot_name = "".join(args)
+    #     print(riot_name)
+    #     print(members)
+    #     await ctx.send("test")
+
     @commands.command()
-    async def test(self, ctx,  *args):
-        members = ctx.message.mentions
-        riot_name = "".join(args)
-        print(riot_name)
-        print(members)
-        await ctx.send("test")
-    @commands.command()
-    @commands.cooldown(1, 20, commands.BucketType.guild)
+    @commands.cooldown(1, 130, commands.BucketType.guild)
     async def leaderboard(self, ctx):  
         """
             Keeps track of top 5 in each role of the leaderboard
@@ -96,6 +99,7 @@ class leagueCommands(riotAPI, commands.Cog):
                             description=f"{response}",
                             color=0xFF0000)
             await ctx.send(embed=embed)
+    
     @commands.command()
     async def count(self, ctx):
         """
@@ -111,6 +115,7 @@ class leagueCommands(riotAPI, commands.Cog):
                     description=f"{response}",
                     color=0xFF0000)
             await ctx.send(embed=embed)
+    
     @commands.command()
     async def deregister(self, ctx, riotid="undefined"):
         
@@ -134,20 +139,41 @@ class leagueCommands(riotAPI, commands.Cog):
         """
             Returns a dog pic
         """
+        #TODO: add retry logic
+        async with ctx.typing():
+            if random.randint(0, 100) == 1:
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send(file=discord.File(f'./assets/{img}'))
+            else:
+                try:
+                    response = requests.get("https://dog.ceo/api/breeds/image/random")
+                    content = json.loads(response.content.decode("utf-8"))
+
+                    response.raise_for_status()
+                    if content['status'] == 'success':
+                        await ctx.send(content['message'])
+                    else:
+                        await ctx.send("Internal API error")
+                except requests.exceptions.HTTPError as e:
+                    await ctx.send("HTTP error, no dogs for you")
+
+    @commands.command()
+    async def cat(self, ctx):
+        """
+            Returns a cat pic
+        """
+        #TODO: add retry logic
         async with ctx.typing():
             try:
-                response = requests.get("https://dog.ceo/api/breeds/image/random")
+                response = requests.get("https://api.thecatapi.com/v1/images/search")
                 content = json.loads(response.content.decode("utf-8"))
-
                 response.raise_for_status()
-                if content['status'] == 'success':
-                    await ctx.send(content['message'])
+                if content['url']:
+                    await ctx.send(content['url'])
                 else:
                     await ctx.send("Internal API error")
             except requests.exceptions.HTTPError as e:
                 await ctx.send("HTTP error, no dogs for you")
-
-
 
     @commands.command()
     async def summary(self, ctx, *args):
