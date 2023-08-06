@@ -27,7 +27,7 @@ class loops(commands.Cog):
                 discord_ids: list[bytes] = self.redis_db.get_all_users()
             except ConnectionError as e:
                 print(e)
-                channel.send("No connection to DB")
+                await channel.send("No connection to DB")
 
             if len(discord_ids) > 0:
                 discord_ids = [id.decode('utf-8') for id in discord_ids]
