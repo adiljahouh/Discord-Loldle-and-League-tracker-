@@ -164,16 +164,20 @@ class leagueCommands(riotAPI, commands.Cog):
         """
         #TODO: add retry logic
         async with ctx.typing():
-            try:
-                response = requests.get("https://api.thecatapi.com/v1/images/search")
-                content = json.loads(response.content.decode("utf-8"))
-                response.raise_for_status()
-                if content['url']:
-                    await ctx.send(content['url'])
-                else:
-                    await ctx.send("Internal API error")
-            except requests.exceptions.HTTPError as e:
-                await ctx.send("HTTP error, no cats for you")
+            if random.randint(0, 100) == 1:
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send("Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+            else:
+                try:
+                    response = requests.get("https://api.thecatapi.com/v1/images/search")
+                    content = json.loads(response.content.decode("utf-8"))
+                    response.raise_for_status()
+                    if content['url']:
+                        await ctx.send(content['url'])
+                    else:
+                        await ctx.send("Internal API error")
+                except requests.exceptions.HTTPError as e:
+                    await ctx.send("HTTP error, no cats for you")
 
     @commands.command()
     async def duck(self, ctx):
@@ -182,16 +186,20 @@ class leagueCommands(riotAPI, commands.Cog):
         """
         #TODO: add retry logic
         async with ctx.typing():
-            try:
-                response = requests.get("https://random-d.uk/api/v2/random")
-                content = json.loads(response.content.decode("utf-8"))
-                response.raise_for_status()
-                if content['url']:
-                    await ctx.send(content['url'])
-                else:
-                    await ctx.send("Internal API error")
-            except requests.exceptions.HTTPError as e:
-                await ctx.send("HTTP error, no ducks for you")
+            if random.randint(0, 100) == 1:
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send("Very rare menno dog!", file=discord.File(f'./assets/{img}'))
+            else:
+                try:
+                    response = requests.get("https://random-d.uk/api/v2/random")
+                    content = json.loads(response.content.decode("utf-8"))
+                    response.raise_for_status()
+                    if content['url']:
+                        await ctx.send(content['url'])
+                    else:
+                        await ctx.send("Internal API error")
+                except requests.exceptions.HTTPError as e:
+                    await ctx.send("HTTP error, no ducks for you")
 
     @commands.command()
     async def summary(self, ctx, *args):
