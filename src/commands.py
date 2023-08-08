@@ -249,7 +249,12 @@ class leagueCommands(riotAPI, commands.Cog):
             else:
                 await ctx.send('No valid image attached. Please attach an image using `.add image`.')
         elif option == 'strike':
-            await ctx.send('Soon..')
+            mentions = ctx.message.mentions
+            if len(mentions) == 0:
+                await ctx.send("Mention someone to strike")
+            else:
+                for mention in mentions:
+                    await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}>")
         else:
             await ctx.send('Invalid option. Available options: image, text')
 async def setup(bot):
