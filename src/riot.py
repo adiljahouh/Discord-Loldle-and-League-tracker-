@@ -20,13 +20,19 @@ class riotAPI():
         }
     def set_key(self, new_key):
         self.api_key = new_key
-
-    async def get_puuid(self, user):
+        
+    async def get_summoner_values(self, user):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{user}", params= self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
-                return content['puuid']
+                return content
+
+    async def get_puuid(self, user):
+        return (await self.get_summoner_values(user))['puuid']
+
+    async def get_account_id(self, user):
+        return (await self.get_summoner_values(user))['id']
     
     async def get_match_ids(self, method, credentials, count=5):
         """
@@ -153,4 +159,53 @@ class riotAPI():
                 player_details['champion'] = game["match_details"]["championName"]
         
         return player_details
+    
+    async def get_player_status(self, user):
+        await asyncio.sleep(sleep_time)
+        matchIDs: list = await self.get_match_ids(method="puuid", credentials=puuid, count=count)
+        game_details_user = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
+        player_details = {}
+        player_details['taken'], player_details['champion'], player_details['disc_id'] = 0, '', discord_id
+        for game in game_details_user:
+            if game["match_details"]['totalDamageTaken'] > player_details['taken'] and game["game_mode"] not in ["ARAM", "URF", "CHERRY"]:
+                player_details['taken'] = game["match_details"]['totalDamageTaken']
+                player_details['champion'] = game["match_details"]["championName"]
+        
+        return player_details
+    
+    async def get_latest_ddragon(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://ddragon.leagueoflegends.com/api/versions.json") as response:
+                response.raise_for_status()
+                content = await response.json()
+                return content[0]
+
+    async def get_champion_list(self):
+        async with aiohttp.ClientSession() as session:
+            latest = await self.get_latest_ddragon()
+            async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion.json") as response:
+                response.raise_for_status()
+                content = await response.json()
+                champ_list = {}
+                for attribute, value in content['data'].items():
+                    champ_list.update({value['key']: attribute})
+                return champ_list
+    
+    async def get_active_game_status(self, user):
+        account_id = await self.get_account_id(user)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}", params= self.params) as response:
+                content = await response.json()
+                status = response.status
+                if status == 404:
+                    return (False, "User not in game")
+                champion_list = await self.get_champion_list()
+                text_arr = [[content['gameId']]]
+                text_arr.append([])
+                for participant in content['participants']:
+                    summonerName = participant['summonerName']
+                    champ_name = champion_list[str(participant['championId'])]
+                    team_color = "\U0001F7E6" if participant['teamId'] == 100 else "\U0001F7E5"
+                    text_arr[1].append([[team_color], [summonerName], [champ_name]])
+                return (True, text_arr)
     

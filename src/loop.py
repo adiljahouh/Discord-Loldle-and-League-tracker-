@@ -11,6 +11,7 @@ class loops(commands.Cog):
         self.redis_db: cacheDB = redis_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
+        self.active_game: int = 0
     
 
     @commands.Cog.listener()
@@ -58,6 +59,30 @@ class loops(commands.Cog):
                 query redis db for all users, check recents kdas and retrieve the cumulative worst.
                 
                 """
+                try:
+                    await channel.send(embed=embed)
+                    print("Message sent successfully.")
+                except discord.Forbidden:
+                    print("I don't have permission to send messages to that channel.")
+                except discord.HTTPException:
+                    print("Failed to send the message.")
+
+    @tasks.loop(minutes=5.0)
+    async def active_game_searcher(self):
+        print("active_game_searcher")
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
+        async with channel.typing():            
+            (active, data) = await self.riot_api.get_active_game_status("nightlon")
+            if (not active or data[0] == self.active_game) :
+                return
+            self.active_game = data[0]
+            embed = discord.Embed(title="☠☠ JEROEN IS IN GAME ☠☠\n\n", 
+                                description="HE WILL SURELY WIN, RIGHT?",
+                                color=0xFF0000)
+            for player in data[1]:
+                embed.add_field(name = player[0], value=f"{player[1]}: {player[2]}\n")
+            if channel is not None:
                 try:
                     await channel.send(embed=embed)
                     print("Message sent successfully.")
