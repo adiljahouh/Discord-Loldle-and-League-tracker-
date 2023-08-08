@@ -11,11 +11,13 @@ class loops(commands.Cog):
         self.redis_db: cacheDB = redis_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
-    
+        self.active_game: int = 0
+
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.send_message.start()
+        self.send_message.start()
+        self.active_game_searcher.start()
 
     @tasks.loop(hours=72)
     async def send_message(self):
@@ -34,9 +36,7 @@ class loops(commands.Cog):
             else:
                 await channel.send("No users registered")
                 return
-
-            
-            embed = discord.Embed(title="⏰ ITS EXPOSING TIME ⏰\n\n", 
+            embed = discord.Embed(title="⏰ ITS EXPOSING TIME ⏰\n\n",
                                 description="BOTTOM G's WILL BE REPRIMANDED",
                                 color=0xFF0000)
             inters = 0
@@ -58,6 +58,33 @@ class loops(commands.Cog):
                 query redis db for all users, check recents kdas and retrieve the cumulative worst.
                 
                 """
+                try:
+                    await channel.send(embed=embed)
+                    print("Message sent successfully.")
+                except discord.Forbidden:
+                    print("I don't have permission to send messages to that channel.")
+                except discord.HTTPException:
+                    print("Failed to send the message.")
+
+    @tasks.loop(minutes=1.0)
+    async def active_game_searcher(self):
+        print("active_game_searcher")
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
+        (active, data) = await self.riot_api.get_active_game_status("nightlon")
+        if (not active or data[0] == self.active_game) :
+            return
+        async with channel.typing():
+            self.active_game = data[0]
+            embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n\n",
+                                  description="HE WILL SURELY WIN, RIGHT?",
+                                  color=0xFF0000)
+            for index, player in enumerate(data[1]):
+                if index == 5:
+                    embed.add_field(name='\u200b', value='\u200b')
+                embed.add_field(name=player[0], value=f"{player[1]}: {player[2]}\n", inline=True)
+            embed.add_field(name='\u200b', value='\u200b')
+            if channel is not None:
                 try:
                     await channel.send(embed=embed)
                     print("Message sent successfully.")
