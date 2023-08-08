@@ -11,6 +11,7 @@ import random
 import json
 import asyncio
 from redis.exceptions import ConnectionError
+import uuid
 class leagueCommands(riotAPI, commands.Cog):
     def __init__(self, bot, redisdb, riot_api) -> None:
         self.bot: commands.bot.Bot = bot
@@ -224,6 +225,33 @@ class leagueCommands(riotAPI, commands.Cog):
                 color=0xFF0000)
                 await ctx.send(embed=embed)
         
+    @commands.command()
+    async def add(self, ctx, option: str, *args):
+        """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""
+        if option == 'image':
+            filepath = os.path.join(os.path.dirname(__file__), '..', 'assets', 'menno_dogs', f'{str(uuid.uuid4())}.jpg')
+            if ctx.message.attachments and ctx.message.attachments[0].url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                attachment_filename = ctx.message.attachments[0].filename
+                await ctx.message.attachments[0].save(filepath) # doesnt work with relative paths
+                await ctx.send(f'Image added: {attachment_filename}')
+            elif args[-1].lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                try:
+                    async with aiohttp.ClientSession() as session:
+                        print(args[-1])
+                        async with session.get(f"{args[-1]}") as response:
+                            response.raise_for_status()
+                            data = await response.read()
+                            with open(filepath, 'wb') as handler:
+                                handler.write(data)
+                            await ctx.send(f'Image added: {args[-1]}')
+                except aiohttp.ClientResponseError as e:
+                    ctx.send(e)
+            else:
+                await ctx.send('No valid image attached. Please attach an image using `.add image`.')
+        elif option == 'strike':
+            await ctx.send('Soon..')
+        else:
+            await ctx.send('Invalid option. Available options: image, text')
 async def setup(bot):
     settings = Settings()
     redisDB = cacheDB(settings.REDISURL)

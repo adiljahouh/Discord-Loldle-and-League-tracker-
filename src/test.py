@@ -1,7 +1,11 @@
 import random
 import os
-img = random.choice(os.listdir('./assets/menno_dogs'))
-print(img)
+import requests
+from PIL import Image
+from io import BytesIO
+response = requests.get("https://www.placemonkeys.com/500/350?random")
+image = Image.open(BytesIO(response.content))
+image.show()
 ## from config import *
 # async def main():
 #     settings = Settings()
