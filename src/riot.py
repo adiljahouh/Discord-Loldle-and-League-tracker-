@@ -160,19 +160,6 @@ class riotAPI():
 
         return player_details
 
-    async def get_player_status(self, user):
-        await asyncio.sleep(sleep_time)
-        matchIDs: list = await self.get_match_ids(method="puuid", credentials=puuid, count=count)
-        game_details_user = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
-        player_details = {}
-        player_details['taken'], player_details['champion'], player_details['disc_id'] = 0, '', discord_id
-        for game in game_details_user:
-            if game["match_details"]['totalDamageTaken'] > player_details['taken'] and game["game_mode"] not in ["ARAM", "URF", "CHERRY"]:
-                player_details['taken'] = game["match_details"]['totalDamageTaken']
-                player_details['champion'] = game["match_details"]["championName"]
-
-        return player_details
-
     async def get_latest_ddragon(self):
         async with aiohttp.ClientSession() as session:
             async with session.get("https://ddragon.leagueoflegends.com/api/versions.json") as response:
