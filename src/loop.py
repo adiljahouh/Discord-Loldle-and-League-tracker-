@@ -12,6 +12,7 @@ class loops(commands.Cog):
         self.redis_db: cacheDB = redis_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
+        self.old_active_game: int = 0
         self.active_game: int = 0
         self.active_user = "nightlon"
 
@@ -75,7 +76,7 @@ class loops(commands.Cog):
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
         (active, data) = await self.riot_api.get_active_game_status(self.active_user)
-        if not active or data[0][0] == self.active_game:
+        if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
             return
         message: discord.Message = None
         async with channel.typing():
@@ -149,6 +150,7 @@ class loops(commands.Cog):
             text = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**"
         else:
             text = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**"
+        self.old_active_game = self.active_game
         self.active_game = 0
         if channel is not None:
             try:
