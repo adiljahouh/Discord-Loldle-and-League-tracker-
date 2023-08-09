@@ -192,7 +192,7 @@ class riotAPI():
                 team_two = []
                 team = 0
                 for participant in content['participants']:
-                    if user == participant['summonerName']:
+                    if user.lower() == participant['summonerName'].lower():
                         team = participant['teamId']
                     summonerName = participant['summonerName']
                     champ_name = champion_list[str(participant['championId'])]
