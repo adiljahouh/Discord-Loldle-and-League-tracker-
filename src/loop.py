@@ -13,12 +13,14 @@ class loops(commands.Cog):
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
         self.active_game: int = 0
+        self.active_user = "nightlon"
 
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.send_message.start()
         self.active_game_searcher.start()
+        self.active_game_finisher.start()
 
     @tasks.loop(hours=72)
     async def send_message(self):
@@ -72,11 +74,12 @@ class loops(commands.Cog):
         print("active_game_searcher")
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
-        (active, data) = await self.riot_api.get_active_game_status("nightlon")
-        if not active or data[0] == self.active_game :
+        (active, data) = await self.riot_api.get_active_game_status(self.active_user)
+        if not active or data[0][0] == self.active_game:
             return
+        message: discord.Message = None
         async with channel.typing():
-            self.active_game = data[0]
+            self.active_game = data[0][0]
             embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
                                         "YOU HAVE 60 SECONDS TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
@@ -87,33 +90,74 @@ class loops(commands.Cog):
                 embed.add_field(name='\u200b', value='\u200b')
             if channel is not None:
                 try:
-                    message: discord.Message = await channel.send(embed=embed)
+                    message = await channel.send(embed=embed)
                     await message.add_reaction("🟦")
                     await message.add_reaction("🟥")
-                    await asyncio.sleep(60)
-                    message_id = message.id
-                    message = await channel.fetch_message(message_id)
-                    await message.fetch()
-                    reactions = message.reactions
-                    text = ""
-                    for reaction in reactions:
-                        if reaction.emoji == "🟦":
-                            text += "**🟦 BELIEVERS**: "
-                            async for user in reaction.users():
-                                if user.id != message.author.id:
-                                    text += f"{user} "
-                            text += "\n"
-                        if reaction.emoji == "🟥":
-                            text += "**🟥 DOUBTERS**: "
-                            async for user in reaction.users():
-                                if user.id != message.author.id:
-                                    text += f"{user} "
-                    await channel.send(text)
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
                 except discord.HTTPException:
                     print("Failed to send the message.")
+        if message is None:
+            return
+        await asyncio.sleep(60)
+        async with channel.typing():
+            message_id = message.id
+            message = await channel.fetch_message(message_id)
+            await message.fetch()
+            reactions = message.reactions
+            text = ""
+            for reaction in reactions:
+                if reaction.emoji == "🟦":
+                    text += "**🟦 BELIEVERS**: "
+                    async for user in reaction.users():
+                        if user.id != message.author.id:
+                            text += f"{user} "
+                    text += "\n"
+                if reaction.emoji == "🟥":
+                    text += "**🟥 DOUBTERS**: "
+                    async for user in reaction.users():
+                        if user.id != message.author.id:
+                            text += f"{user} "
+            try:
+                await channel.send(text)
+                print("Message sent successfully.")
+            except discord.Forbidden:
+                print("I don't have permission to send messages to that channel.")
+            except discord.HTTPException:
+                print("Failed to send the message.")
+
+    @tasks.loop(minutes=1.0)
+    async def active_game_finisher(self):
+        print("active_game_finisher")
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
+        if self.active_game == 0:
+            return
+        match_id = f'EUW1_{self.active_game}'
+        try:
+            match_data = await self.riot_api.get_match_details_by_matchID(match_id)
+        except aiohttp.ClientResponseError:
+            # Game is still in progress
+            return
+        result = False
+        for player in match_data:
+            if player['summonerName'].lower() == self.active_user.lower():
+                result = player['win']
+        text = ""
+        if result:
+            text = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**"
+        else:
+            text = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**"
+        self.active_game = 0
+        if channel is not None:
+            try:
+                await channel.send(text)
+                print("Message sent successfully.")
+            except discord.Forbidden:
+                print("I don't have permission to send messages to that channel.")
+            except discord.HTTPException:
+                print("Failed to send the message.")
 
 async def setup(bot):
     settings = Settings()
