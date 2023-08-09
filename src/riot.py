@@ -187,11 +187,30 @@ class riotAPI():
                 if status == 404:
                     return (False, "User not in game")
                 champion_list = await self.get_champion_list()
-                text_arr = [[content['gameId']]]
-                text_arr.append([])
+                text_arr = [[content['gameId']], []]
+                team_one = []
+                team_two = []
+                team = 0
                 for participant in content['participants']:
+                    if user == participant['summonerName']:
+                        team = participant['teamId']
                     summonerName = participant['summonerName']
                     champ_name = champion_list[str(participant['championId'])]
-                    team_color = "\U0001F7E6" if participant['teamId'] == 100 else "\U0001F7E5"
-                    text_arr[1].append([team_color, summonerName, champ_name])
+                    if participant['teamId'] == 100:
+                        team_color = "\U0001F7E6"
+                        team_one.append([team_color, summonerName, champ_name])
+                    else:
+                        team_color = "\U0001F7E5"
+                        team_two.append([team_color, summonerName, champ_name])
+                if team == 200:
+                    for player in team_one:
+                        player[0] = "\U0001F7E5"
+                    for player in team_two:
+                        player[0] = "\U0001F7E6"
+                    text_arr[1].append(team_two)
+                    text_arr[1].append(team_one)
+                else:
+                    text_arr[1].append(team_one)
+                    text_arr[1].append(team_two)
+                print(text_arr)
                 return (True, text_arr)

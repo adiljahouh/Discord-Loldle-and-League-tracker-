@@ -72,8 +72,8 @@ class loops(commands.Cog):
         print("active_game_searcher")
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
-        (active, data) = await self.riot_api.get_active_game_status("spktra")
-        if (not active or data[0] == self.active_game) :
+        (active, data) = await self.riot_api.get_active_game_status("nightlon")
+        if not active or data[0] == self.active_game :
             return
         async with channel.typing():
             self.active_game = data[0]
@@ -81,28 +81,36 @@ class loops(commands.Cog):
                                         "YOU HAVE 60 SECONDS TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
-            for index, player in enumerate(data[1]):
-                if index == 5:
-                    embed.add_field(name='\u200b', value='\u200b')
-                embed.add_field(name=player[0], value=f"{player[1]}: {player[2]}\n", inline=True)
-            embed.add_field(name='\u200b', value='\u200b')
+            for team in data[1]:
+                for player in team:
+                    embed.add_field(name=player[0], value=f"{player[1]}: {player[2]}\n", inline=True)
+                embed.add_field(name='\u200b', value='\u200b')
             if channel is not None:
                 try:
                     message: discord.Message = await channel.send(embed=embed)
-                    await message.add_reaction("👍")
-                    await message.add_reaction("👎")
-                    await asyncio.sleep(5)
+                    await message.add_reaction("🟦")
+                    await message.add_reaction("🟥")
+                    await asyncio.sleep(60)
                     message_id = message.id
                     message = await channel.fetch_message(message_id)
                     await message.fetch()
                     reactions = message.reactions
                     print("reactions", reactions)
+                    text = ""
                     for reaction in reactions:
                         print("reaction", reaction)
-                        if reaction.emoji in ["👍", "👎"]:
+                        if reaction.emoji == "🟦":
+                            text += "**🟦 BELIEVERS**: "
                             async for user in reaction.users():
                                 if user.id != message.author.id:
-                                    await channel.send(f'{user} has reacted with {reaction.emoji}!')
+                                    text += f"{user} "
+                            text += "\n"
+                        if reaction.emoji == "🟥":
+                            text += "**🟥 DOUBTERS**: "
+                            async for user in reaction.users():
+                                if user.id != message.author.id:
+                                    text += f"{user} "
+                    await channel.send(text)
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
