@@ -95,10 +95,8 @@ class loops(commands.Cog):
                     message = await channel.fetch_message(message_id)
                     await message.fetch()
                     reactions = message.reactions
-                    print("reactions", reactions)
                     text = ""
                     for reaction in reactions:
-                        print("reaction", reaction)
                         if reaction.emoji == "🟦":
                             text += "**🟦 BELIEVERS**: "
                             async for user in reaction.users():

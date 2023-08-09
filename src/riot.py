@@ -212,5 +212,4 @@ class riotAPI():
                 else:
                     text_arr[1].append(team_one)
                     text_arr[1].append(team_two)
-                print(text_arr)
                 return (True, text_arr)
