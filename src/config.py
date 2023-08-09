@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     RIOTTOKEN:str
     REDISURL: str
     GPTAPI: str
+    PLAYERROLE: int
 
     class Config:
         env_file = ".env"

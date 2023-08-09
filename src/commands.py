@@ -15,18 +15,19 @@ import uuid
 import functools
 
 class leagueCommands(riotAPI, commands.Cog):
-    def __init__(self, bot, redisdb, riot_api, jail_role_id) -> None:
+    def __init__(self, bot, redisdb, riot_api, jail_role_id, player_role_id) -> None:
         self.bot: commands.bot.Bot = bot
         self.redisdb: cacheDB= redisdb
         self.riot_api: riotAPI = riot_api
         self.jail_role = jail_role_id
+        self.player_role = player_role_id
 
     @commands.Cog.listener()
     async def on_ready(self):
         pass
   
 
-    def validate_user(func):
+    def check_registery(func):
         @functools.wraps(func)
         async def inner(self, ctx, *args, **kwargs):
             try:
@@ -42,8 +43,22 @@ class leagueCommands(riotAPI, commands.Cog):
                 return
         return inner
     
+    def mod_check(func):
+        @functools.wraps(func)
+        async def inner(self, ctx, *args, **kwargs):
+            try:
+                for role in ctx.author.roles:
+                    if role.id == self.player_role:
+                        print("Moderator validated")
+                        return await func(self, ctx, *args, **kwargs)
+                required_role = ctx.guild.get_role(self.player_role)
+                await ctx.send(f"You need the {required_role.mention} role to use this command.")   
+            except Exception as e:
+                await ctx.send(f"Error occured during role check, Error: {e}")
+                return
+        return inner
     @commands.command()
-    @validate_user
+    @check_registery
     async def duck(self, ctx):
         """
             Returns a duck pic or gif
@@ -68,7 +83,7 @@ class leagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 130, commands.BucketType.guild)
-    @validate_user
+    @check_registery
     async def leaderboard(self, ctx):  
         """
             Keeps track of top 5 in each role of the leaderboard
@@ -139,7 +154,8 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(embed=embed)
     
     @commands.command()
-    @validate_user
+    @check_registery
+    @mod_check
     async def count(self, ctx):
         """
             Returns amount of users registered
@@ -174,7 +190,7 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(embed=embed)
     
     @commands.command()
-    @validate_user
+    @check_registery
     async def dog(self, ctx):
         """
             Returns a dog pic
@@ -198,7 +214,7 @@ class leagueCommands(riotAPI, commands.Cog):
                     await ctx.send("HTTP error, no dogs for you")
 
     @commands.command()
-    @validate_user
+    @check_registery
     async def cat(self, ctx):
         """
             Returns a cat pic
@@ -227,7 +243,7 @@ class leagueCommands(riotAPI, commands.Cog):
     #         await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
 
     @commands.command()
-    @validate_user
+    @check_registery
     async def summary(self, ctx, *args):
         
         """ Summary of a user (or your registered user if nothing is passed)
@@ -253,6 +269,8 @@ class leagueCommands(riotAPI, commands.Cog):
                 await ctx.send(embed=embed)
         
     @commands.command()
+    @check_registery
+    @mod_check
     async def add(self, ctx, option: str, *args):
         """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""
         if option == 'image':
@@ -308,4 +326,4 @@ async def setup(bot):
     redisDB = cacheDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(leagueCommands(bot, redisDB, riot_api, settings.JAILROLE))
+    await bot.add_cog(leagueCommands(bot, redisDB, riot_api, settings.JAILROLE, settings.PLAYERROLE))
