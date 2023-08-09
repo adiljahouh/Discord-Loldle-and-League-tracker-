@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     DISCORDTOKEN: str
     CHANNELID: int
-    WEBHOOK: str
+    JAILROLE: int
     RIOTTOKEN:str
     REDISURL: str
     GPTAPI: str

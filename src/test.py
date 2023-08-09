@@ -3,9 +3,21 @@ import os
 import requests
 from PIL import Image
 from io import BytesIO
-response = requests.get("https://www.placemonkeys.com/500/350?random")
-image = Image.open(BytesIO(response.content))
-image.show()
+def hello_decorator(func):
+    def wrapper(*args, **kwargs):
+        print("Hello")
+        result = func(*args, **kwargs)
+        return result
+    return wrapper
+
+
+@hello_decorator
+def httprequest(ree, bee, kree):
+    return [ree, bee, kree]
+
+
+test = httprequest("koo", "moo", "doo")
+print(test)
 ## from config import *
 # async def main():
 #     settings = Settings()

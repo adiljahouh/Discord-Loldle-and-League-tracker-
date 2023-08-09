@@ -12,18 +12,63 @@ import json
 import asyncio
 from redis.exceptions import ConnectionError
 import uuid
+import functools
+
 class leagueCommands(riotAPI, commands.Cog):
-    def __init__(self, bot, redisdb, riot_api) -> None:
+    def __init__(self, bot, redisdb, riot_api, jail_role_id) -> None:
         self.bot: commands.bot.Bot = bot
         self.redisdb: cacheDB= redisdb
         self.riot_api: riotAPI = riot_api
+        self.jail_role = jail_role_id
 
     @commands.Cog.listener()
     async def on_ready(self):
         pass
+  
+
+    def validate_user(func):
+        @functools.wraps(func)
+        async def inner(self, ctx, *args, **kwargs):
+            try:
+                discord_ids: list[bytes] = self.redisdb.get_all_users()
+                ids = [id.decode('utf-8') for id in discord_ids]
+                for id in ids:
+                    if str(id) == str(ctx.author.id):
+                        return await func(self, ctx, *args, **kwargs)
+                await ctx.send("You need to register using .register <league_name> to use this bot.")   
+            except ConnectionError as e:
+                print("ooooo")
+                await ctx.send("Could not connect to database to verify users.")
+                return
+        return inner
+    
+    @commands.command()
+    @validate_user
+    async def duck(self, ctx):
+        """
+            Returns a duck pic or gif
+        """
+        #TODO: add retry logic
+        async with ctx.typing():
+            if random.randint(0, 100) == 1:
+                img = random.choice(os.listdir('../assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
+            else:
+                try:
+                    response = requests.get("https://random-d.uk/api/v2/random")
+                    content = json.loads(response.content.decode("utf-8"))
+                    response.raise_for_status()
+                    if content['url']:
+                        await ctx.send(content['url'])
+                    else:
+                        await ctx.send("Internal API error")
+                except requests.exceptions.HTTPError as e:
+                    await ctx.send("HTTP error, no ducks for you")
+
 
     @commands.command()
     @commands.cooldown(1, 130, commands.BucketType.guild)
+    @validate_user
     async def leaderboard(self, ctx):  
         """
             Keeps track of top 5 in each role of the leaderboard
@@ -64,7 +109,7 @@ class leagueCommands(riotAPI, commands.Cog):
     @leaderboard.error
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f'This command is actually on cooldown, you can use it in {round(error.retry_after, 2)} seconds.')
+            await ctx.send(f'This command is actually on cooldown, you can use it in {round(error.retry_after, 2)} seconds.')  
 
     @commands.command()
     async def register(self, ctx, *args):
@@ -87,13 +132,14 @@ class leagueCommands(riotAPI, commands.Cog):
                 return
             self.redisdb.store_user(discord_userid, riot_name, puuid, author_discord_tag)
             response = f"**Riot ID**: {discord_userid}\
-            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}"
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0"
             embed = discord.Embed(title="📠Registering User📠\n\n", 
                             description=f"{response}",
                             color=0xFF0000)
             await ctx.send(embed=embed)
     
     @commands.command()
+    @validate_user
     async def count(self, ctx):
         """
             Returns amount of users registered
@@ -116,10 +162,10 @@ class leagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             author_discord_tag = str(ctx.author)
             userid = str(ctx.author.id)
-            riot_name = self.redisdb.remove_user(userid)
-            if riot_name != None:
+            userinfo: dict = self.redisdb.remove_and_return_all(userid)
+            if userinfo != None:
                 response = f"**Riot ID**: {userid}\
-                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name.decode('utf-8')}"
+                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {userinfo[b'riot_user'].decode('utf-8')}\n**Strikes:** {userinfo[b'strikes'].decode('utf-8')}"
             else:
                 response = "No user found for discord ID"
             embed = discord.Embed(title="📠Deregistering User📠\n\n", 
@@ -128,6 +174,7 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(embed=embed)
     
     @commands.command()
+    @validate_user
     async def dog(self, ctx):
         """
             Returns a dog pic
@@ -151,6 +198,7 @@ class leagueCommands(riotAPI, commands.Cog):
                     await ctx.send("HTTP error, no dogs for you")
 
     @commands.command()
+    @validate_user
     async def cat(self, ctx):
         """
             Returns a cat pic
@@ -179,28 +227,7 @@ class leagueCommands(riotAPI, commands.Cog):
     #         await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
 
     @commands.command()
-    async def duck(self, ctx):
-        """
-            Returns a duck pic or gif
-        """
-        #TODO: add retry logic
-        async with ctx.typing():
-            if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('../assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
-            else:
-                try:
-                    response = requests.get("https://random-d.uk/api/v2/random")
-                    content = json.loads(response.content.decode("utf-8"))
-                    response.raise_for_status()
-                    if content['url']:
-                        await ctx.send(content['url'])
-                    else:
-                        await ctx.send("Internal API error")
-                except requests.exceptions.HTTPError as e:
-                    await ctx.send("HTTP error, no ducks for you")
-
-    @commands.command()
+    @validate_user
     async def summary(self, ctx, *args):
         
         """ Summary of a user (or your registered user if nothing is passed)
@@ -251,10 +278,29 @@ class leagueCommands(riotAPI, commands.Cog):
         elif option == 'strike':
             mentions = ctx.message.mentions
             if len(mentions) == 0:
-                await ctx.send("Mention someone to strike")
+                await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
             else:
                 for mention in mentions:
-                    await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}>")
+                    filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
+                    if len(filtered_args) == 0:
+                        # if we didnt pass a reason
+                        filtered_args.append("No reason")
+                    if self.redisdb.check_user_existence(mention.id) == 1:
+                        total = self.redisdb.increment_field(mention.id, "strikes", 1)
+                        if total >= 3:
+                            success = self.redisdb.set_user_field(mention.id, "strikes", 0)
+                            if success == 0:
+                                role = ctx.guild.get_role(self.jail_role)
+                                user = ctx.guild.get_member(mention.id)
+                                await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)} BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {role.mention}")
+                                await user.add_roles(role)
+                            else:
+                                await ctx.send(f"Couldnt reset your strikes, contact an admin")
+                        else:
+                            await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)}\n TOTAL COUNT: {total}")
+                    else:
+                        await ctx.send(f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
+
         else:
             await ctx.send('Invalid option. Available options: image, text')
 async def setup(bot):
@@ -262,4 +308,4 @@ async def setup(bot):
     redisDB = cacheDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(leagueCommands(bot, redisDB, riot_api))
+    await bot.add_cog(leagueCommands(bot, redisDB, riot_api, settings.JAILROLE))
