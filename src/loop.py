@@ -5,6 +5,7 @@ from database import cacheDB
 from config import Settings
 from redis.exceptions import ConnectionError
 import aiohttp
+import asyncio
 class loops(commands.Cog):
     def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
         self.bot: commands.bot.Bot = bot
@@ -71,12 +72,13 @@ class loops(commands.Cog):
         print("active_game_searcher")
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
-        (active, data) = await self.riot_api.get_active_game_status("nightlon")
+        (active, data) = await self.riot_api.get_active_game_status("spktra")
         if (not active or data[0] == self.active_game) :
             return
         async with channel.typing():
             self.active_game = data[0]
-            embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n\n",
+            embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
+                                        "YOU HAVE 60 SECONDS TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
             for index, player in enumerate(data[1]):
@@ -86,7 +88,21 @@ class loops(commands.Cog):
             embed.add_field(name='\u200b', value='\u200b')
             if channel is not None:
                 try:
-                    await channel.send(embed=embed)
+                    message: discord.Message = await channel.send(embed=embed)
+                    await message.add_reaction("👍")
+                    await message.add_reaction("👎")
+                    await asyncio.sleep(5)
+                    message_id = message.id
+                    message = await channel.fetch_message(message_id)
+                    await message.fetch()
+                    reactions = message.reactions
+                    print("reactions", reactions)
+                    for reaction in reactions:
+                        print("reaction", reaction)
+                        if reaction.emoji in ["👍", "👎"]:
+                            async for user in reaction.users():
+                                if user.id != message.author.id:
+                                    await channel.send(f'{user} has reacted with {reaction.emoji}!')
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
