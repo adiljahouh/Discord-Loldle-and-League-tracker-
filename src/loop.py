@@ -5,17 +5,20 @@ from database import cacheDB
 from config import Settings
 from redis.exceptions import ConnectionError
 import aiohttp
+import asyncio
 class loops(commands.Cog):
     def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
         self.bot: commands.bot.Bot = bot
         self.redis_db: cacheDB = redis_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
-    
+        self.active_game: int = 0
+
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.send_message.start()
+        self.send_message.start()
+        self.active_game_searcher.start()
 
     @tasks.loop(hours=72)
     async def send_message(self):
@@ -34,9 +37,7 @@ class loops(commands.Cog):
             else:
                 await channel.send("No users registered")
                 return
-
-            
-            embed = discord.Embed(title="⏰ ITS EXPOSING TIME ⏰\n\n", 
+            embed = discord.Embed(title="⏰ ITS EXPOSING TIME ⏰\n\n",
                                 description="BOTTOM G's WILL BE REPRIMANDED",
                                 color=0xFF0000)
             inters = 0
@@ -60,6 +61,54 @@ class loops(commands.Cog):
                 """
                 try:
                     await channel.send(embed=embed)
+                    print("Message sent successfully.")
+                except discord.Forbidden:
+                    print("I don't have permission to send messages to that channel.")
+                except discord.HTTPException:
+                    print("Failed to send the message.")
+
+    @tasks.loop(minutes=1.0)
+    async def active_game_searcher(self):
+        print("active_game_searcher")
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
+        (active, data) = await self.riot_api.get_active_game_status("nightlon")
+        if not active or data[0] == self.active_game :
+            return
+        async with channel.typing():
+            self.active_game = data[0]
+            embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
+                                        "YOU HAVE 60 SECONDS TO PREDICT!!!\n\n",
+                                  description="HE WILL SURELY WIN, RIGHT?",
+                                  color=0xFF0000)
+            for team in data[1]:
+                for player in team:
+                    embed.add_field(name=player[0], value=f"{player[1]}: {player[2]}\n", inline=True)
+                embed.add_field(name='\u200b', value='\u200b')
+            if channel is not None:
+                try:
+                    message: discord.Message = await channel.send(embed=embed)
+                    await message.add_reaction("🟦")
+                    await message.add_reaction("🟥")
+                    await asyncio.sleep(60)
+                    message_id = message.id
+                    message = await channel.fetch_message(message_id)
+                    await message.fetch()
+                    reactions = message.reactions
+                    text = ""
+                    for reaction in reactions:
+                        if reaction.emoji == "🟦":
+                            text += "**🟦 BELIEVERS**: "
+                            async for user in reaction.users():
+                                if user.id != message.author.id:
+                                    text += f"{user} "
+                            text += "\n"
+                        if reaction.emoji == "🟥":
+                            text += "**🟥 DOUBTERS**: "
+                            async for user in reaction.users():
+                                if user.id != message.author.id:
+                                    text += f"{user} "
+                    await channel.send(text)
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
