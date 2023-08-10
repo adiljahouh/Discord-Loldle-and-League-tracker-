@@ -308,10 +308,14 @@ class leagueCommands(riotAPI, commands.Cog):
                         if total >= 3:
                             success = self.redisdb.set_user_field(mention.id, "strikes", 0)
                             if success == 0:
-                                role = ctx.guild.get_role(self.jail_role)
                                 user = ctx.guild.get_member(mention.id)
-                                await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)} BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {role.mention}")
-                                await user.add_roles(role)
+                                for current_role in user.roles:
+                                    if current_role.name == "@everyone":
+                                        continue
+                                    await user.remove_roles(current_role)
+                                jail_role = ctx.guild.get_role(self.jail_role)
+                                await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)} BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
+                                await user.add_roles(jail_role)
                             else:
                                 await ctx.send(f"Couldnt reset your strikes, contact an admin")
                         else:
