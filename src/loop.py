@@ -14,6 +14,7 @@ class loops(commands.Cog):
         self.channel_id: int = channel_id
         self.old_active_game: int = 0
         self.active_game: int = 0
+        self.active_message_id: discord.Message.id = 0
         self.active_user = "nightlon"
 
 
@@ -79,16 +80,22 @@ class loops(commands.Cog):
         if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
             return
         message: discord.Message = None
+        embed = None
         async with channel.typing():
             self.active_game = data[0][0]
             embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
-                                        "YOU HAVE 60 SECONDS TO PREDICT!!!\n\n",
+                                        "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
-            for team in data[1]:
+            embed_fields = []
+            for indx, team in enumerate(data[1]):
+                embed_fields.append("")
                 for player in team:
-                    embed.add_field(name=player[0], value=f"{player[1]}: {player[2]}\n", inline=True)
-                embed.add_field(name='\u200b', value='\u200b')
+                    embed_fields[indx] += f"**{player[2]}** ({player[1]})\n"
+            embed.add_field(name="🟦", value=embed_fields[0], inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=True)
+            embed.add_field(name="🟥", value=embed_fields[1], inline=True)
+
             if channel is not None:
                 try:
                     message = await channel.send(embed=embed)
@@ -101,27 +108,32 @@ class loops(commands.Cog):
                     print("Failed to send the message.")
         if message is None:
             return
-        await asyncio.sleep(60)
+        await asyncio.sleep(300)
         async with channel.typing():
             message_id = message.id
-            message = await channel.fetch_message(message_id)
-            await message.fetch()
-            reactions = message.reactions
+            self.active_message_id = message_id
+            message_update = await channel.fetch_message(message_id)
+            await message_update.fetch()
+            reactions = message_update.reactions
             text = ""
             for reaction in reactions:
                 if reaction.emoji == "🟦":
-                    text += "**🟦 BELIEVERS**: "
                     async for user in reaction.users():
-                        if user.id != message.author.id:
+                        if user.id != message_update.author.id:
                             text += f"{user} "
-                    text += "\n"
+                    embed.add_field(name="**🟦 BELIEVERS**", value=text, inline=True)
+                    embed.add_field(name='\u200b', value='\u200b')
+                    embed.add_field(name='\u200b', value='\u200b')
+                text = ""
                 if reaction.emoji == "🟥":
-                    text += "**🟥 DOUBTERS**: "
                     async for user in reaction.users():
-                        if user.id != message.author.id:
+                        if user.id != message_update.author.id:
                             text += f"{user} "
+                    embed.add_field(name="**🟥 DOUBTERS**", value=text, inline=True)
+                    embed.add_field(name='\u200b', value='\u200b')
+                    embed.add_field(name='\u200b', value='\u200b')
             try:
-                await channel.send(text)
+                await message_update.edit(embed=embed)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
@@ -142,19 +154,25 @@ class loops(commands.Cog):
             # Game is still in progress
             return
         result = False
+        score = ""
         for player in match_data:
             if player['summonerName'].lower() == self.active_user.lower():
                 result = player['win']
+                score = f"{player['kills']} / {player['deaths']} / {player['assists']}, bait pings: {player['baitPings']}"
         text = ""
         if result:
-            text = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**"
+            text = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
         else:
-            text = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**"
+            text = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
+        text += score
         self.old_active_game = self.active_game
         self.active_game = 0
         if channel is not None:
+            message = await channel.fetch_message(self.active_message_id)
+            embed = message.embeds[0]
+            embed.add_field(name="RESULT!!!", value=text, inline=True)
             try:
-                await channel.send(text)
+                await message.edit(embed=embed)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
