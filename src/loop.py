@@ -20,13 +20,15 @@ class loops(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.send_message.start()
         self.active_game_searcher.start()
         self.active_game_finisher.start()
+        self.leaderboard.start()
+        await asyncio.sleep(120) #1800
+        self.send_message.start()
 
-    @tasks.loop(hours=72)
+    @tasks.loop(hours=48)
     async def send_message(self):
-        print("looping")
+        print("Setting up exposing session...")
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
         async with channel.typing():
@@ -48,10 +50,10 @@ class loops(commands.Cog):
             for index, discord_id in enumerate(discord_ids):
                 riot_id = self.redis_db.get_user_field(discord_id, "puuid")
                 try:
-                    flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=5)
+                    flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=10)
                 except aiohttp.ClientResponseError as e:
                     print(e.message)
-                    channel.send(e.message)
+                    await channel.send(e.message)
 
                 if flame_text:
                     inters+=1
@@ -70,6 +72,49 @@ class loops(commands.Cog):
                     print("I don't have permission to send messages to that channel.")
                 except discord.HTTPException:
                     print("Failed to send the message.")
+
+
+    @tasks.loop(hours=24)
+    #FIXME: Remove the concurrency here, its redundant
+    async def leaderboard(self):  
+        """
+            Keeps track of top 5 in each role of the leaderboard
+        """
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
+        async with channel.typing():
+            print("Retrieving Leaderboard...")
+            try:
+                discord_ids: list[bytes] = self.redis_db.get_all_users()
+            except ConnectionError as e:
+                await channel.send("Could not connect to database.")
+                return
+            leaderboard_text = ''
+            if len(discord_ids) > 0:
+                discord_ids = [id.decode('utf-8') for id in discord_ids]
+            else:
+                await channel.send("No users are registered.")
+            tasks= []
+            delay = 1
+            for discord_id in discord_ids:
+                puuid = self.redis_db.get_user_field(discord_id, "puuid")
+                tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=5, sleep_time=delay, discord_id = discord_id))
+                delay += 10
+            try:
+                result = await asyncio.gather(*tasks)
+            except aiohttp.ClientResponseError as e:
+                print(e)
+                await channel.send(e.message + ', please wait a minute.')
+                return
+            top_5 = sorted(result, key=lambda x: x['taken'], reverse=True)[:5]
+            for index, top_g in enumerate(top_5):
+                leaderboard_text += f'\n{index+1}. <@{top_g["disc_id"]}> | {top_g["taken"]} on **{top_g["champion"]}**'
+            description = f"Type .register to be able to participate"
+            embed = discord.Embed(title="💪🏽TOPPEST G's💪🏽\n\n", 
+                            description=f"{description}",
+                            color=0xFF0000)
+            embed.add_field(name="Top Damage Taken Past 5 Games", value = leaderboard_text)
+            await channel.send(embed=embed)
 
     @tasks.loop(minutes=1.0)
     async def active_game_searcher(self):

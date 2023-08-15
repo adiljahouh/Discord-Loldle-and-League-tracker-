@@ -81,50 +81,10 @@ class leagueCommands(riotAPI, commands.Cog):
                     await ctx.send("HTTP error, no ducks for you")
 
 
-    @commands.command()
-    @commands.cooldown(1, 130, commands.BucketType.guild)
-    @check_registery
-    async def leaderboard(self, ctx):  
-        """
-            Keeps track of top 5 in each role of the leaderboard
-        """
-        async with ctx.typing():
-            try:
-                discord_ids: list[bytes] = self.redisdb.get_all_users()
-            except ConnectionError as e:
-                await ctx.send("Could not connect to database.")
-                return
-            leaderboard_text = ''
-            if len(discord_ids) > 0:
-                discord_ids = [id.decode('utf-8') for id in discord_ids]
-            else:
-                await ctx.send("No users are registered.")
-            tasks= []
-            delay = 1
-            for discord_id in discord_ids:
-                puuid = self.redisdb.get_user_field(discord_id, "puuid")
-                tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=5, sleep_time=delay, discord_id = discord_id))
-                delay += 1
-            try:
-                result = await asyncio.gather(*tasks)
-            except aiohttp.ClientResponseError as e:
-                print(e)
-                await ctx.send(e.message + ', please wait a minute.')
-                return
-            top_5 = sorted(result, key=lambda x: x['taken'], reverse=True)[:5]
-            for index, top_g in enumerate(top_5):
-                leaderboard_text += f'\n{index+1}. <@{top_g["disc_id"]}> | {top_g["taken"]} on **{top_g["champion"]}**'
-            description = f"Type .register to be able to participate"
-            embed = discord.Embed(title="💪🏽TOPPEST G's💪🏽\n\n", 
-                            description=f"{description}",
-                            color=0xFF0000)
-            embed.add_field(name="Top Damage Taken Past 5 Games", value = leaderboard_text)
-            await ctx.send(embed=embed)
-
-    @leaderboard.error
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f'This command is actually on cooldown, you can use it in {round(error.retry_after, 2)} seconds.')  
+    # @leaderboard.error
+    # async def on_command_error(self, ctx, error):
+    #     if isinstance(error, commands.CommandOnCooldown):
+    #         await ctx.send(f'This command is actually on cooldown, you can use it in {round(error.retry_after, 2)} seconds.')  
 
     @commands.command()
     async def register(self, ctx, *args):
