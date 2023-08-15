@@ -15,18 +15,19 @@ import uuid
 import functools
 
 class leagueCommands(riotAPI, commands.Cog):
-    def __init__(self, bot, redisdb, riot_api, jail_role_id, player_role_id) -> None:
+    def __init__(self, bot, redisdb, riot_api, jail_role_id, player_role_id, g_role) -> None:
         self.bot: commands.bot.Bot = bot
         self.redisdb: cacheDB= redisdb
         self.riot_api: riotAPI = riot_api
         self.jail_role = jail_role_id
         self.player_role = player_role_id
+        self.g_role = g_role
 
     @commands.Cog.listener()
     async def on_ready(self):
         pass
   
-
+    #FIXME: can now change this to role check, not registery
     def check_registery(func):
         @functools.wraps(func)
         async def inner(self, ctx, *args, **kwargs):
@@ -90,6 +91,7 @@ class leagueCommands(riotAPI, commands.Cog):
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
         async with ctx.typing():
+            print("register")
             riot_name = "".join(args)
             if len(riot_name) ==0:
                 await ctx.send("Specify a riot username")
@@ -108,6 +110,12 @@ class leagueCommands(riotAPI, commands.Cog):
             self.redisdb.store_user(discord_userid, riot_name, puuid, author_discord_tag)
             response = f"**Riot ID**: {discord_userid}\
             \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0"
+            try:
+                g_role = ctx.guild.get_role(self.g_role)
+                await ctx.author.add_roles(g_role)
+            except Exception as e:
+                await ctx.send(e)
+                return
             embed = discord.Embed(title="📠Registering User📠\n\n", 
                             description=f"{response}",
                             color=0xFF0000)
@@ -290,4 +298,4 @@ async def setup(bot):
     redisDB = cacheDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(leagueCommands(bot, redisDB, riot_api, settings.JAILROLE, settings.PLAYERROLE))
+    await bot.add_cog(leagueCommands(bot, redisDB, riot_api, settings.JAILROLE, settings.PLAYERROLE, settings.GROLE))

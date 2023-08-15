@@ -23,10 +23,10 @@ class loops(commands.Cog):
         self.active_game_searcher.start()
         self.active_game_finisher.start()
         self.leaderboard.start()
-        await asyncio.sleep(120) #1800
+        await asyncio.sleep(3600) #1800
         self.send_message.start()
 
-    @tasks.loop(hours=48)
+    @tasks.loop(hours=24)
     async def send_message(self):
         print("Setting up exposing session...")
         channel_id: int = self.channel_id
@@ -54,6 +54,7 @@ class loops(commands.Cog):
                 except aiohttp.ClientResponseError as e:
                     print(e.message)
                     await channel.send(e.message)
+                    return
 
                 if flame_text:
                     inters+=1

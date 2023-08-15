@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     REDISURL: str
     GPTAPI: str
     PLAYERROLE: int
+    GROLE: int
 
     class Config:
         env_file = ".env"
