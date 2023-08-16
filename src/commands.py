@@ -235,6 +235,38 @@ class leagueCommands(riotAPI, commands.Cog):
                 description=f"{message}",
                 color=0xFF0000)
                 await ctx.send(embed=embed)
+
+    @commands.command()
+    @check_registery
+    async def clash(self, ctx, *args):
+        """
+            Returns the opgg of all members in the same clash team as the given summoner name
+        """
+        async with ctx.typing():
+            summoner = "".join(args)
+            message = ""
+            embed = False
+            try:
+                if len(args) != 0:
+                    opgg = await self.riot_api.get_clash_opgg(summoner)
+                    message = opgg
+                    embed = True
+                else:
+                    message = "Pls provide a valid summoner name: .clash <summoner name>"
+            except aiohttp.ClientResponseError as e:
+                if e.status >= 400 and e.status <=500:
+                    message = "Bad request error, invalid summoner"
+                else:
+                    message = "Internal Server Error"
+            finally:
+                if embed:
+                    embed = discord.Embed(title=f"Clash team opgg for player: {summoner}\n\n", description=f"{message}",
+                                          color=0xFF0000)
+                    await ctx.send(embed=embed)
+                else:
+                    if message == "":
+                        message = "Player is not in a clash team"
+                    await ctx.send(message)
         
     @commands.command()
     @check_registery
