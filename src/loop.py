@@ -3,6 +3,7 @@ import discord
 from riot import riotAPI
 from database import cacheDB
 from config import Settings
+from team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
@@ -133,18 +134,16 @@ class loops(commands.Cog):
                                         "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
-            embed_fields = []
-            for indx, team in enumerate(data[1]):
-                embed_fields.append("")
-                for player in team:
-                    embed_fields[indx] += f"**{player[2]}** ({player[1]})\n"
-            embed.add_field(name="🟦", value=embed_fields[0], inline=True)
-            embed.add_field(name='\u200b', value='\u200b', inline=True)
-            embed.add_field(name="🟥", value=embed_fields[1], inline=True)
+            champions = [[player[1] for player in team] for team in data[1]]
+            players = [[player[0] for player in team] for team in data[1]]
+            image_creator: imageCreator = imageCreator(self.riot_api, champions, players)
+            img = await image_creator.get_team_image()
+            picture = discord.File(fp=img, filename="team.png")
+            embed.set_image(url="attachment://team.png")
 
             if channel is not None:
                 try:
-                    message = await channel.send(embed=embed)
+                    message = await channel.send(file=picture, embed=embed)
                     await message.add_reaction("🟦")
                     await message.add_reaction("🟥")
                     print("Message sent successfully.")
@@ -224,6 +223,7 @@ class loops(commands.Cog):
                 print("I don't have permission to send messages to that channel.")
             except discord.HTTPException:
                 print("Failed to send the message.")
+
 
 async def setup(bot):
     settings = Settings()

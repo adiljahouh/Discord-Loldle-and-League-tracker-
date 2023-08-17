@@ -197,16 +197,10 @@ class riotAPI():
                     summonerName = participant['summonerName']
                     champ_name = champion_list[str(participant['championId'])]
                     if participant['teamId'] == 100:
-                        team_color = "\U0001F7E6"
-                        team_one.append([team_color, summonerName, champ_name])
+                        team_one.append([summonerName, champ_name])
                     else:
-                        team_color = "\U0001F7E5"
-                        team_two.append([team_color, summonerName, champ_name])
+                        team_two.append([summonerName, champ_name])
                 if team == 200:
-                    for player in team_one:
-                        player[0] = "\U0001F7E5"
-                    for player in team_two:
-                        player[0] = "\U0001F7E6"
                     text_arr[1].append(team_two)
                     text_arr[1].append(team_one)
                 else:
