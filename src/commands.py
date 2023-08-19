@@ -217,11 +217,28 @@ class leagueCommands(riotAPI, commands.Cog):
         """ Summary of a user (or your registered user if nothing is passed)
           by calling .summary <league_name> or just .summary"""
         async with ctx.typing():
+            game_mode_mapping = {
+                0: "custom",
+                400: "normal",
+                420: "solo",
+                430: "blind",
+                440: "flex",
+                450: "aram",
+                700: "clash",
+                1700: "arena",
+                "ranked": "ranked",
+                "normal": "normals"
+            }
             try:
                 count = 5
                 if len(args) != 0:
-                    user = "".join(args)
-                    message = await self.riot_api.get_kda_by_user(user, count)
+                    if args[-1].lower() in game_mode_mapping.values():
+                        user = "".join(args[:-1])
+                        queue_id = [i for i in game_mode_mapping if game_mode_mapping[i] == args[-1]][0]
+                    else:
+                        user = "".join(args)
+                        queue_id = None
+                    message = await self.riot_api.get_kda_by_user(user, count, queue_id)
                 else:
                     puuid = self.redisdb.get_user_field(str(ctx.author.id), "puuid")
                     message = await self.riot_api.get_kda_by_puuid(puuid.decode('utf-8'), count)
