@@ -161,7 +161,7 @@ class loops(commands.Cog):
                     print("Failed to send the message.")
         if message is None:
             return
-        await asyncio.sleep(10)
+        await asyncio.sleep(300)
         async with channel.typing():
             message_id = message.id
             self.active_message_id = message_id
