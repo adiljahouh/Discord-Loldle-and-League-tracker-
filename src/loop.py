@@ -120,70 +120,73 @@ class loops(commands.Cog):
 
     @tasks.loop(minutes=1.0)
     async def active_game_searcher(self):
-        print("active_game_searcher")
-        channel_id: int = self.channel_id
-        channel = self.bot.get_channel(channel_id)
-        (active, data) = await self.riot_api.get_active_game_status(self.active_user)
-        if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
-            return
-        message: discord.Message = None
-        embed = None
-        async with channel.typing():
-            self.active_game = data[0][0]
-            embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
-                                        "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
-                                  description="HE WILL SURELY WIN, RIGHT?",
-                                  color=0xFF0000)
-            champions = [[player[1] for player in team] for team in data[1]]
-            players = [[player[0] for player in team] for team in data[1]]
-            image_creator: imageCreator = imageCreator(self.riot_api, champions, players)
-            img = await image_creator.get_team_image()
-            picture = discord.File(fp=img, filename="team.png")
-            embed.set_image(url="attachment://team.png")
+        try:
+            print("active_game_searcher")
+            channel_id: int = self.channel_id
+            channel = self.bot.get_channel(channel_id)
+            (active, data) = await self.riot_api.get_active_game_status(self.active_user)
+            if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
+                return
+            message: discord.Message = None
+            embed = None
+            async with channel.typing():
+                self.active_game = data[0][0]
+                embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
+                                            "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
+                                      description="HE WILL SURELY WIN, RIGHT?",
+                                      color=0xFF0000)
+                champions = [[player[1] for player in team] for team in data[1]]
+                players = [[player[0] for player in team] for team in data[1]]
+                image_creator: imageCreator = imageCreator(self.riot_api, champions, players)
+                img = await image_creator.get_team_image()
+                picture = discord.File(fp=img, filename="team.png")
+                embed.set_image(url="attachment://team.png")
 
-            if channel is not None:
+                if channel is not None:
+                    try:
+                        message = await channel.send(file=picture, embed=embed)
+                        await message.add_reaction("🟦")
+                        await message.add_reaction("🟥")
+                        print("Message sent successfully.")
+                    except discord.Forbidden:
+                        print("I don't have permission to send messages to that channel.")
+                    except discord.HTTPException:
+                        print("Failed to send the message.")
+            if message is None:
+                return
+            await asyncio.sleep(300)
+            async with channel.typing():
+                message_id = message.id
+                self.active_message_id = message_id
+                message_update = await channel.fetch_message(message_id)
+                await message_update.fetch()
+                reactions = message_update.reactions
+                text = ""
+                for reaction in reactions:
+                    if reaction.emoji == "🟦":
+                        async for user in reaction.users():
+                            if user.id != message_update.author.id:
+                                text += f"{user} "
+                        embed.add_field(name="**🟦 BELIEVERS**", value=text, inline=True)
+                        embed.add_field(name='\u200b', value='\u200b')
+                        embed.add_field(name='\u200b', value='\u200b')
+                    text = ""
+                    if reaction.emoji == "🟥":
+                        async for user in reaction.users():
+                            if user.id != message_update.author.id:
+                                text += f"{user} "
+                        embed.add_field(name="**🟥 DOUBTERS**", value=text, inline=True)
+                        embed.add_field(name='\u200b', value='\u200b')
+                        embed.add_field(name='\u200b', value='\u200b')
                 try:
-                    message = await channel.send(file=picture, embed=embed)
-                    await message.add_reaction("🟦")
-                    await message.add_reaction("🟥")
+                    await message_update.edit(embed=embed)
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
                 except discord.HTTPException:
                     print("Failed to send the message.")
-        if message is None:
-            return
-        await asyncio.sleep(300)
-        async with channel.typing():
-            message_id = message.id
-            self.active_message_id = message_id
-            message_update = await channel.fetch_message(message_id)
-            await message_update.fetch()
-            reactions = message_update.reactions
-            text = ""
-            for reaction in reactions:
-                if reaction.emoji == "🟦":
-                    async for user in reaction.users():
-                        if user.id != message_update.author.id:
-                            text += f"{user} "
-                    embed.add_field(name="**🟦 BELIEVERS**", value=text, inline=True)
-                    embed.add_field(name='\u200b', value='\u200b')
-                    embed.add_field(name='\u200b', value='\u200b')
-                text = ""
-                if reaction.emoji == "🟥":
-                    async for user in reaction.users():
-                        if user.id != message_update.author.id:
-                            text += f"{user} "
-                    embed.add_field(name="**🟥 DOUBTERS**", value=text, inline=True)
-                    embed.add_field(name='\u200b', value='\u200b')
-                    embed.add_field(name='\u200b', value='\u200b')
-            try:
-                await message_update.edit(embed=embed)
-                print("Message sent successfully.")
-            except discord.Forbidden:
-                print("I don't have permission to send messages to that channel.")
-            except discord.HTTPException:
-                print("Failed to send the message.")
+        except Exception as e:
+            print(e)
 
     @tasks.loop(minutes=1.0)
     async def active_game_finisher(self):
