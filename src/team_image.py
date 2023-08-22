@@ -21,7 +21,7 @@ class imageCreator():
         img = Image.open('/assets/team_background.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0,0), img)
-        myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 40)
+        myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 37)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):
                 champ_image: Image = await self.champion_splash(champ)
@@ -44,6 +44,7 @@ class imageCreator():
         async with aiohttp.ClientSession() as session:
             url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
             async with session.get(url) as resp:
+                resp.raise_for_status()
                 if resp.status == 200:
                     content = await resp.read()
                     return Image.open(BytesIO(content))

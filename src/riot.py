@@ -181,7 +181,8 @@ class riotAPI():
     async def get_active_game_status(self, user):
         account_id = await self.get_account_id(user)
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}", params= self.params) as response:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}", params=self.params) as response:
+                response.raise_for_status()
                 content = await response.json()
                 status = response.status
                 if status == 404:
