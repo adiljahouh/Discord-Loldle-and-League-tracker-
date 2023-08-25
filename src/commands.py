@@ -13,7 +13,7 @@ import asyncio
 from redis.exceptions import ConnectionError
 import uuid
 import functools
-
+import datetime
 class leagueCommands(riotAPI, commands.Cog):
     def __init__(self, bot, redisdb, riot_api, jail_role_id, player_role_id, g_role) -> None:
         self.bot: commands.bot.Bot = bot
@@ -109,7 +109,7 @@ class leagueCommands(riotAPI, commands.Cog):
                 return
             self.redisdb.store_user(discord_userid, riot_name, puuid, author_discord_tag)
             response = f"**Riot ID**: {discord_userid}\
-            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0"
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
             try:
                 g_role = ctx.guild.get_role(self.g_role)
                 await ctx.author.add_roles(g_role)
@@ -140,6 +140,7 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send(embed=embed)
     
     @commands.command()
+    @mod_check
     async def deregister(self, ctx, riotid="undefined"):
         
         """ deregister a user by calling .deregister <your_league_name>"""
@@ -204,11 +205,63 @@ class leagueCommands(riotAPI, commands.Cog):
                 except requests.exceptions.HTTPError as e:
                     await ctx.send("HTTP error, no cats for you")
 
-    # @commands.command()
-    # async def test(self, ctx):
-    #     async with ctx.typing():
-    #         img = random.choice(os.listdir('/assets/menno_dogs'))
-    #         await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
+    @commands.command()
+    @check_registery
+    async def daily(self, ctx):
+        async with ctx.typing():
+            try:
+                today = datetime.datetime.now().date()
+                userid = str(ctx.author.id)
+                last_claim =  self.redisdb.get_user_field(discord_id=userid, field="last_claim")
+                if last_claim.decode('utf-8') is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
+                    status =  "You claim some points"
+                    self.redisdb.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
+                    self.redisdb.increment_field(userid, "points", 500)
+                else:
+                    status = "You already claimed your points for today"
+                points_bytes = self.redisdb.get_user_field(userid, "points")
+            except Exception as e:
+                await ctx.send(e)
+                return
+            points = points_bytes.decode('utf-8')
+            message = f'Total points: {points}'
+            embed = discord.Embed(title=f"{status}\n\n", 
+                description=f"{message}",
+                color=0xFF0000)
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @check_registery
+    async def roll(self, ctx, number):
+        async with ctx.typing():
+            userid = str(ctx.author.id)
+            points_bytes = self.redisdb.get_user_field(userid, "points")
+            points = points_bytes.decode('utf-8')
+            if int(number) > int(points):
+                await ctx.send(f"You do not have enough points for this, total points: {points}")
+                return
+            roll = random.choice(['Heads', 'Tails'])
+            print(roll)
+            print(points)
+            print(int(number))
+            if roll != 'Heads':
+                print("yes")
+                try:
+                    self.redisdb.decrement_field(userid, "points", number)
+                except Exception as e:
+                    print(e)
+                print("test")
+                new_points = self.redisdb.get_user_field(userid, "points")
+                print(new_points)
+                status = "LOLOLOLOLO-LOSER"
+            else:
+                self.redisdb.increment_field(userid, "points", number)
+                new_points = self.redisdb.get_user_field(userid, "points")
+                status = "You won!"
+            embed = discord.Embed(title=f"{status}\n\n", 
+                description=f"Original points: {points}\nNew points: {new_points.decode('utf-8')}",
+                color=0xFF0000)
+            await ctx.send(embed=embed)
 
     @commands.command()
     @check_registery
@@ -252,6 +305,38 @@ class leagueCommands(riotAPI, commands.Cog):
                 description=f"{message}",
                 color=0xFF0000)
                 await ctx.send(embed=embed)
+
+    @commands.command()
+    @check_registery
+    async def clash(self, ctx, *args):
+        """
+            Returns the opgg of all members in the same clash team as the given summoner name
+        """
+        async with ctx.typing():
+            summoner = "".join(args)
+            message = ""
+            embed = False
+            try:
+                if len(args) != 0:
+                    opgg = await self.riot_api.get_clash_opgg(summoner)
+                    message = opgg
+                    embed = True
+                else:
+                    message = "Pls provide a valid summoner name: .clash <summoner name>"
+            except aiohttp.ClientResponseError as e:
+                if e.status >= 400 and e.status <=500:
+                    message = "Bad request error, invalid summoner"
+                else:
+                    message = "Internal Server Error"
+            finally:
+                if embed:
+                    embed = discord.Embed(title=f"Clash team opgg for player: {summoner}\n\n", description=f"{message}",
+                                          color=0xFF0000)
+                    await ctx.send(embed=embed)
+                else:
+                    if message == "":
+                        message = "Player is not in a clash team"
+                    await ctx.send(message)
         
     @commands.command()
     @check_registery
@@ -277,7 +362,7 @@ class leagueCommands(riotAPI, commands.Cog):
                 except aiohttp.ClientResponseError as e:
                     ctx.send(e)
             else:
-                await ctx.send('No valid image attached. Please attach an image using `.add image`.')
+                await ctx.send('No valid image attached. Please attach an image using `.add image`. Links either ending in jpg/png/jpeg or embedded pictures.')
         elif option == 'strike':
             mentions = ctx.message.mentions
             if len(mentions) == 0:

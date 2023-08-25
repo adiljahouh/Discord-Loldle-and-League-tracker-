@@ -3,6 +3,7 @@ import discord
 from riot import riotAPI
 from database import cacheDB
 from config import Settings
+from team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
@@ -122,7 +123,11 @@ class loops(commands.Cog):
         print("active_game_searcher")
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
-        (active, data) = await self.riot_api.get_active_game_status(self.active_user)
+        try:
+            (active, data) = await self.riot_api.get_active_game_status(self.active_user)
+        except aiohttp.ClientResponseError as e:
+            # print("Failed to get active game status with error: ", e)
+            return
         if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
             return
         message: discord.Message = None
@@ -133,18 +138,20 @@ class loops(commands.Cog):
                                         "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
-            embed_fields = []
-            for indx, team in enumerate(data[1]):
-                embed_fields.append("")
-                for player in team:
-                    embed_fields[indx] += f"**{player[2]}** ({player[1]})\n"
-            embed.add_field(name="🟦", value=embed_fields[0], inline=True)
-            embed.add_field(name='\u200b', value='\u200b', inline=True)
-            embed.add_field(name="🟥", value=embed_fields[1], inline=True)
+            champions = [[player[1] for player in team] for team in data[1]]
+            players = [[player[0] for player in team] for team in data[1]]
+            image_creator: imageCreator = imageCreator(self.riot_api, champions, players)
+            try:
+                img = await image_creator.get_team_image()
+            except aiohttp.ClientResponseError as e:
+                print("Failed to get images for image creator with exception: ", e)
+                return
+            picture = discord.File(fp=img, filename="team.png")
+            embed.set_image(url="attachment://team.png")
 
             if channel is not None:
                 try:
-                    message = await channel.send(embed=embed)
+                    message = await channel.send(file=picture, embed=embed)
                     await message.add_reaction("🟦")
                     await message.add_reaction("🟥")
                     print("Message sent successfully.")
@@ -158,8 +165,11 @@ class loops(commands.Cog):
         async with channel.typing():
             message_id = message.id
             self.active_message_id = message_id
-            message_update = await channel.fetch_message(message_id)
-            await message_update.fetch()
+            try:
+                message_update = await channel.fetch_message(message_id)
+                await message_update.fetch()
+            except discord.HTTPException:
+                print("Failed to retrieve the message.")
             reactions = message_update.reactions
             text = ""
             for reaction in reactions:
@@ -197,7 +207,7 @@ class loops(commands.Cog):
         try:
             match_data = await self.riot_api.get_match_details_by_matchID(match_id)
         except aiohttp.ClientResponseError:
-            # Game is still in progress
+            print("Game is still in progress")
             return
         result = False
         score = ""
@@ -214,16 +224,18 @@ class loops(commands.Cog):
         self.old_active_game = self.active_game
         self.active_game = 0
         if channel is not None:
-            message = await channel.fetch_message(self.active_message_id)
-            embed = message.embeds[0]
-            embed.add_field(name="RESULT!!!", value=text, inline=True)
+            message: discord.Message = await channel.fetch_message(self.active_message_id)
+            embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
+                                  description=text,
+                                  color=0xFF0000)
             try:
-                await message.edit(embed=embed)
+                await channel.send(embed=embed, reference=message)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
             except discord.HTTPException:
                 print("Failed to send the message.")
+
 
 async def setup(bot):
     settings = Settings()

@@ -35,7 +35,14 @@ class riotAPI():
     async def get_account_id(self, user):
         return (await self.get_summoner_values(user))['id']
 
-    async def get_match_ids(self, method, credentials, count=5, queue_id=None):
+    async def get_name_by_summoner_id(self, summoner_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}", params= self.params) as response:
+                response.raise_for_status()
+                content: dict = await response.json()
+                return content['name']
+
+    async def get_match_ids(self, method, credentials, count=5):
         """
             Returns a list of matches by ID's in the form of:
             [
@@ -187,7 +194,8 @@ class riotAPI():
     async def get_active_game_status(self, user):
         account_id = await self.get_account_id(user)
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}", params= self.params) as response:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}", params=self.params) as response:
+                response.raise_for_status()
                 content = await response.json()
                 status = response.status
                 if status == 404:
@@ -203,19 +211,39 @@ class riotAPI():
                     summonerName = participant['summonerName']
                     champ_name = champion_list[str(participant['championId'])]
                     if participant['teamId'] == 100:
-                        team_color = "\U0001F7E6"
-                        team_one.append([team_color, summonerName, champ_name])
+                        team_one.append([summonerName, champ_name])
                     else:
-                        team_color = "\U0001F7E5"
-                        team_two.append([team_color, summonerName, champ_name])
+                        team_two.append([summonerName, champ_name])
                 if team == 200:
-                    for player in team_one:
-                        player[0] = "\U0001F7E5"
-                    for player in team_two:
-                        player[0] = "\U0001F7E6"
                     text_arr[1].append(team_two)
                     text_arr[1].append(team_one)
                 else:
                     text_arr[1].append(team_one)
                     text_arr[1].append(team_two)
                 return (True, text_arr)
+
+    async def get_clash_team_id(self, account_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}", params= self.params) as response:
+                response.raise_for_status()
+                content = await response.json()
+                return content[0]['teamId']
+
+    async def get_clash_players(self, team_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}", params= self.params) as response:
+                response.raise_for_status()
+                content = await response.json()
+                return content['players']
+
+    async def get_clash_opgg(self, user):
+        account_id = await self.get_account_id(user)
+        team_id = await self.get_clash_team_id(account_id)
+        players = await self.get_clash_players(team_id)
+        text = "https://www.op.gg/multisearch/euw?summoners="
+        for player in players:
+            summoner = await self.get_name_by_summoner_id(player['summonerId'])
+            summoner_cleaned = summoner.replace(" ", "").lower()
+            text += f"{summoner_cleaned},"
+        return text[:-1]
+
