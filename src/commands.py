@@ -209,16 +209,20 @@ class leagueCommands(riotAPI, commands.Cog):
     @check_registery
     async def daily(self, ctx):
         async with ctx.typing():
-            today = datetime.datetime.now().date()
-            userid = str(ctx.author.id)
-            last_claim =  self.redisdb.get_user_field(discord_id=userid, field="last_claim")
-            if last_claim.decode('utf-8') is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                status =  "You claim some points"
-                self.redisdb.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
-                self.redisdb.increment_field(userid, "points", 500)
-            else:
-                status = "You already claimed your points for today"
-            points_bytes = self.redisdb.get_user_field(userid, "points")
+            try:
+                today = datetime.datetime.now().date()
+                userid = str(ctx.author.id)
+                last_claim =  self.redisdb.get_user_field(discord_id=userid, field="last_claim")
+                if last_claim.decode('utf-8') is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
+                    status =  "You claim some points"
+                    self.redisdb.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
+                    self.redisdb.increment_field(userid, "points", 500)
+                else:
+                    status = "You already claimed your points for today"
+                points_bytes = self.redisdb.get_user_field(userid, "points")
+            except Exception as e:
+                await ctx.send(e)
+                return
             points = points_bytes.decode('utf-8')
             message = f'Total points: {points}'
             embed = discord.Embed(title=f"{status}\n\n", 
