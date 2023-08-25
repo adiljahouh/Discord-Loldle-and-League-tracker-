@@ -213,8 +213,8 @@ class leagueCommands(riotAPI, commands.Cog):
                 today = datetime.datetime.now().date()
                 userid = str(ctx.author.id)
                 last_claim =  self.redisdb.get_user_field(discord_id=userid, field="last_claim")
-                if last_claim.decode('utf-8') is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status =  "You claim some points"
+                if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
+                    status = "You claim some points"
                     self.redisdb.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
                     self.redisdb.increment_field(userid, "points", 500)
                 else:
@@ -236,6 +236,10 @@ class leagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             userid = str(ctx.author.id)
             points_bytes = self.redisdb.get_user_field(userid, "points")
+            if points_bytes is None:
+                print(points_bytes)
+                await ctx.send("First type .daily to get your points")
+                return
             points = points_bytes.decode('utf-8')
             if int(number) > int(points):
                 await ctx.send(f"You do not have enough points for this, total points: {points}")
