@@ -2,6 +2,7 @@ import requests
 import datetime
 import aiohttp
 import asyncio
+import copy
 class PlayerMissingError(Exception):
     pass
 class PlayerMissingError(Exception):
@@ -51,10 +52,15 @@ class riotAPI():
         """
         if method == "puuid":
             puuid = credentials
-            params = self.params
+            params = copy.deepcopy(self.params)
             params['count'] = count
+            if queue_id is not None:
+                if isinstance(queue_id, str):
+                    params['type'] = queue_id
+                else:
+                    params['queue'] = queue_id
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids", params= self.params) as response:
+                async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids", params=params) as response:
                     response.raise_for_status()
                     content = await response.json()
                     return content
@@ -134,9 +140,9 @@ class riotAPI():
                 text += f'{result} **{time_diff}** day(s) ago  {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text
 
-    async def get_kda_by_user(self, user, count =10):
+    async def get_kda_by_user(self, user, count =10, queue_id=None):
         puuid = await self.get_puuid(user)
-        matchIDs: list = await self.get_match_ids("puuid", puuid, count=count)
+        matchIDs: list = await self.get_match_ids("puuid", puuid, count=count, queue_id=queue_id)
         game_details_user = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
         flame = False
         flame_text = 'Nice job  \n\n'
