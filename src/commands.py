@@ -232,7 +232,7 @@ class leagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @check_registery
-    async def roll(self, ctx, number):
+    async def roll(self, ctx, *args):
         async with ctx.typing():
             userid = str(ctx.author.id)
             points_bytes = self.redisdb.get_user_field(userid, "points")
@@ -240,6 +240,10 @@ class leagueCommands(riotAPI, commands.Cog):
                 print(points_bytes)
                 await ctx.send("First type .daily to get your points")
                 return
+            if len(args) == 0:
+                await ctx.send("Amount has to be specified .roll <amount>")
+                return
+            number = args[0]
             points = points_bytes.decode('utf-8')
             if int(number) > int(points):
                 await ctx.send(f"You do not have enough points for this, total points: {points}")
