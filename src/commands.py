@@ -237,7 +237,6 @@ class leagueCommands(riotAPI, commands.Cog):
             userid = str(ctx.author.id)
             points_bytes = self.redisdb.get_user_field(userid, "points")
             if points_bytes is None:
-                print(points_bytes)
                 await ctx.send("First type .daily to get your points")
                 return
             if len(args) == 0:
