@@ -126,7 +126,7 @@ class loops(commands.Cog):
         try:
             (active, data) = await self.riot_api.get_active_game_status(self.active_user)
         except aiohttp.ClientResponseError as e:
-            print("Failed to get active game status with error: ", e)
+            # print("Failed to get active game status with error: ", e)
             return
         if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
             return
