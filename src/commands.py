@@ -228,6 +228,39 @@ class leagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @check_registery
+    async def roll(self, ctx, number):
+        async with ctx.typing():
+            userid = str(ctx.author.id)
+            points_bytes = self.redisdb.get_user_field(userid, "points")
+            points = points_bytes.decode('utf-8')
+            if int(number) > int(points):
+                await ctx.send(f"You do not have enough points for this, total points: {points}")
+                return
+            roll = random.choice(['Heads', 'Tails'])
+            print(roll)
+            print(points)
+            print(int(number))
+            if roll != 'Heads':
+                print("yes")
+                try:
+                    self.redisdb.decrement_field(userid, "points", number)
+                except Exception as e:
+                    print(e)
+                print("test")
+                new_points = self.redisdb.get_user_field(userid, "points")
+                print(new_points)
+                status = "LOLOLOLOLO-LOSER"
+            else:
+                self.redisdb.increment_field(userid, "points", number)
+                new_points = self.redisdb.get_user_field(userid, "points")
+                status = "You won!"
+            embed = discord.Embed(title=f"{status}\n\n", 
+                description=f"Original points: {points}\nNew points: {new_points.decode('utf-8')}",
+                color=0xFF0000)
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @check_registery
     async def summary(self, ctx, *args):
         
         """ Summary of a user (or your registered user if nothing is passed)

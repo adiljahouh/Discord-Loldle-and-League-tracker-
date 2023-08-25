@@ -69,3 +69,10 @@ class cacheDB():
         if self.client is None:
             self.connect()
         return self.client.hincrby(discord_id, field, amount)
+    
+    def decrement_field(self, discord_id, field, amount=1):
+        if self.client is None:
+            self.connect()
+        neg_amount = -int(amount)
+        print(neg_amount)
+        return self.client.hincrby(discord_id, field, str(neg_amount))
