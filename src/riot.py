@@ -34,6 +34,13 @@ class riotAPI():
     async def get_account_id(self, user):
         return (await self.get_summoner_values(user))['id']
 
+    async def get_name_by_summoner_id(self, summoner_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}", params= self.params) as response:
+                response.raise_for_status()
+                content: dict = await response.json()
+                return content['name']
+
     async def get_match_ids(self, method, credentials, count=5):
         """
             Returns a list of matches by ID's in the form of:
@@ -213,3 +220,29 @@ class riotAPI():
                     text_arr[1].append(team_one)
                     text_arr[1].append(team_two)
                 return (True, text_arr)
+
+    async def get_clash_team_id(self, account_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}", params= self.params) as response:
+                response.raise_for_status()
+                content = await response.json()
+                return content[0]['teamId']
+
+    async def get_clash_players(self, team_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}", params= self.params) as response:
+                response.raise_for_status()
+                content = await response.json()
+                return content['players']
+
+    async def get_clash_opgg(self, user):
+        account_id = await self.get_account_id(user)
+        team_id = await self.get_clash_team_id(account_id)
+        players = await self.get_clash_players(team_id)
+        text = "https://www.op.gg/multisearch/euw?summoners="
+        for player in players:
+            summoner = await self.get_name_by_summoner_id(player['summonerId'])
+            summoner_cleaned = summoner.replace(" ", "").lower()
+            text += f"{summoner_cleaned},"
+        return text[:-1]
+
