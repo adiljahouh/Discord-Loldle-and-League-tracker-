@@ -42,7 +42,7 @@ class riotAPI():
                 content: dict = await response.json()
                 return content['name']
 
-    async def get_match_ids(self, method, credentials, count=5):
+    async def get_match_ids(self, method, credentials, count=5, queue_id=None):
         """
             Returns a list of matches by ID's in the form of:
             [
