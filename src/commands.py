@@ -384,7 +384,14 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send("Use .bet <win/lose> <amount>")
             return
         decision = "believers" if args[0] == "win" else "doubters"
-        amount = int(args[1])
+        try:
+            amount = int(args[1])
+        except Exception as e:
+            await ctx.send("Specify an integer amount larger than 0")
+            return
+        if amount <= 0:
+            await ctx.send("Specify an integer amount larger than 0")
+            return
         try:
             state = self.redisdb.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
             if state:
