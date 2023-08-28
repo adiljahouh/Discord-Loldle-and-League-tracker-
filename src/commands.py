@@ -413,15 +413,6 @@ class leagueCommands(riotAPI, commands.Cog):
         except discord.HTTPException:
             print("Failed to send the message.")
 
-    # DELETE THIS BEFORE PUSHING IT TO MAIN
-    @commands.command()
-    @check_registery
-    async def bets(self, ctx):
-        try:
-            await ctx.send(self.redisdb.get_all_bets())
-        except Exception as e:
-            print(e)
-
 
 async def setup(bot):
     settings = Settings()
