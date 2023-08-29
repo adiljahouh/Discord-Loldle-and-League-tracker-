@@ -386,7 +386,7 @@ class leagueCommands(riotAPI, commands.Cog):
         decision = "believers" if args[0] == "win" else "doubters"
         try:
             amount = int(args[1])
-        except Exception as e:
+        except ValueError:
             await ctx.send("Specify an integer amount larger than 0")
             return
         if amount <= 0:
