@@ -375,7 +375,11 @@ class leagueCommands(riotAPI, commands.Cog):
             await ctx.send('Invalid option. Available options: image, text')
 
     @commands.command()
+    @check_registery
     async def bet(self, ctx, *args):
+        """
+            Bet points with .bet <win/lose> <amount>
+        """
         print("Bet command")
         if not self.redisdb.get_betting_state():
             await ctx.send("Betting not enabled")
@@ -405,6 +409,9 @@ class leagueCommands(riotAPI, commands.Cog):
     @commands.command()
     @check_registery
     async def points(self, ctx):
+        """
+            Returns amount of points of the current user
+        """
         print("Points command")
         points = self.redisdb.get_user_field(str(ctx.author.id), "points")
         if points is None:
