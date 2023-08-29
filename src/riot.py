@@ -194,8 +194,18 @@ class riotAPI():
                 status = response.status
                 if status == 404:
                     return (False, "User not in game")
+                game_mode_mapping = {
+                    0: "Custom",
+                    400: "Normal",
+                    420: "Ranked Solo/Duo",
+                    430: "Blind Pick",
+                    440: "Ranked Flex",
+                    450: "ARAM",
+                    700: "Clash"
+                }
+                game_mode = game_mode_mapping[int(content['gameQueueConfigId'])]
                 champion_list = await self.get_champion_list()
-                text_arr = [[content['gameId']], []]
+                text_arr = [content['gameId'], []]
                 team_one = []
                 team_two = []
                 team = 0
@@ -214,6 +224,7 @@ class riotAPI():
                 else:
                     text_arr[1].append(team_one)
                     text_arr[1].append(team_two)
+                text_arr.append(game_mode)
                 return (True, text_arr)
 
     async def get_clash_team_id(self, account_id):

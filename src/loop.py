@@ -128,19 +128,19 @@ class loops(commands.Cog):
         except aiohttp.ClientResponseError as e:
             # print("Failed to get active game status with error: ", e)
             return
-        if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
+        if not active or data[0] == self.active_game or data[0] == self.old_active_game:
             return
         message: discord.Message = None
         embed = None
         async with channel.typing():
-            self.active_game = data[0][0]
+            self.active_game = data[0]
             embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
                                         "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
             champions = [[player[1] for player in team] for team in data[1]]
             players = [[player[0] for player in team] for team in data[1]]
-            image_creator: imageCreator = imageCreator(self.riot_api, champions, players)
+            image_creator: imageCreator = imageCreator(self.riot_api, champions, players, data[2])
             try:
                 img = await image_creator.get_team_image()
             except aiohttp.ClientResponseError as e:
