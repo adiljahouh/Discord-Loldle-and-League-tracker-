@@ -244,22 +244,24 @@ class leagueCommands(riotAPI, commands.Cog):
                 return
             number = args[0]
             points = points_bytes.decode('utf-8')
-            if int(number) > int(points):
+            try:
+                number = int(number)
+            except ValueError:
+                await ctx.send("Specify an integer amount larger than 0")
+                return
+            if number <= 0:
+                await ctx.send("Specify an integer amount larger than 0")
+                return
+            if number > int(points):
                 await ctx.send(f"You do not have enough points for this, total points: {points}")
                 return
             roll = random.choice(['Heads', 'Tails'])
-            print(roll)
-            print(points)
-            print(int(number))
             if roll != 'Heads':
-                print("yes")
                 try:
                     self.redisdb.decrement_field(userid, "points", number)
                 except Exception as e:
                     print(e)
-                print("test")
                 new_points = self.redisdb.get_user_field(userid, "points")
-                print(new_points)
                 status = "LOLOLOLOLO-LOSER"
             else:
                 self.redisdb.increment_field(userid, "points", number)
