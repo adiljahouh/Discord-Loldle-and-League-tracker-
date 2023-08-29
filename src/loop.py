@@ -151,7 +151,7 @@ class loops(commands.Cog):
 
             if channel is not None:
                 try:
-                    message = await channel.send(file=picture, embed=embed)
+                    message = await channel.send("@here", file=picture, embed=embed)
                     self.redis_db.enable_betting()
                     print("Message sent successfully.")
                 except discord.Forbidden:
