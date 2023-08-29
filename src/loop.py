@@ -135,7 +135,7 @@ class loops(commands.Cog):
         async with channel.typing():
             self.active_game = data[0][0]
             embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
-                                        "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
+                                        "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
             champions = [[player[1] for player in team] for team in data[1]]
