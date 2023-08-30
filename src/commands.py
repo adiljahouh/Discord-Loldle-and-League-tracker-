@@ -213,8 +213,8 @@ class leagueCommands(riotAPI, commands.Cog):
                 today = datetime.datetime.now().date()
                 userid = str(ctx.author.id)
                 last_claim =  self.redisdb.get_user_field(discord_id=userid, field="last_claim")
-                if last_claim.decode('utf-8') is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status =  "You claim some points"
+                if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
+                    status = "You claim some points"
                     self.redisdb.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
                     self.redisdb.increment_field(userid, "points", 500)
                 else:
@@ -232,27 +232,36 @@ class leagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @check_registery
-    async def roll(self, ctx, number):
+    async def roll(self, ctx, *args):
         async with ctx.typing():
             userid = str(ctx.author.id)
             points_bytes = self.redisdb.get_user_field(userid, "points")
+            if points_bytes is None:
+                await ctx.send("First type .daily to get your points")
+                return
+            if len(args) == 0:
+                await ctx.send("Amount has to be specified .roll <amount>")
+                return
+            number = args[0]
             points = points_bytes.decode('utf-8')
-            if int(number) > int(points):
+            try:
+                number = int(number)
+            except ValueError:
+                await ctx.send("Specify an integer amount larger than 0")
+                return
+            if number <= 0:
+                await ctx.send("Specify an integer amount larger than 0")
+                return
+            if number > int(points):
                 await ctx.send(f"You do not have enough points for this, total points: {points}")
                 return
             roll = random.choice(['Heads', 'Tails'])
-            print(roll)
-            print(points)
-            print(int(number))
             if roll != 'Heads':
-                print("yes")
                 try:
                     self.redisdb.decrement_field(userid, "points", number)
                 except Exception as e:
                     print(e)
-                print("test")
                 new_points = self.redisdb.get_user_field(userid, "points")
-                print(new_points)
                 status = "LOLOLOLOLO-LOSER"
             else:
                 self.redisdb.increment_field(userid, "points", number)
