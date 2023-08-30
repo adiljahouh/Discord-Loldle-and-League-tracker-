@@ -24,7 +24,7 @@ class loops(commands.Cog):
         self.active_game_searcher.start()
         self.active_game_finisher.start()
         self.leaderboard.start()
-        await asyncio.sleep(3600) #1800
+        await asyncio.sleep(36000) #1800
         self.send_message.start()
 
     @tasks.loop(hours=24)
