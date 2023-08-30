@@ -58,6 +58,7 @@ class leagueCommands(riotAPI, commands.Cog):
                 await ctx.send(f"Error occured during role check, Error: {e}")
                 return
         return inner
+
     @commands.command()
     @check_registery
     async def duck(self, ctx):
@@ -80,12 +81,6 @@ class leagueCommands(riotAPI, commands.Cog):
                         await ctx.send("Internal API error")
                 except requests.exceptions.HTTPError as e:
                     await ctx.send("HTTP error, no ducks for you")
-
-
-    # @leaderboard.error
-    # async def on_command_error(self, ctx, error):
-    #     if isinstance(error, commands.CommandOnCooldown):
-    #         await ctx.send(f'This command is actually on cooldown, you can use it in {round(error.retry_after, 2)} seconds.')  
 
     @commands.command()
     async def register(self, ctx, *args):
@@ -404,6 +399,61 @@ class leagueCommands(riotAPI, commands.Cog):
 
         else:
             await ctx.send('Invalid option. Available options: image, text')
+
+    @commands.command()
+    @check_registery
+    async def bet(self, ctx, *args):
+        """
+            Bet points with .bet <win/lose> <amount>
+        """
+        print("Bet command")
+        if not self.redisdb.get_betting_state():
+            await ctx.send("Betting not enabled")
+            return
+        if len(args) != 2 or args[0].lower() not in ["win", "lose"]:
+            await ctx.send("Use .bet <win/lose> <amount>")
+            return
+        decision = "believers" if args[0] == "win" else "doubters"
+        try:
+            amount = int(args[1])
+        except ValueError:
+            await ctx.send("Specify an integer amount larger than 0")
+            return
+        if amount <= 0:
+            await ctx.send("Specify an integer amount larger than 0")
+            return
+        try:
+            state = self.redisdb.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
+            if state:
+                embed = discord.Embed(title=f"{str(ctx.author.name)} has bet {amount} points on {decision}")
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(f"Bet amount > point")
+        except Exception as e:
+            print(e)
+
+    @commands.command()
+    @check_registery
+    async def points(self, ctx):
+        """
+            Returns amount of points of the current user
+        """
+        print("Points command")
+        points = self.redisdb.get_user_field(str(ctx.author.id), "points")
+        if points is None:
+            points = 0
+        else:
+            points = points.decode('utf8')
+        embed = discord.Embed(title=f"You have {points} points")
+        try:
+            await ctx.send(embed=embed)
+            print("Message sent successfully.")
+        except discord.Forbidden:
+            print("I don't have permission to send messages to that channel.")
+        except discord.HTTPException:
+            print("Failed to send the message.")
+
+
 async def setup(bot):
     settings = Settings()
     redisDB = cacheDB(settings.REDISURL)

@@ -128,19 +128,19 @@ class loops(commands.Cog):
         except aiohttp.ClientResponseError as e:
             # print("Failed to get active game status with error: ", e)
             return
-        if not active or data[0][0] == self.active_game or data[0][0] == self.old_active_game:
+        if not active or data[0] == self.active_game or data[0] == self.old_active_game:
             return
         message: discord.Message = None
         embed = None
         async with channel.typing():
-            self.active_game = data[0][0]
+            self.active_game = data[0]
             embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
-                                        "YOU HAVE 5 MINUTES TO PREDICT!!!\n\n",
+                                        "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                   description="HE WILL SURELY WIN, RIGHT?",
                                   color=0xFF0000)
             champions = [[player[1] for player in team] for team in data[1]]
             players = [[player[0] for player in team] for team in data[1]]
-            image_creator: imageCreator = imageCreator(self.riot_api, champions, players)
+            image_creator: imageCreator = imageCreator(self.riot_api, champions, players, data[2])
             try:
                 img = await image_creator.get_team_image()
             except aiohttp.ClientResponseError as e:
@@ -151,9 +151,8 @@ class loops(commands.Cog):
 
             if channel is not None:
                 try:
-                    message = await channel.send(file=picture, embed=embed)
-                    await message.add_reaction("🟦")
-                    await message.add_reaction("🟥")
+                    message = await channel.send("@here", file=picture, embed=embed)
+                    self.redis_db.enable_betting()
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
@@ -161,35 +160,19 @@ class loops(commands.Cog):
                     print("Failed to send the message.")
         if message is None:
             return
-        await asyncio.sleep(300)
+        self.active_message_id = message.id
+        await asyncio.sleep(self.redis_db.betting_time)
         async with channel.typing():
-            message_id = message.id
-            self.active_message_id = message_id
-            try:
-                message_update = await channel.fetch_message(message_id)
-                await message_update.fetch()
-            except discord.HTTPException:
-                print("Failed to retrieve the message.")
-            reactions = message_update.reactions
-            text = ""
-            for reaction in reactions:
-                if reaction.emoji == "🟦":
-                    async for user in reaction.users():
-                        if user.id != message_update.author.id:
-                            text += f"{user} "
-                    embed.add_field(name="**🟦 BELIEVERS**", value=text, inline=True)
-                    embed.add_field(name='\u200b', value='\u200b')
-                    embed.add_field(name='\u200b', value='\u200b')
+            all_bets = self.redis_db.get_all_bets()
+            for decision in all_bets.keys():
                 text = ""
-                if reaction.emoji == "🟥":
-                    async for user in reaction.users():
-                        if user.id != message_update.author.id:
-                            text += f"{user} "
-                    embed.add_field(name="**🟥 DOUBTERS**", value=text, inline=True)
-                    embed.add_field(name='\u200b', value='\u200b')
+                for user in all_bets[decision]:
+                    text += f"{user['name']} **{user['amount']}**\n"
+                embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
+                if decision == "believers":
                     embed.add_field(name='\u200b', value='\u200b')
             try:
-                await message_update.edit(embed=embed)
+                await message.edit(embed=embed)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
@@ -214,21 +197,38 @@ class loops(commands.Cog):
         for player in match_data:
             if player['summonerName'].lower() == self.active_user.lower():
                 result = player['win']
-                score = f"{player['kills']} / {player['deaths']} / {player['assists']}, bait pings: {player['baitPings']}"
-        text = ""
+                score = f"{player['kills']} / {player['deaths']} / {player['assists']}, bait pings: {player['baitPings']}\n"
         if result:
-            text = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
+            description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
+            winners = "believers"
         else:
-            text = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
-        text += score
+            description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
+            winners = "doubters"
+
+        description += score
+        message: discord.Message = await channel.fetch_message(self.active_message_id)
+        embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
+                              description=description,
+                              color=0xFF0000)
+        all_bets = self.redis_db.get_all_bets()
+        for decision in all_bets.keys():
+            text = ""
+            decide = "won" if decision == winners else "lost"
+            for user in all_bets[decision]:
+                if decision == winners:
+                    self.redis_db.increment_field(user['discord_id'], "points", 2*int(user['amount']))
+                if decide == "won":
+                    text += f"{user['name']} has {decide} {2*int(user['amount'])} points\n"
+                else:
+                    text += f"{user['name']} has {decide} {user['amount']} points\n"
+            embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
+            if decision == "believers":
+                embed.add_field(name='\u200b', value='\u200b')
         self.old_active_game = self.active_game
         self.active_game = 0
         if channel is not None:
-            message: discord.Message = await channel.fetch_message(self.active_message_id)
-            embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
-                                  description=text,
-                                  color=0xFF0000)
             try:
+                self.redis_db.remove_all_bets()
                 await channel.send(embed=embed, reference=message)
                 print("Message sent successfully.")
             except discord.Forbidden:
