@@ -232,7 +232,7 @@ class leagueCommands(riotAPI, commands.Cog):
             userid = str(ctx.author.id)
             points_bytes = self.redisdb.get_user_field(userid, "points")
             if points_bytes is None:
-                await ctx.send("First type .daily to get your points")
+                await ctx.send("You have no points,  type .daily to get your points")
                 return
             if len(args) == 0:
                 await ctx.send("Amount has to be specified .roll <amount>")
@@ -242,10 +242,10 @@ class leagueCommands(riotAPI, commands.Cog):
             try:
                 number = int(number)
             except ValueError:
-                await ctx.send("Specify an integer amount larger than 0")
+                await ctx.send("Specify a valid amount larger than 0")
                 return
             if number <= 0:
-                await ctx.send("Specify an integer amount larger than 0")
+                await ctx.send("Specify a valid amount larger than 0")
                 return
             if number > int(points):
                 await ctx.send(f"You do not have enough points for this, total points: {points}")
