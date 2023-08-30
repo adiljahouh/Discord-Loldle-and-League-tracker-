@@ -105,7 +105,7 @@ class cacheDB():
             print("Not enough points")
             return False
         points = int(points.decode('utf8'))
-        if points <= amount:
+        if points < amount:
             print("Not enough points")
             return False
         self.decrement_field(discord_id, "points", amount)
