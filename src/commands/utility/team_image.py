@@ -1,12 +1,12 @@
 from io import BytesIO
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
+from ddragon import get_latest_ddragon
 
 
 class imageCreator():
 
-    def __init__(self, riot_api, champions, players, game_mode):
-        self.riot_api = riot_api
+    def __init__(self, champions, players, game_mode):
         self.champions = champions
         self.players = players
         self.game_mode = game_mode
@@ -50,7 +50,7 @@ class imageCreator():
         return bytes
 
     async def champion_splash(self, champion):
-        version = await self.riot_api.get_latest_ddragon()
+        version = await get_latest_ddragon()
         async with aiohttp.ClientSession() as session:
             url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
             async with session.get(url) as resp:

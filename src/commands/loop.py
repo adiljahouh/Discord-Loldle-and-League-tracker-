@@ -142,7 +142,7 @@ class loops(commands.Cog):
                                   color=0xFF0000)
             champions = [[player[1] for player in team] for team in data[1]]
             players = [[player[0] for player in team] for team in data[1]]
-            image_creator: imageCreator = imageCreator(self.riot_api, champions, players, data[2])
+            image_creator: imageCreator = imageCreator(champions, players, data[2])
             try:
                 img = await image_creator.get_team_image()
             except aiohttp.ClientResponseError as e:

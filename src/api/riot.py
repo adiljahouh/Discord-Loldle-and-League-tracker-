@@ -3,6 +3,7 @@ import datetime
 import aiohttp
 import asyncio
 import copy
+from ddragon import get_champion_list
 class PlayerMissingError(Exception):
     pass
 class PlayerMissingError(Exception):
@@ -19,8 +20,6 @@ class riotAPI():
         self.params = {
             "api_key": self.api_key
         }
-    def set_key(self, new_key):
-        self.api_key = new_key
 
     async def get_summoner_values(self, user):
         async with aiohttp.ClientSession() as session:
@@ -173,24 +172,6 @@ class riotAPI():
 
         return player_details
 
-    async def get_latest_ddragon(self):
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://ddragon.leagueoflegends.com/api/versions.json") as response:
-                response.raise_for_status()
-                content = await response.json()
-                return content[0]
-
-    async def get_champion_list(self):
-        async with aiohttp.ClientSession() as session:
-            latest = await self.get_latest_ddragon()
-            async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion.json") as response:
-                response.raise_for_status()
-                content = await response.json()
-                champ_list = {}
-                for attribute, value in content['data'].items():
-                    champ_list.update({value['key']: attribute})
-                return champ_list
-
     async def get_active_game_status(self, user):
         account_id = await self.get_account_id(user)
         async with aiohttp.ClientSession() as session:
@@ -210,7 +191,7 @@ class riotAPI():
                     700: "Clash"
                 }
                 game_mode = game_mode_mapping[int(content['gameQueueConfigId'])]
-                champion_list = await self.get_champion_list()
+                champion_list = await get_champion_list()
                 text_arr = [content['gameId'], []]
                 team_one = []
                 team_two = []
