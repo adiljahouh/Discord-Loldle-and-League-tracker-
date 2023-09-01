@@ -4,7 +4,7 @@ from config import Settings
 async def main():
     settings = Settings()
     my_bot = discBot(token=settings.DISCORDTOKEN, channel_id=settings.CHANNELID)
-    my_cogs = ["loop", "commands"]
+    my_cogs = ["loop", "league_commands", "animal_commands", "point_commands"]
     for cog in my_cogs:
         await add_cog(my_bot, cog)
     await my_bot.start_bot()
