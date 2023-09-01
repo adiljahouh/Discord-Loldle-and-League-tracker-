@@ -3,10 +3,12 @@ import discord
 from riot import riotAPI
 from database import cacheDB
 from config import Settings
-from team_image import imageCreator
+from utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
+
+
 class loops(commands.Cog):
     def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
         self.bot: commands.bot.Bot = bot
