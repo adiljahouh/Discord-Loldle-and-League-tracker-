@@ -1,14 +1,16 @@
-from database import cacheDB
 from redis.exceptions import ConnectionError
 from config import Settings
 import functools
+import sys
+sys.path.append('../databases')
+from main_db import MainDB
 
 
 def role_check(func):
     @functools.wraps(func)
     async def inner(self, ctx, *args, **kwargs):
         try:
-            redisdb = cacheDB(Settings().REDISURL)
+            redisdb = MainDB(Settings().REDISURL)
             discord_ids: list[bytes] = redisdb.get_all_users()
             ids = [id.decode('utf-8') for id in discord_ids]
             for id in ids:

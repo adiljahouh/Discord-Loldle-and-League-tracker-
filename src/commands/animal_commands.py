@@ -2,18 +2,20 @@ import aiohttp
 from discord.ext import commands
 import requests
 from config import Settings
-from database import cacheDB
 import discord
 import os
 import random
 import json
 import uuid
 from commands_utility import role_check, mod_check
+import sys
+sys.path.append('../databases')
+from main_db import MainDB
 
 
 class AnimalCommands(commands.Cog):
-    def __init__(self, redisdb, jail_role_id, player_role_id, g_role) -> None:
-        self.redisdb: cacheDB = redisdb
+    def __init__(self, main_db, jail_role_id, player_role_id, g_role) -> None:
+        self.main_db = main_db
         self.jail_role = jail_role_id
         self.player_role = player_role_id
         self.g_role = g_role
@@ -127,10 +129,10 @@ class AnimalCommands(commands.Cog):
                     if len(filtered_args) == 0:
                         # if we didnt pass a reason
                         filtered_args.append("No reason")
-                    if self.redisdb.check_user_existence(mention.id) == 1:
-                        total = self.redisdb.increment_field(mention.id, "strikes", 1)
+                    if self.main_db.check_user_existence(mention.id) == 1:
+                        total = self.main_db.increment_field(mention.id, "strikes", 1)
                         if total >= 3:
-                            success = self.redisdb.set_user_field(mention.id, "strikes", 0)
+                            success = self.main_db.set_user_field(mention.id, "strikes", 0)
                             if success == 0:
                                 user = ctx.guild.get_member(mention.id)
                                 for current_role in user.roles:
@@ -153,6 +155,6 @@ class AnimalCommands(commands.Cog):
 
 async def setup(bot):
     settings = Settings()
-    redisDB = cacheDB(settings.REDISURL)
+    main_db = MainDB(settings.REDISURL)
     print("adding commands...")
-    await bot.add_cog(AnimalCommands(redisDB, settings.JAILROLE, settings.PLAYERROLE, settings.GROLE))
+    await bot.add_cog(AnimalCommands(main_db, settings.JAILROLE, settings.PLAYERROLE, settings.GROLE))

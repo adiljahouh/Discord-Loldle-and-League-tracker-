@@ -1,15 +1,19 @@
 from discord.ext import commands
 from config import Settings
-from database import cacheDB
 import discord
 import random
 import datetime
 from commands_utility import role_check
+import sys
+sys.path.append('../databases')
+from main_db import MainDB
+from betting_db import BettingDB
 
 
 class PointCommands(commands.Cog):
-    def __init__(self, redisdb, g_role) -> None:
-        self.redisdb: cacheDB = redisdb
+    def __init__(self, main_db, betting_db, g_role) -> None:
+        self.main_db = main_db
+        self.betting_db = betting_db
         self.g_role = g_role
 
     @commands.Cog.listener()
@@ -23,14 +27,14 @@ class PointCommands(commands.Cog):
             try:
                 today = datetime.datetime.now().date()
                 userid = str(ctx.author.id)
-                last_claim = self.redisdb.get_user_field(discord_id=userid, field="last_claim")
+                last_claim = self.main_db.get_user_field(discord_id=userid, field="last_claim")
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "You claim some points"
-                    self.redisdb.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
-                    self.redisdb.increment_field(userid, "points", 500)
+                    self.main_db.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
+                    self.main_db.increment_field(userid, "points", 500)
                 else:
                     status = "You already claimed your points for today"
-                points_bytes = self.redisdb.get_user_field(userid, "points")
+                points_bytes = self.main_db.get_user_field(userid, "points")
             except Exception as e:
                 await ctx.send(e)
                 return
@@ -46,7 +50,7 @@ class PointCommands(commands.Cog):
     async def roll(self, ctx, *args):
         async with ctx.typing():
             userid = str(ctx.author.id)
-            points_bytes = self.redisdb.get_user_field(userid, "points")
+            points_bytes = self.main_db.get_user_field(userid, "points")
             if points_bytes is None:
                 await ctx.send("You have no points,  type .daily to get your points")
                 return
@@ -69,14 +73,14 @@ class PointCommands(commands.Cog):
             roll = random.choice(['Heads', 'Tails'])
             if roll != 'Heads':
                 try:
-                    self.redisdb.decrement_field(userid, "points", number)
+                    self.main_db.decrement_field(userid, "points", number)
                 except Exception as e:
                     print(e)
-                new_points = self.redisdb.get_user_field(userid, "points")
+                new_points = self.main_db.get_user_field(userid, "points")
                 status = "LOLOLOLOLO-LOSER"
             else:
-                self.redisdb.increment_field(userid, "points", number)
-                new_points = self.redisdb.get_user_field(userid, "points")
+                self.main_db.increment_field(userid, "points", number)
+                new_points = self.main_db.get_user_field(userid, "points")
                 status = "You won!"
             embed = discord.Embed(title=f"{status}\n\n",
                 description=f"Original points: {points}\nNew points: {new_points.decode('utf-8')}",
@@ -90,7 +94,7 @@ class PointCommands(commands.Cog):
             Bet points with .bet <win/lose> <amount>
         """
         print("Bet command")
-        if not self.redisdb.get_betting_state():
+        if not self.betting_db.get_betting_state():
             await ctx.send("Betting not enabled")
             return
         if len(args) != 2 or args[0].lower() not in ["win", "lose"]:
@@ -106,7 +110,7 @@ class PointCommands(commands.Cog):
             await ctx.send("Specify an integer amount larger than 0")
             return
         try:
-            state = self.redisdb.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
+            state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
             if state:
                 embed = discord.Embed(title=f"{str(ctx.author.name)} has bet {amount} points on {decision}")
                 await ctx.send(embed=embed)
@@ -122,7 +126,7 @@ class PointCommands(commands.Cog):
             Returns amount of points of the current user
         """
         print("Points command")
-        points = self.redisdb.get_user_field(str(ctx.author.id), "points")
+        points = self.main_db.get_user_field(str(ctx.author.id), "points")
         if points is None:
             points = 0
         else:
@@ -139,6 +143,7 @@ class PointCommands(commands.Cog):
 
 async def setup(bot):
     settings = Settings()
-    redisDB = cacheDB(settings.REDISURL)
+    main_db = MainDB(settings.REDISURL)
+    betting_db = BettingDB(settings.REDISURL)
     print("adding commands...")
-    await bot.add_cog(PointCommands(redisDB, settings.GROLE))
+    await bot.add_cog(PointCommands(main_db, betting_db, settings.GROLE))

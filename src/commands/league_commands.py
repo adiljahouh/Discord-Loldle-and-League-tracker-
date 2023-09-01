@@ -2,14 +2,16 @@ from discord.ext import commands
 from riot import riotAPI
 import aiohttp
 from config import Settings
-from database import cacheDB
 import discord
 from commands_utility import role_check, mod_check
+import sys
+sys.path.append('../databases')
+from main_db import MainDB
 
 
 class LeagueCommands(riotAPI, commands.Cog):
-    def __init__(self, redisdb, riot_api, player_role_id, g_role) -> None:
-        self.redisdb: cacheDB = redisdb
+    def __init__(self, main_db, riot_api, player_role_id, g_role) -> None:
+        self.main_db = main_db
         self.riot_api: riotAPI = riot_api
         self.player_role = player_role_id
         self.g_role = g_role
@@ -38,7 +40,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     message = "Internal Server Error"
                 await ctx.send(message)
                 return
-            self.redisdb.store_user(discord_userid, riot_name, puuid, author_discord_tag)
+            self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
             response = f"**Riot ID**: {discord_userid}\
             \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
             try:
@@ -61,7 +63,7 @@ class LeagueCommands(riotAPI, commands.Cog):
         """
         print("Counting")
         async with ctx.typing():
-            discord_ids: list[bytes] = self.redisdb.get_all_users()
+            discord_ids: list[bytes] = self.main_db.get_all_users()
             response = ''
             for index, discord_id in enumerate(discord_ids):
                 id = discord_id.decode('utf-8')
@@ -78,7 +80,7 @@ class LeagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             author_discord_tag = str(ctx.author)
             userid = str(ctx.author.id)
-            userinfo: dict = self.redisdb.remove_and_return_all(userid)
+            userinfo: dict = self.main_db.remove_and_return_all(userid)
             if userinfo is not None:
                 response = f"**Riot ID**: {userid}\
                 \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {userinfo[b'riot_user'].decode('utf-8')}\n" \
@@ -120,7 +122,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                         queue_id = None
                     message = await self.riot_api.get_kda_by_user(user, count, queue_id)
                 else:
-                    puuid = self.redisdb.get_user_field(str(ctx.author.id), "puuid")
+                    puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid")
                     message = await self.riot_api.get_kda_by_puuid(puuid.decode('utf-8'), count)
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
@@ -168,7 +170,7 @@ class LeagueCommands(riotAPI, commands.Cog):
 
 async def setup(bot):
     settings = Settings()
-    redisDB = cacheDB(settings.REDISURL)
+    main_db = MainDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(LeagueCommands(redisDB, riot_api, settings.PLAYERROLE, settings.GROLE))
+    await bot.add_cog(LeagueCommands(main_db, riot_api, settings.PLAYERROLE, settings.GROLE))

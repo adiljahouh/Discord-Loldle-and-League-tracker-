@@ -1,18 +1,22 @@
 from discord.ext import commands, tasks
 import discord
 from riot import riotAPI
-from database import cacheDB
 from config import Settings
 from utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
+import sys
+sys.path.append('../databases')
+from main_db import MainDB
+from betting_db import BettingDB
 
 
 class loops(commands.Cog):
-    def __init__(self, bot, redis_db, riot_api, channel_id) -> None:
+    def __init__(self, bot, main_db, betting_db, riot_api, channel_id) -> None:
         self.bot: commands.bot.Bot = bot
-        self.redis_db: cacheDB = redis_db
+        self.main_db = main_db
+        self.betting_db = betting_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
         self.old_active_game: int = 0
@@ -36,7 +40,7 @@ class loops(commands.Cog):
         channel = self.bot.get_channel(channel_id)
         async with channel.typing():
             try:
-                discord_ids: list[bytes] = self.redis_db.get_all_users()
+                discord_ids: list[bytes] = self.main_db.get_all_users()
             except ConnectionError as e:
                 print(e)
                 await channel.send("No connection to DB")
@@ -51,7 +55,7 @@ class loops(commands.Cog):
                                 color=0xFF0000)
             inters = 0
             for index, discord_id in enumerate(discord_ids):
-                riot_id = self.redis_db.get_user_field(discord_id, "puuid")
+                riot_id = self.main_db.get_user_field(discord_id, "puuid")
                 try:
                     flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=10)
                 except aiohttp.ClientResponseError as e:
@@ -89,7 +93,7 @@ class loops(commands.Cog):
         async with channel.typing():
             print("Retrieving Leaderboard...")
             try:
-                discord_ids: list[bytes] = self.redis_db.get_all_users()
+                discord_ids: list[bytes] = self.main_db.get_all_users()
             except ConnectionError as e:
                 await channel.send("Could not connect to database.")
                 return
@@ -101,7 +105,7 @@ class loops(commands.Cog):
             tasks= []
             delay = 1
             for discord_id in discord_ids:
-                puuid = self.redis_db.get_user_field(discord_id, "puuid")
+                puuid = self.main_db.get_user_field(discord_id, "puuid")
                 tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=5, sleep_time=delay, discord_id = discord_id))
                 delay += 10
             try:
@@ -154,7 +158,7 @@ class loops(commands.Cog):
             if channel is not None:
                 try:
                     message = await channel.send("@here", file=picture, embed=embed)
-                    self.redis_db.enable_betting()
+                    self.betting_db.enable_betting()
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
@@ -163,9 +167,9 @@ class loops(commands.Cog):
         if message is None:
             return
         self.active_message_id = message.id
-        await asyncio.sleep(self.redis_db.betting_time)
+        await asyncio.sleep(self.betting_db.betting_time)
         async with channel.typing():
-            all_bets = self.redis_db.get_all_bets()
+            all_bets = self.betting_db.get_all_bets()
             for decision in all_bets.keys():
                 text = ""
                 for user in all_bets[decision]:
@@ -212,13 +216,13 @@ class loops(commands.Cog):
         embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
                               description=description,
                               color=0xFF0000)
-        all_bets = self.redis_db.get_all_bets()
+        all_bets = self.betting_db.get_all_bets()
         for decision in all_bets.keys():
             text = ""
             decide = "won" if decision == winners else "lost"
             for user in all_bets[decision]:
                 if decision == winners:
-                    self.redis_db.increment_field(user['discord_id'], "points", 2*int(user['amount']))
+                    self.main_db.increment_field(user['discord_id'], "points", 2*int(user['amount']))
                 if decide == "won":
                     text += f"{user['name']} has {decide} {2*int(user['amount'])} points\n"
                 else:
@@ -230,7 +234,7 @@ class loops(commands.Cog):
         self.active_game = 0
         if channel is not None:
             try:
-                self.redis_db.remove_all_bets()
+                self.betting_db.remove_all_bets()
                 await channel.send(embed=embed, reference=message)
                 print("Message sent successfully.")
             except discord.Forbidden:
@@ -241,7 +245,8 @@ class loops(commands.Cog):
 
 async def setup(bot):
     settings = Settings()
-    redis_db: cacheDB = cacheDB(settings.REDISURL)
+    main_db = MainDB(settings.REDISURL)
+    betting_db = BettingDB(settings.REDISURL)
     riot: riotAPI = riotAPI(settings.RIOTTOKEN)
     print("adding loops..")
-    await bot.add_cog(loops(bot, redis_db, riot, settings.CHANNELID))
+    await bot.add_cog(loops(bot, main_db, betting_db, riot, settings.CHANNELID))
