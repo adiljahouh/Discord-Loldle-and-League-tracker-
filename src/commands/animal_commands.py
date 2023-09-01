@@ -30,7 +30,7 @@ class AnimalCommands(commands.Cog):
         """
             Returns a duck pic or gif
         """
-        #TODO: add retry logic
+        # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('../assets/menno_dogs'))
@@ -53,7 +53,7 @@ class AnimalCommands(commands.Cog):
         """
             Returns a dog pic
         """
-        #TODO: add retry logic
+        # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('../assets/menno_dogs'))
@@ -77,7 +77,7 @@ class AnimalCommands(commands.Cog):
         """
             Returns a cat pic
         """
-        #TODO: add retry logic
+        # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('../assets/menno_dogs'))
@@ -100,10 +100,12 @@ class AnimalCommands(commands.Cog):
     async def add(self, ctx, option: str, *args):
         """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""
         if option == 'image':
-            filepath = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'menno_dogs', f'{str(uuid.uuid4())}.jpg')
-            if ctx.message.attachments and ctx.message.attachments[0].url.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+            filepath = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'menno_dogs',
+                                    f'{str(uuid.uuid4())}.jpg')
+            if ctx.message.attachments and ctx.message.attachments[0].url.lower().endswith(
+                    ('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 attachment_filename = ctx.message.attachments[0].filename
-                await ctx.message.attachments[0].save(filepath) # doesnt work with relative paths
+                await ctx.message.attachments[0].save(filepath)  # doesnt work with relative paths
                 await ctx.send(f'Image added: {attachment_filename}')
             elif args[-1].lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 try:
@@ -118,7 +120,8 @@ class AnimalCommands(commands.Cog):
                 except aiohttp.ClientResponseError as e:
                     ctx.send(e)
             else:
-                await ctx.send('No valid image attached. Please attach an image using `.add image`. Links either ending in jpg/png/jpeg or embedded pictures.')
+                await ctx.send(
+                    'No valid image attached. Please attach an image using `.add image`. Links either ending in jpg/png/jpeg or embedded pictures.')
         elif option == 'strike':
             mentions = ctx.message.mentions
             if len(mentions) == 0:
@@ -147,8 +150,8 @@ class AnimalCommands(commands.Cog):
                         else:
                             await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)}\n TOTAL COUNT: {total}")
                     else:
-                        await ctx.send(f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
-
+                        await ctx.send(
+                            f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
         else:
             await ctx.send('Invalid option. Available options: image, text')
 

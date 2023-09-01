@@ -41,8 +41,8 @@ class PointCommands(commands.Cog):
             points = points_bytes.decode('utf-8')
             message = f'Total points: {points}'
             embed = discord.Embed(title=f"{status}\n\n",
-                description=f"{message}",
-                color=0xFF0000)
+                                  description=f"{message}",
+                                  color=0xFF0000)
             await ctx.send(embed=embed)
 
     @commands.command()
@@ -83,8 +83,8 @@ class PointCommands(commands.Cog):
                 new_points = self.main_db.get_user_field(userid, "points")
                 status = "You won!"
             embed = discord.Embed(title=f"{status}\n\n",
-                description=f"Original points: {points}\nNew points: {new_points.decode('utf-8')}",
-                color=0xFF0000)
+                                  description=f"Original points: {points}\nNew points: {new_points.decode('utf-8')}",
+                                  color=0xFF0000)
             await ctx.send(embed=embed)
 
     @commands.command()

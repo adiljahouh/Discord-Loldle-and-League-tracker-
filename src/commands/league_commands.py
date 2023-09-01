@@ -26,7 +26,7 @@ class LeagueCommands(riotAPI, commands.Cog):
         async with ctx.typing():
             print("register")
             riot_name = "".join(args)
-            if len(riot_name) ==0:
+            if len(riot_name) == 0:
                 await ctx.send("Specify a riot username")
                 return
             author_discord_tag = str(ctx.author)
@@ -34,7 +34,7 @@ class LeagueCommands(riotAPI, commands.Cog):
             try:
                 puuid = await self.riot_api.get_puuid(riot_name)
             except aiohttp.ClientResponseError as e:
-                if e.status >= 400 and e.status <=500:
+                if 400 <= e.status <= 500:
                     message = "Bad request error, refresh the API key or re-register your user"
                 else:
                     message = "Internal Server Error"
@@ -67,7 +67,7 @@ class LeagueCommands(riotAPI, commands.Cog):
             response = ''
             for index, discord_id in enumerate(discord_ids):
                 id = discord_id.decode('utf-8')
-                response += f'\n{index+1}. <@{id}>'
+                response += f'\n{index + 1}. <@{id}>'
             embed = discord.Embed(title="📠Users Registered📠\n\n",
                                   description=f"{response}",
                                   color=0xFF0000)

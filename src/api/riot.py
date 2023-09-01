@@ -1,11 +1,8 @@
-import requests
 import datetime
 import aiohttp
 import asyncio
 import copy
 from ddragon import get_champion_list
-class PlayerMissingError(Exception):
-    pass
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error
@@ -14,7 +11,8 @@ class riotAPI():
     """
         Simple functions to get matches, puuid and matchid's
     """
-    #FIXME: UNCOUPLE THIS
+
+    # FIXME: UNCOUPLE THIS
     def __init__(self, api_key) -> None:
         self.api_key = api_key
         self.params = {
@@ -23,7 +21,8 @@ class riotAPI():
 
     async def get_summoner_values(self, user):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{user}", params= self.params) as response:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{user}",
+                                   params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
                 return content
@@ -36,7 +35,8 @@ class riotAPI():
 
     async def get_name_by_summoner_id(self, summoner_id):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}", params= self.params) as response:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}",
+                                   params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
                 return content['name']
@@ -59,15 +59,17 @@ class riotAPI():
                 else:
                     params['queue'] = queue_id
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids", params=params) as response:
+                async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids",
+                                       params=params) as response:
                     response.raise_for_status()
                     content = await response.json()
                     return content
 
     async def get_match_details_by_matchID(self, match_id):
-        #/lol/match/v5/matches/{matchId}
+        # /lol/match/v5/matches/{matchId}
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}", params= self.params) as response:
+            async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
+                                   params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
                 return content['info']['participants']
@@ -77,17 +79,19 @@ class riotAPI():
             Returns the details of a singular match for a singular player by passing the match ID and PUUID
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}", params= self.params) as response:
+            async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
+                                   params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
                 matchinfo = dict()
-                matchinfo['game_end'], matchinfo['game_mode'], matchinfo['game_type'] = content['info']['gameEndTimestamp'], \
-                    content['info']['gameMode'], content['info']['queueId']
+                matchinfo['game_end'], matchinfo['game_mode'], matchinfo['game_type'] = content['info'][
+                                                                                            'gameEndTimestamp'], \
+                                                                                        content['info']['gameMode'], \
+                                                                                        content['info']['queueId']
                 for player in content['info']['participants']:
                     if player.get("puuid") == puuid:
                         matchinfo['match_details'] = player
                         return matchinfo
-
 
     async def get_multiple_match_details_by_matchIDs_and_filter_for_puuid(self, puuid, matchIDs) -> list:
         """
@@ -97,20 +101,21 @@ class riotAPI():
         matchesinfo: list = []
         for matchID in matchIDs:
             matchinfo: dict = await self.get_match_detail_by_matchID_and_filter_for_puuid(matchID, puuid)
-            matchinfo['time_diff'] = datetime.datetime.now().timestamp() - matchinfo['game_end']/1000
+            matchinfo['time_diff'] = datetime.datetime.now().timestamp() - matchinfo['game_end'] / 1000
             matchesinfo.append(matchinfo)
         return matchesinfo
 
     async def get_kda_by_puuid(self, puuid, count=10):
         matchIDs: list = await self.get_match_ids("puuid", puuid, count)
-        game_details_user: list = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
+        game_details_user: list = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid,
+                                                                                                         matchIDs)
         flame = False
         flame_text = 'Nice job \n\n'
         text = ''
         game_mode_mapping = {
-        420: "Ranked Solo/Duo",
-        440: "Ranked Flex",
-        400: "Normal"
+            420: "Ranked Solo/Duo",
+            440: "Ranked Flex",
+            400: "Normal"
         }
         for game in game_details_user:
             details = game["match_details"]
@@ -123,12 +128,13 @@ class riotAPI():
     async def get_bad_kda_by_puuid(self, puuid, count=10, sleep_time=2):
         await asyncio.sleep(sleep_time)
         matchIDs: list = await self.get_match_ids("puuid", puuid, count=count)
-        game_details_user: list = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
+        game_details_user: list = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid,
+                                                                                                         matchIDs)
         text = ''
         game_mode_mapping = {
-        420: "Ranked Solo/Duo",
-        440: "Ranked Flex",
-        400: "Normal"
+            420: "Ranked Solo/Duo",
+            440: "Ranked Flex",
+            400: "Normal"
         }
         for game in game_details_user:
             details = game["match_details"]
@@ -139,7 +145,7 @@ class riotAPI():
                 text += f'{result} **{time_diff}** day(s) ago  {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text
 
-    async def get_kda_by_user(self, user, count =10, queue_id=None):
+    async def get_kda_by_user(self, user, count=10, queue_id=None):
         puuid = await self.get_puuid(user)
         matchIDs: list = await self.get_match_ids("puuid", puuid, count=count, queue_id=queue_id)
         game_details_user = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
@@ -166,7 +172,9 @@ class riotAPI():
         player_details = {}
         player_details['taken'], player_details['champion'], player_details['disc_id'] = 0, '', discord_id
         for game in game_details_user:
-            if game["match_details"]['totalDamageTaken'] > player_details['taken'] and game["game_mode"] not in ["ARAM", "URF", "CHERRY"]:
+            if game["match_details"]['totalDamageTaken'] > player_details['taken'] and game["game_mode"] not in ["ARAM",
+                                                                                                                 "URF",
+                                                                                                                 "CHERRY"]:
                 player_details['taken'] = game["match_details"]['totalDamageTaken']
                 player_details['champion'] = game["match_details"]["championName"]
 
@@ -175,7 +183,9 @@ class riotAPI():
     async def get_active_game_status(self, user):
         account_id = await self.get_account_id(user)
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}", params=self.params) as response:
+            async with session.get(
+                    f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",
+                    params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
                 status = response.status
@@ -216,14 +226,16 @@ class riotAPI():
 
     async def get_clash_team_id(self, account_id):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}", params= self.params) as response:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}",
+                                   params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
                 return content[0]['teamId']
 
     async def get_clash_players(self, team_id):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}", params= self.params) as response:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}",
+                                   params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
                 return content['players']
@@ -238,4 +250,3 @@ class riotAPI():
             summoner_cleaned = summoner.replace(" ", "").lower()
             text += f"{summoner_cleaned},"
         return text[:-1]
-

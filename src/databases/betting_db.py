@@ -2,6 +2,7 @@ import redis
 from redis.exceptions import ConnectionError
 from main_db import MainDB
 
+
 class BettingDB():
     def __init__(self, url) -> None:
         self.url = url
@@ -85,7 +86,8 @@ class BettingDB():
                 discord_tag = self.client.hget(key, "discord_tag")
                 if amount is None or discord_tag is None:
                     continue
-                result[decision].append({"name": discord_tag.decode('utf8'), "amount": amount.decode('utf8'), "discord_id": discord_id})
+                result[decision].append(
+                    {"name": discord_tag.decode('utf8'), "amount": amount.decode('utf8'), "discord_id": discord_id})
         print(result)
         return result
 
