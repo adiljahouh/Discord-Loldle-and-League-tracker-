@@ -4,14 +4,11 @@ import asyncio
 import copy
 from ddragon import get_champion_list
 from merakia import pull_data
+from utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error
-from utility.get_roles import get_roles
-# import sys
-# sys.path.append('/app/src/commands/utility')
-# print(sys.path)
-# from get_roles import get_roles
+
 
 
 class riotAPI():
