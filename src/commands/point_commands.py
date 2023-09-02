@@ -4,8 +4,6 @@ import discord
 import random
 import datetime
 from commands_utility import role_check
-import sys
-sys.path.append('../databases')
 from main_db import MainDB
 from betting_db import BettingDB
 

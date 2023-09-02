@@ -4,8 +4,6 @@ import aiohttp
 from config import Settings
 import discord
 from commands_utility import role_check, mod_check
-import sys
-sys.path.append('../databases')
 from main_db import MainDB
 
 
