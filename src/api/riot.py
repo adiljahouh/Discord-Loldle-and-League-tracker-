@@ -3,9 +3,16 @@ import aiohttp
 import asyncio
 import copy
 from ddragon import get_champion_list
+from merakia import pull_data
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error
+from utility.get_roles import get_roles
+# import sys
+# sys.path.append('/app/src/commands/utility')
+# print(sys.path)
+# from get_roles import get_roles
+
 
 class riotAPI():
     """
@@ -210,11 +217,17 @@ class riotAPI():
                     if user.lower() == participant['summonerName'].lower():
                         team = participant['teamId']
                     summonerName = participant['summonerName']
-                    champ_name = champion_list[str(participant['championId'])]
                     if participant['teamId'] == 100:
-                        team_one.append([summonerName, champ_name])
+                        team_one.append([summonerName, int(participant['championId'])])
                     else:
-                        team_two.append([summonerName, champ_name])
+                        team_two.append([summonerName, int(participant['championId'])])
+                try:
+                    champion_roles = pull_data()
+                except Exception as e:
+                    print(e)
+                    return
+                team_one = self.order_team(champion_roles, team_one, champion_list)
+                team_two = self.order_team(champion_roles, team_two, champion_list)
                 if team == 200:
                     text_arr[1].append(team_two)
                     text_arr[1].append(team_one)
@@ -250,3 +263,15 @@ class riotAPI():
             summoner_cleaned = summoner.replace(" ", "").lower()
             text += f"{summoner_cleaned},"
         return text[:-1]
+
+    def order_team(self, champion_roles, team, champion_list):
+        champions = [combo[1] for combo in team]
+        roles = get_roles(champion_roles, champions)
+        team_order = []
+        for pos in roles:
+            for combo in team:
+                if combo[1] == pos:
+                    team_order.append([combo[0], champion_list[str(combo[1])]])
+                    break
+        print(team_order)
+        return team_order
