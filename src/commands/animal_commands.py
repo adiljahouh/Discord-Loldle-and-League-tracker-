@@ -34,7 +34,7 @@ class AnimalCommands(commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
             else:
                 message = await duck_api()
                 await ctx.send(message)
@@ -49,7 +49,7 @@ class AnimalCommands(commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
             else:
                 message = await dog_api()
                 await ctx.send(message)
@@ -64,7 +64,7 @@ class AnimalCommands(commands.Cog):
         async with ctx.typing():
             if random.randint(0, 100) == 1:
                 img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
             else:
                 message = await cat_api()
                 await ctx.send(message)
