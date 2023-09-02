@@ -14,12 +14,13 @@ from betting_db import BettingDB
 
 
 class loops(commands.Cog):
-    def __init__(self, bot, main_db, betting_db, riot_api, channel_id) -> None:
+    def __init__(self, bot, main_db, betting_db, riot_api, channel_id, ping_role) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.betting_db = betting_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
+        self.ping_role = ping_role
         self.old_active_game: int = 0
         self.active_game: int = 0
         self.active_message_id: discord.Message.id = 0
@@ -154,7 +155,7 @@ class loops(commands.Cog):
 
             if channel is not None:
                 try:
-                    message = await channel.send("@here", file=picture, embed=embed)
+                    message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
                     self.betting_db.enable_betting()
                     print("Message sent successfully.")
                 except discord.Forbidden:
@@ -246,4 +247,4 @@ async def setup(bot):
     betting_db = BettingDB(settings.REDISURL)
     riot: riotAPI = riotAPI(settings.RIOTTOKEN)
     print("adding loops..")
-    await bot.add_cog(loops(bot, main_db, betting_db, riot, settings.CHANNELID))
+    await bot.add_cog(loops(bot, main_db, betting_db, riot, settings.CHANNELID, settings.PINGROLE))
