@@ -33,7 +33,7 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('../assets/menno_dogs'))
+                img = random.choice(os.listdir('/assets/menno_dogs'))
                 await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
                 message = await duck_api()
@@ -48,7 +48,7 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('../assets/menno_dogs'))
+                img = random.choice(os.listdir('/assets/menno_dogs'))
                 await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
                 message = await dog_api()
@@ -63,7 +63,7 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('../assets/menno_dogs'))
+                img = random.choice(os.listdir('/assets/menno_dogs'))
                 await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
                 message = await cat_api()
@@ -75,8 +75,7 @@ class AnimalCommands(commands.Cog):
     async def add(self, ctx, option: str, *args):
         """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""
         if option == 'image':
-            filepath = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'menno_dogs',
-                                    f'{str(uuid.uuid4())}.jpg')
+            filepath = f"/assets/menno_dogs/{str(uuid.uuid4())}.jpg"
             if ctx.message.attachments and ctx.message.attachments[0].url.lower().endswith(
                     ('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 attachment_filename = ctx.message.attachments[0].filename
