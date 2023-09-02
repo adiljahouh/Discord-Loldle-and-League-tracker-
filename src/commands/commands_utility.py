@@ -1,8 +1,6 @@
 from redis.exceptions import ConnectionError
 from config import Settings
 import functools
-import sys
-sys.path.append('../databases')
 from main_db import MainDB
 
 
