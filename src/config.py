@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     JAILROLE: int
     RIOTTOKEN: str
     REDISURL: str
-    GPTAPI: str
     PLAYERROLE: int
     GROLE: int
 
