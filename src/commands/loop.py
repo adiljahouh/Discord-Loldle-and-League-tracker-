@@ -6,9 +6,6 @@ from utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
-import sys
-
-sys.path.append('../databases')
 from main_db import MainDB
 from betting_db import BettingDB
 

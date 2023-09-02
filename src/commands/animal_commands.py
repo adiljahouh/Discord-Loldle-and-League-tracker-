@@ -7,10 +7,7 @@ import random
 import uuid
 from commands_utility import role_check, mod_check
 from animals import cat_api, dog_api, duck_api
-import sys
-sys.path.append('../databases')
 from main_db import MainDB
-
 
 
 class AnimalCommands(commands.Cog):
