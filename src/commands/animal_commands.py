@@ -1,16 +1,16 @@
 import aiohttp
 from discord.ext import commands
-import requests
 from config import Settings
 import discord
 import os
 import random
-import json
 import uuid
 from commands_utility import role_check, mod_check
+from animals import cat_api, dog_api, duck_api
 import sys
 sys.path.append('../databases')
 from main_db import MainDB
+
 
 
 class AnimalCommands(commands.Cog):
@@ -36,16 +36,8 @@ class AnimalCommands(commands.Cog):
                 img = random.choice(os.listdir('../assets/menno_dogs'))
                 await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
-                try:
-                    response = requests.get("https://random-d.uk/api/v2/random")
-                    content = json.loads(response.content.decode("utf-8"))
-                    response.raise_for_status()
-                    if content['url']:
-                        await ctx.send(content['url'])
-                    else:
-                        await ctx.send("Internal API error")
-                except requests.exceptions.HTTPError as e:
-                    await ctx.send("HTTP error, no ducks for you")
+                message = await duck_api()
+                await ctx.send(message)
 
     @commands.command()
     @role_check
@@ -59,17 +51,8 @@ class AnimalCommands(commands.Cog):
                 img = random.choice(os.listdir('../assets/menno_dogs'))
                 await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
-                try:
-                    response = requests.get("https://dog.ceo/api/breeds/image/random")
-                    content = json.loads(response.content.decode("utf-8"))
-
-                    response.raise_for_status()
-                    if content['status'] == 'success':
-                        await ctx.send(content['message'])
-                    else:
-                        await ctx.send("Internal API error")
-                except requests.exceptions.HTTPError as e:
-                    await ctx.send("HTTP error, no dogs for you")
+                message = await dog_api()
+                await ctx.send(message)
 
     @commands.command()
     @role_check
@@ -83,16 +66,8 @@ class AnimalCommands(commands.Cog):
                 img = random.choice(os.listdir('../assets/menno_dogs'))
                 await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'../assets/menno_dogs/{img}'))
             else:
-                try:
-                    response = requests.get("https://api.thecatapi.com/v1/images/search")
-                    content = json.loads(response.content.decode("utf-8"))
-                    response.raise_for_status()
-                    if content[0]['url']:
-                        await ctx.send(content[0]['url'])
-                    else:
-                        await ctx.send("Internal API error")
-                except requests.exceptions.HTTPError as e:
-                    await ctx.send("HTTP error, no cats for you")
+                message = await cat_api()
+                await ctx.send(message)
 
     @commands.command()
     @role_check
