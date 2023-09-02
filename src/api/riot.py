@@ -270,5 +270,4 @@ class riotAPI():
                 if combo[1] == pos:
                     team_order.append([combo[0], champion_list[str(combo[1])]])
                     break
-        print(team_order)
         return team_order
