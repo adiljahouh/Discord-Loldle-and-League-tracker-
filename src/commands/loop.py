@@ -177,6 +177,9 @@ class loops(commands.Cog):
                     embed.add_field(name='\u200b', value='\u200b')
             try:
                 await message.edit(embed=embed)
+                embed = discord.Embed(title="Betting is no longer enabled",
+                                      color=0xFF0000)
+                await channel.send(embed=embed)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
