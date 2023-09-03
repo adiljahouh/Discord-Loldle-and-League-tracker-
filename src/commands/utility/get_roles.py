@@ -1,7 +1,7 @@
 from typing import List
 
 
-def calculate_metric(champion_positions, champions_by_position):
+def calculate_metric(champion_positions, champions_by_position, punish):
     total = 0
     count = 0
     for position, champion in champions_by_position.items():
@@ -11,9 +11,10 @@ def calculate_metric(champion_positions, champions_by_position):
             val = -1.0
         total += val
     total = total / len(champions_by_position)
-    total -= count
-    if count >= 2:
-        total = 0
+    if punish:
+        total -= count
+        if count >= 2:
+            total = 0.0
     return total
 
 
@@ -82,11 +83,15 @@ def get_positions(champion_positions, composition: List[int], top=None, jungle=N
 
     best_pos = {}
     best_metric = -float('inf')
-    for perm in perms:
-        metric = calculate_metric(champion_positions, perm)
-        if metric > best_metric:
-            best_pos = perm
-            best_metric = metric
+    for punish in [True, False]:
+        for perm in perms:
+            metric = calculate_metric(champion_positions, perm, punish)
+            if metric > best_metric:
+                best_pos = perm
+                best_metric = metric
+        print(best_metric)
+        if best_metric > 0.0:
+            break
     return best_pos
 
 def quickperm(a):
