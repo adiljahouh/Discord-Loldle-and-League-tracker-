@@ -2,18 +2,18 @@ from typing import List
 
 
 def calculate_metric(champion_positions, champions_by_position, punish):
-    total = 0
-    count = 0
+    total = 0.0
+    count = 0.0
     for position, champion in champions_by_position.items():
         val = champion_positions[champion][position]
         if val == 0:
-            count += 1
+            count += 1.0
             val = -1.0
         total += val
     total = total / len(champions_by_position)
     if punish:
         total -= count
-        if count >= 2:
+        if count >= 2.0:
             total = 0.0
     return total
 
