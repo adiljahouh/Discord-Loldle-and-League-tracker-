@@ -1,6 +1,7 @@
 from io import BytesIO
 import aiohttp
 import copy
+from ddragon import get_latest_ddragon, get_champion_list, champion_splash
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -75,7 +76,9 @@ class EndImage():
         col_red = (255, 77, 10)
         col_green = (6, 226, 191)
         col_white = (255, 255, 255)
+        col_gray = (60, 60, 60)
         # Define fonts
+        font_xll = ImageFont.truetype('../assets/Social Gothic Bold.otf', 80)
         font_big = ImageFont.truetype('../assets/Social Gothic Bold.otf', 49)
         font_small = ImageFont.truetype('../assets/Social Gothic Bold.otf', 25)
         font_text_middle = ImageFont.truetype('../assets/nimbussannovt.ttf', 35)
@@ -92,13 +95,13 @@ class EndImage():
             result = "Won"
             color = col_green
         # Show gameresult
-        _, _, w, h = draw_text.textbbox((0, 0), f"Jeroen {result}", font=font_big)
-        draw_text.text((105+(775-w)/2, (190-h)/2), f"Jeroen {result}", font=font_big, fill=color)
+        _, _, w, h = draw_text.textbbox((0, 0), f"Jeroen {result}", font=font_xll)
+        draw_text.text((105+(775-w)/2, (190-h)/2), f"Jeroen {result}", font=font_xll, fill=color)
         # Show gametime
         _, _, w, h = draw_text.textbbox((0, 0), f"Gametime {self.game_time}", font=font_small)
-        draw_text.text((105+(775-w)/2, 110+(134-h)/2), f"Gametime {self.game_time}", font=font_small, fill=col_white)
+        draw_text.text((105+(775-w)/2, 140+(134-h)/2), f"Gametime {self.game_time}", font=font_small, fill=col_white)
         # Show middle text
-        for indx, attr in enumerate(['K/D/A', 'GOLD', 'TOWERS', 'DRAKES', 'ELDER DRAGONS', 'BARONS']):
+        for indx, attr in enumerate(['K/D/A', 'GOLD', 'TOWERS', 'DRAKES', 'ELDER DRAGONS', 'BARONS', 'BANS']):
             _, _, w, h = draw_text.textbbox((0, 0), attr, font=font_text_middle)
             draw_text.text((105 + (776-w)/2, 290+(indx*100)+(100-h)/2), attr, font=font_text_middle, fill=col_white)
         # Might be able to loop from here
@@ -114,6 +117,61 @@ class EndImage():
         for indx, attr in enumerate(['gold', 'towers', 'drakes', 'elder', 'baron']):
             _, _, w, h = draw_text.textbbox((0, 0), str(team[attr]), font=font_big)
             draw_text.text((880-w, 390+(100*indx)+(100-h)/2), str(team[attr]), font=font_big, fill=col_white)
+
+        # Bans
+        champ_list = await get_champion_list()
+        for team_indx, team in enumerate(self.teams):
+            for indx, ban in enumerate(team["bans"]):
+                champ_image: Image = await champion_splash(champ_list[str(ban)])
+                champ_image: Image = champ_image.convert('RGBA')
+                if team_indx == 0:
+                    pos = (110 + (65*indx), 913)
+                else:
+                    pos = (825 - (65*indx), 913)
+                champ_image = champ_image.resize((55, 55))
+                base_image.paste(champ_image, pos, champ_image)
+
+        # Min/Max stats
+        min_stat = 99999999999999999999
+        max_stat = -1
+        for team in self.teams:
+            for player in team['players']:
+                stats = [player['damage_dealt'], player['damage_taken']]
+                lowest = min(stats)
+                highest = max(stats)
+                if lowest < min_stat:
+                    min_stat = lowest
+                if highest > max_stat:
+                    max_stat = highest
+        print(min_stat, max_stat)
+        # Draw damage graph
+        for team_indx, team in enumerate(self.teams):
+            for indx, player in enumerate(team["players"]):
+                if team_indx == 0:
+                    base_image.paste(col_green, (960, 40 + (205*indx), 1160 + int(240*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 100 + (205*indx)))
+                    base_image.paste(col_gray, (960, 140 + (205*indx), 1160 + int(240*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 200 + (205*indx)))
+                else:
+                    base_image.paste(col_green, (1655 - int(240*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 40 + (205*indx), 1855, 100 + (205*indx)))
+                    base_image.paste(col_gray, (1655 - int(240*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 140 + (205*indx), 1855, 200 + (205*indx)))
+
+        # Player names, damage numbers, and player champ images
+        for team_indx, team in enumerate(self.teams):
+            for indx, player in enumerate(team["players"]):
+                _, _, w, h = draw_text.textbbox((0, 0), str(player['name']), font=font_small)
+                draw_text.text((1090 + (635*team_indx) - (w*team_indx), 60 + (205*indx) + (120-h)/2), str(player['name']), font=font_small, fill=col_white)
+                _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_dealt']), font=font_small)
+                draw_text.text((1090 + (635*team_indx) - (w*team_indx), 10 + (205*indx) + (120-h)/2), str(player['damage_dealt']), font=font_small, fill=col_white)
+                _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
+                draw_text.text((1090 + (635*team_indx) - (w*team_indx), 110 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white)
+                champ_image: Image = await champion_splash(champ_list[str(player['champ_id'])])
+                champ_image: Image = champ_image.convert('RGBA')
+                pos = (960 + (775*team_indx), 55 + (205*indx))
+                base_image.paste(champ_image, pos, champ_image)
+
+
+
+
+
 
 
 
@@ -147,12 +205,3 @@ class EndImage():
     #     bytes.seek(0)
     #     return bytes
     #
-    async def champion_splash(self, champion):
-        version = await self.riot_api.get_latest_ddragon()
-        async with aiohttp.ClientSession() as session:
-            url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
-            async with session.get(url) as resp:
-                resp.raise_for_status()
-                if resp.status == 200:
-                    content = await resp.read()
-                    return Image.open(BytesIO(content))
