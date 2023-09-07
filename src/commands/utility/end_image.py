@@ -148,11 +148,11 @@ class EndImage():
         for team_indx, team in enumerate(self.teams):
             for indx, player in enumerate(team["players"]):
                 if team_indx == 0:
-                    base_image.paste(col_green, (960, 40 + (205*indx), 1160 + int(240*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 100 + (205*indx)))
-                    base_image.paste(col_gray, (960, 140 + (205*indx), 1160 + int(240*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 200 + (205*indx)))
+                    base_image.paste(col_green, (960, 40 + (205*indx), 1150 + int(250*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 100 + (205*indx)))
+                    base_image.paste(col_gray, (960, 140 + (205*indx), 1150 + int(250*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 200 + (205*indx)))
                 else:
-                    base_image.paste(col_green, (1655 - int(240*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 40 + (205*indx), 1855, 100 + (205*indx)))
-                    base_image.paste(col_gray, (1655 - int(240*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 140 + (205*indx), 1855, 200 + (205*indx)))
+                    base_image.paste(col_green, (1665 - int(250*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 40 + (205*indx), 1855, 100 + (205*indx)))
+                    base_image.paste(col_gray, (1665 - int(250*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 140 + (205*indx), 1855, 200 + (205*indx)))
 
         # Player names, damage numbers, and player champ images
         for team_indx, team in enumerate(self.teams):
