@@ -16,7 +16,6 @@ Default path is set to /opt/discbot/ this path contains the .env file with the f
 - JAILROLE: int
 - RIOTTOKEN:str
 - REDISURL: str
-- GPTAPI: str
 - PLAYERROLE: int
 - GROLE: int
 
