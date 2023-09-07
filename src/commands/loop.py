@@ -152,14 +152,19 @@ class loops(commands.Cog):
 
             if channel is not None:
                 try:
-                    message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
-                    self.betting_db.enable_betting()
+                    if data[2] != "Custom":
+                        self.betting_db.enable_betting()
+                        message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
+                    else:
+                        message = await channel.send(file=picture, embed=embed)
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
                 except discord.HTTPException:
                     print("Failed to send the message.")
         if message is None:
+            return
+        if data[2] == "Custom":
             return
         self.active_message_id = message.id
         await asyncio.sleep(self.betting_db.betting_time)
