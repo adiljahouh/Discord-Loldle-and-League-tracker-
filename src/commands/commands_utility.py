@@ -1,7 +1,7 @@
 from redis.exceptions import ConnectionError
 from config import Settings
 import functools
-from main_db import MainDB
+from databases.main_db import MainDB
 
 
 def role_check(func):
@@ -33,6 +33,22 @@ def mod_check(func):
                     return await func(self, ctx, *args, **kwargs)
             required_role = ctx.guild.get_role(self.player_role)
             await ctx.send(f"You need the {required_role.mention} role to use this command.")
+        except Exception as e:
+            await ctx.send(f"Error occured during role check, Error: {e}")
+            return
+    return inner
+
+
+def super_user_check(func):
+    @functools.wraps(func)
+    async def inner(self, ctx, *args, **kwargs):
+        settings = Settings()
+        try:
+            if str(ctx.author.id) == str(settings.SUPERUSER):
+                print("super user validated")
+                return await func(self, ctx, *args, **kwargs)
+            else:
+                await ctx.send(f"You are not <@{settings.SUPERUSER}>")
         except Exception as e:
             await ctx.send(f"Error occured during role check, Error: {e}")
             return

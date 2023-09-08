@@ -1,22 +1,23 @@
 from discord.ext import commands, tasks
 import discord
-from riot import riotAPI
+from api.riot import riotAPI
 from config import Settings
-from utility.team_image import imageCreator
+from commands.utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
-from main_db import MainDB
-from betting_db import BettingDB
+from databases.betting_db import BettingDB
+from databases.main_db import MainDB
 
 
 class loops(commands.Cog):
-    def __init__(self, bot, main_db, betting_db, riot_api, channel_id) -> None:
+    def __init__(self, bot, main_db, betting_db, riot_api, channel_id, ping_role) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.betting_db = betting_db
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
+        self.ping_role = ping_role
         self.old_active_game: int = 0
         self.active_game: int = 0
         self.active_message_id: discord.Message.id = 0
@@ -151,14 +152,19 @@ class loops(commands.Cog):
 
             if channel is not None:
                 try:
-                    message = await channel.send("@here", file=picture, embed=embed)
-                    self.betting_db.enable_betting()
+                    if data[2] != "Custom":
+                        self.betting_db.enable_betting()
+                        message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
+                    else:
+                        message = await channel.send(file=picture, embed=embed)
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
                 except discord.HTTPException:
                     print("Failed to send the message.")
         if message is None:
+            return
+        if data[2] == "Custom":
             return
         self.active_message_id = message.id
         await asyncio.sleep(self.betting_db.betting_time)
@@ -173,6 +179,9 @@ class loops(commands.Cog):
                     embed.add_field(name='\u200b', value='\u200b')
             try:
                 await message.edit(embed=embed)
+                embed = discord.Embed(title="Betting is no longer enabled",
+                                      color=0xFF0000)
+                await channel.send(embed=embed)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
@@ -243,4 +252,4 @@ async def setup(bot):
     betting_db = BettingDB(settings.REDISURL)
     riot: riotAPI = riotAPI(settings.RIOTTOKEN)
     print("adding loops..")
-    await bot.add_cog(loops(bot, main_db, betting_db, riot, settings.CHANNELID))
+    await bot.add_cog(loops(bot, main_db, betting_db, riot, settings.CHANNELID, settings.PINGROLE))

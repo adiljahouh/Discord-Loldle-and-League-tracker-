@@ -1,6 +1,6 @@
 import redis
 from redis.exceptions import ConnectionError
-from main_db import MainDB
+from databases.main_db import MainDB
 
 
 class BettingDB():
@@ -39,7 +39,7 @@ class BettingDB():
             print("Not enough points")
             return False
         points = int(points.decode('utf8'))
-        if points <= amount:
+        if points < amount:
             print("Not enough points")
             return False
         self.DB_MAIN.decrement_field(discord_id, "points", amount)

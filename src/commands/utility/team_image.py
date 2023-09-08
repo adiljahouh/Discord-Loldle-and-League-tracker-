@@ -1,7 +1,7 @@
 from io import BytesIO
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
-from ddragon import champion_splash
+from api.ddragon import champion_splash
 
 
 class imageCreator():
