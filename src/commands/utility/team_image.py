@@ -1,7 +1,7 @@
 from io import BytesIO
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
-from api.ddragon import get_latest_ddragon
+from api.ddragon import champion_splash
 
 
 class imageCreator():
@@ -26,7 +26,7 @@ class imageCreator():
         draw_text = ImageDraw.Draw(base_image)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):
-                champ_image: Image = await self.champion_splash(champ)
+                champ_image: Image = await champion_splash(champ)
                 champ_image = champ_image.convert('RGBA')
                 position = (70 + (520 * team_num), 110 + (170 * champ_num))
                 base_image.paste(champ_image, position, champ_image)
@@ -48,13 +48,3 @@ class imageCreator():
         image.save(bytes, format="PNG")
         bytes.seek(0)
         return bytes
-
-    async def champion_splash(self, champion):
-        version = await get_latest_ddragon()
-        async with aiohttp.ClientSession() as session:
-            url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
-            async with session.get(url) as resp:
-                resp.raise_for_status()
-                if resp.status == 200:
-                    content = await resp.read()
-                    return Image.open(BytesIO(content))
