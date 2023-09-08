@@ -38,7 +38,9 @@ class EndImage():
         if player_indx >= 5:
             self.player_team_id = 200
         self.game_time = int(self.data["info"]["gameDuration"])
-        self.game_time = f"{int((self.game_time/60) // 1)}:{self.game_time % 60}"
+        seconds = self.game_time % 60
+        seconds = seconds if seconds > 10 else f"0{seconds}"
+        self.game_time = f"{int((self.game_time/60) // 1)}:{seconds}"
         for indx, team in enumerate(self.data["info"]["teams"]):
             for ban in team["bans"]:
                 self.teams[indx]["bans"].append(ban["championId"])
