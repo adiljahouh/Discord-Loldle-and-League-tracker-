@@ -5,7 +5,7 @@ import discord
 import os
 import random
 import uuid
-from commands_utility import role_check, mod_check
+from commands.commands_utility import role_check, mod_check
 from api.animals import cat_api, dog_api, duck_api
 from databases.main_db import MainDB
 

@@ -2,7 +2,7 @@ from discord.ext import commands, tasks
 import discord
 from api.riot import riotAPI
 from config import Settings
-from utility.team_image import imageCreator
+from commands.utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio

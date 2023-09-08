@@ -3,7 +3,7 @@ from api.riot import riotAPI
 import aiohttp
 from config import Settings
 import discord
-from commands_utility import role_check, mod_check
+from commands.commands_utility import role_check, mod_check
 from databases.main_db import MainDB
 
 

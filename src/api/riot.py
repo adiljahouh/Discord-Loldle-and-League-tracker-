@@ -2,8 +2,8 @@ import datetime
 import aiohttp
 import asyncio
 import copy
-from ddragon import get_champion_list
-from merakia import pull_data
+from api.ddragon import get_champion_list
+from api.merakia import pull_data
 from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass

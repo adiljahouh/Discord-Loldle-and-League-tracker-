@@ -3,7 +3,7 @@ from config import Settings
 import discord
 import random
 import datetime
-from commands_utility import role_check
+from commands.commands_utility import role_check
 from databases.betting_db import BettingDB
 from databases.main_db import MainDB
 

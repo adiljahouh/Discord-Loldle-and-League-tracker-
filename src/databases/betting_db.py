@@ -1,6 +1,6 @@
 import redis
 from redis.exceptions import ConnectionError
-from main_db import MainDB
+from databases.main_db import MainDB
 
 
 class BettingDB():
