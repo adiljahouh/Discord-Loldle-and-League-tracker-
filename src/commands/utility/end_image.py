@@ -1,15 +1,16 @@
 from io import BytesIO
 import aiohttp
 import copy
-from api.ddragon import get_latest_ddragon, get_champion_list, champion_splash
+from api.ddragon import get_champion_list, champion_splash
 from PIL import Image, ImageDraw, ImageFont
 
 
 class EndImage():
 
-    def __init__(self, data, puuid):
+    def __init__(self, data, name):
         self.data = data
-        self.puuid = puuid
+        self.name = name
+        self.puuid = 0
         self.player_team_id = 100
         self.swap = False
         self.won_team_id = 100
@@ -34,6 +35,10 @@ class EndImage():
         return {"bans": [], "players": [], "kills": 0, "deaths": 0, "assists": 0, "gold": 0, "towers": 0, "drakes": 0, "elder": 0, "baron": 0}
 
     def prepare_data(self):
+        # First find puuid
+        for player in self.data["info"]["participants"]:
+            if player["summonerName"].lower() == self.name.lower():
+                self.puuid = player["puuid"]
         player_indx = self.data["metadata"]['participants'].index(self.puuid)
         if player_indx >= 5:
             self.player_team_id = 200
@@ -64,7 +69,6 @@ class EndImage():
 
 
     def missing_data(self, team, player):
-        print(player)
         team["elder"] = player["challenges"]["teamElderDragonKills"]
         team["assists"] += player["assists"]
         team["deaths"] += player["deaths"]
@@ -134,6 +138,9 @@ class EndImage():
         champ_list = await get_champion_list()
         for team_indx, team in enumerate(self.teams):
             for indx, ban in enumerate(team["bans"]):
+                # No bans should be skipped
+                if str(ban) == "-1":
+                    continue
                 champ_image: Image = await champion_splash(champ_list[str(ban)])
                 champ_image: Image = champ_image.convert('RGBA')
                 if team_indx == 0:
@@ -155,7 +162,6 @@ class EndImage():
                     min_stat = lowest
                 if highest > max_stat:
                     max_stat = highest
-        print(min_stat, max_stat)
         # Draw damage graph
         for team_indx, team in enumerate(self.teams):
             for indx, player in enumerate(team["players"]):
@@ -199,20 +205,18 @@ class EndImage():
                 # Player kda
                 _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
                 draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+        return self.img_to_bytes(base_image)
+        # base_image.show()
+
+    def img_to_bytes(self, image: Image):
+        byte_arr = BytesIO()
+        image.save(byte_arr, format="PNG")
+        byte_arr.seek(0)
+        return byte_arr
 
 
 
-
-
-
-
-
-
-
-
-
-        base_image.show()
-        # for team_num, team in enumerate(self.champions):
+    # for team_num, team in enumerate(self.champions):
         #     for champ_num, champ in enumerate(team):
         #         champ_image: Image = await self.champion_splash(champ)
         #         champ_image = champ_image.convert('RGBA')
@@ -230,10 +234,5 @@ class EndImage():
         # _, _, w, h = draw_text.textbbox((0, 0), self.game_mode, font=myFont)
         # draw_text.text(((1100-w)/2, (100-h)/2), self.game_mode, font=myFont, fill=(255, 255, 255))
         # return self.img_to_bytes(base_image)
-    #
-    # def img_to_bytes(self, image: Image):
-    #     bytes = BytesIO()
-    #     image.save(bytes, format="PNG")
-    #     bytes.seek(0)
-    #     return bytes
-    #
+
+

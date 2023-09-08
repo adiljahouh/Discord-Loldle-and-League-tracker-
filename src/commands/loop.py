@@ -8,6 +8,7 @@ import aiohttp
 import asyncio
 from databases.betting_db import BettingDB
 from databases.main_db import MainDB
+from commands.utility.end_image import EndImage
 
 
 class loops(commands.Cog):
@@ -197,13 +198,20 @@ class loops(commands.Cog):
             return
         match_id = f'EUW1_{self.active_game}'
         try:
-            match_data = await self.riot_api.get_match_details_by_matchID(match_id)
+            match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
         except aiohttp.ClientResponseError:
             print("Game is still in progress")
             return
+        try:
+            endIm = EndImage(match_data, self.active_user)
+            end_image = await endIm.get_team_image()
+            picture = discord.File(fp=end_image, filename="team.png")
+        except Exception as e:
+            print(e)
+            return
         result = False
         score = ""
-        for player in match_data:
+        for player in match_data['info']['participants']:
             if player['summonerName'].lower() == self.active_user.lower():
                 result = player['win']
                 score = f"{player['kills']} / {player['deaths']} / {player['assists']}, bait pings: {player['baitPings']}\n"
@@ -219,6 +227,7 @@ class loops(commands.Cog):
         embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
                               description=description,
                               color=0xFF0000)
+        embed.set_image(url="attachment://team.png")
         all_bets = self.betting_db.get_all_bets()
         for decision in all_bets.keys():
             text = ""
@@ -238,7 +247,7 @@ class loops(commands.Cog):
         if channel is not None:
             try:
                 self.betting_db.remove_all_bets()
-                await channel.send(embed=embed, reference=message)
+                await channel.send(embed=embed, reference=message, file=picture)
                 print("Message sent successfully.")
             except discord.Forbidden:
                 print("I don't have permission to send messages to that channel.")
