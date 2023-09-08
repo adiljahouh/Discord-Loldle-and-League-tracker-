@@ -19,6 +19,7 @@ Default path is set to /opt/discbot/ this path contains the .env file with the f
 - PLAYERROLE: int
 - GROLE: int
 - PINGROLE: int
+- SUPERUSER: int
 
 Having this .env file somewhere else means you are forced to change this path in the ```docker-compose.yml```.
 Running ```docker-compose up --build``` or ```docker compose up --build``` will start both containers.

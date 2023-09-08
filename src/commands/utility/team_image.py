@@ -19,10 +19,10 @@ class imageCreator():
 
     async def get_team_image(self):
         base_image = Image.new(mode="RGB", size=(1100, 1020))
-        img = Image.open('/assets/team_background.png')
+        img = Image.open('/assets/image_generator/team_background.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
-        myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 37)
+        myFont = ImageFont.truetype('/assets/image_generator/Gidole-Regular.ttf', 37)
         draw_text = ImageDraw.Draw(base_image)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):
@@ -38,7 +38,7 @@ class imageCreator():
         draw_text.text(((1100 - w) / 2, 925 + (50 - h) / 2), bet_text_upper, font=myFont, fill=(255, 255, 255))
         _, _, w, h = draw_text.textbbox((0, 0), bet_text_lower, font=myFont)
         draw_text.text(((1100 - w) / 2, 955 + (50 - h) / 2), bet_text_lower, font=myFont, fill=(255, 255, 255))
-        myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 50)
+        myFont = ImageFont.truetype('/assets/image_generator/Gidole-Regular.ttf', 50)
         _, _, w, h = draw_text.textbbox((0, 0), self.game_mode, font=myFont)
         draw_text.text(((1100 - w) / 2, (100 - h) / 2), self.game_mode, font=myFont, fill=(255, 255, 255))
         return self.img_to_bytes(base_image)

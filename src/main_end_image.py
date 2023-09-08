@@ -1,7 +1,7 @@
 import aiohttp
 from config import Settings
-from riot import riotAPI
-from end_image import EndImage
+from src.api.riot import riotAPI
+from commands.utility.end_image import EndImage
 import asyncio
 
 
@@ -12,7 +12,7 @@ async def main():
         "api_key": settings.RIOTTOKEN
     }
     puuid = await client.get_puuid("nightlon")
-    match = (await client.get_match_ids("puuid", puuid, count=5, queue_id=420))[0]
+    match = (await client.get_match_ids("puuid", puuid, count=5, queue_id=420))[3]
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match}", params=params) as response:
             response.raise_for_status()

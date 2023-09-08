@@ -1,7 +1,7 @@
 from io import BytesIO
 import aiohttp
 import copy
-from ddragon import get_latest_ddragon, get_champion_list, champion_splash
+from api.ddragon import get_latest_ddragon, get_champion_list, champion_splash
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -62,17 +62,22 @@ class EndImage():
 
 
     def missing_data(self, team, player):
+        print(player)
         team["elder"] = player["challenges"]["teamElderDragonKills"]
         team["assists"] += player["assists"]
         team["deaths"] += player["deaths"]
         team["gold"] += player["goldEarned"]
+        hero = False
+        if self.puuid == player["puuid"]:
+            hero = True
         team["players"].append({"name": player["summonerName"], "champ_id": player["championId"],
                                 "champ_name": player["championName"],
                                 "damage_dealt": player["totalDamageDealtToChampions"],
                                 "damage_taken": player["totalDamageTaken"],
                                 "kills": player["kills"],
                                 "deaths": player["deaths"],
-                                "assists": player["assists"]
+                                "assists": player["assists"],
+                                "hero": hero
                                 })
 
     async def get_team_image(self):
@@ -83,13 +88,13 @@ class EndImage():
         col_gray = (60, 60, 60)
         col_black = (0, 0, 0)
         # Define fonts
-        font_xll = ImageFont.truetype('../assets/Social Gothic Bold.otf', 90)
-        font_big = ImageFont.truetype('../assets/Social Gothic Bold.otf', 49)
-        font_small = ImageFont.truetype('../assets/Social Gothic Bold.otf', 25)
-        font_text_middle = ImageFont.truetype('../assets/nimbussannovt.ttf', 35)
+        font_xll = ImageFont.truetype('../assets/image_generator/Social Gothic Bold.otf', 90)
+        font_big = ImageFont.truetype('../assets/image_generator/Social Gothic Bold.otf', 49)
+        font_small = ImageFont.truetype('../assets/image_generator/Social Gothic Bold.otf', 25)
+        font_text_middle = ImageFont.truetype('../assets/image_generator/nimbussannovt.ttf', 35)
 
         base_image = Image.new(mode="RGB", size=(1920, 1080))
-        img = Image.open('../assets/end_image.png')
+        img = Image.open('../assets/image_generator/end_image.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
 
@@ -159,20 +164,37 @@ class EndImage():
                     base_image.paste(col_red, (1665 - int(250*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 30 + (205*indx), 1855, 100 + (205*indx)))
                     base_image.paste(col_gray, (1665 - int(250*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 140 + (205*indx), 1855, 210 + (205*indx)))
 
-        # Player names, damage numbers, and player champ images
+        # Player names, damage numbers, player champ images, kda
         for team_indx, team in enumerate(self.teams):
             for indx, player in enumerate(team["players"]):
                 kda = f"{player['kills']}/{player['deaths']}/{player['assists']}"
+                # Player name
                 _, _, w, h = draw_text.textbbox((0, 0), str(player['name']), font=font_small)
                 draw_text.text((1090 + (635*team_indx) - (w*team_indx), 60 + (205*indx) + (120-h)/2), str(player['name']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+                # Player damage dealt
                 _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_dealt']), font=font_small)
                 draw_text.text((1090 + (635*team_indx) - (w*team_indx), 5 + (205*indx) + (120-h)/2), str(player['damage_dealt']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+                # Player damage taken
                 _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
                 draw_text.text((1090 + (635*team_indx) - (w*team_indx), 115 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+                # Player image
                 champ_image: Image = await champion_splash(champ_list[str(player['champ_id'])])
                 champ_image: Image = champ_image.convert('RGBA')
                 pos = (960 + (775*team_indx), 55 + (205*indx))
                 base_image.paste(champ_image, pos, champ_image)
+                if player["hero"]:
+                    if self.won_team_id == self.player_team_id:
+                        img = Image.open('../assets/image_generator/crown.png')
+                        img = img.rotate(25)
+                        img = img.resize((75, 75))
+                        base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                    else:
+                        img = Image.open('../assets/image_generator/dunce.png')
+                        img = img.rotate(35)
+                        img = img.resize((75, 75))
+                        base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+
+                # Player kda
                 _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
                 draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
 
