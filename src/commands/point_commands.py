@@ -3,7 +3,7 @@ from config import Settings
 import discord
 import random
 import datetime
-from commands.commands_utility import role_check
+from commands.commands_utility import role_check, super_user_check
 from databases.betting_db import BettingDB
 from databases.main_db import MainDB
 
@@ -16,6 +16,27 @@ class PointCommands(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
+
+    @commands.command()
+    @super_user_check
+    async def give(self, ctx, _, amount):
+        async with ctx.typing():
+            try:
+                mentions = ctx.message.mentions
+                if len(mentions) == 0 or len(mentions) > 1:
+                    await ctx.send("Mention 1 person to grant points")
+                    return
+                self.main_db.increment_field(mentions[0].id, "points", int(amount))
+                points_bytes = self.main_db.get_user_field(mentions[0].id, "points")
+            except Exception as e:
+                await ctx.send(e)
+                return
+            points = points_bytes.decode('utf-8')
+            message = f'Total points: {points}'
+            embed = discord.Embed(title=f"{'You have been given some points'}\n\n",
+                                  description=f"{message}",
+                                  color=0xFF0000)
+            await ctx.send(embed=embed)
 
     @commands.command()
     @role_check
@@ -101,10 +122,10 @@ class PointCommands(commands.Cog):
         try:
             amount = int(args[1])
         except ValueError:
-            await ctx.send("Specify an integer amount larger than 0")
+            await ctx.send("Specify a whole number larger than 0")
             return
         if amount <= 0:
-            await ctx.send("Specify an integer amount larger than 0")
+            await ctx.send("Specify a whole number larger than 0")
             return
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)

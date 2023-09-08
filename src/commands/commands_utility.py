@@ -37,3 +37,19 @@ def mod_check(func):
             await ctx.send(f"Error occured during role check, Error: {e}")
             return
     return inner
+
+
+def super_user_check(func):
+    @functools.wraps(func)
+    async def inner(self, ctx, *args, **kwargs):
+        settings = Settings()
+        try:
+            if str(ctx.author.id) == str(settings.SUPERUSER):
+                print("super user validated")
+                return await func(self, ctx, *args, **kwargs)
+            else:
+                await ctx.send(f"You are not <@{settings.SUPERUSER}>")
+        except Exception as e:
+            await ctx.send(f"Error occured during role check, Error: {e}")
+            return
+    return inner
