@@ -1,12 +1,12 @@
 from io import BytesIO
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
+from ddragon import get_latest_ddragon
 
 
 class imageCreator():
 
-    def __init__(self, riot_api, champions, players, game_mode):
-        self.riot_api = riot_api
+    def __init__(self, champions, players, game_mode):
         self.champions = champions
         self.players = players
         self.game_mode = game_mode
@@ -28,19 +28,19 @@ class imageCreator():
             for champ_num, champ in enumerate(team):
                 champ_image: Image = await self.champion_splash(champ)
                 champ_image = champ_image.convert('RGBA')
-                position = (70+(520*team_num), 110+(170*champ_num))
+                position = (70 + (520 * team_num), 110 + (170 * champ_num))
                 base_image.paste(champ_image, position, champ_image)
-                position = (position[0]+130, position[1]+40)
+                position = (position[0] + 130, position[1] + 40)
                 draw_text.text(position, self.players[team_num][champ_num], fill=(255, 255, 255), font=myFont)
         bet_text_upper = "BETTING HAS STARTED"
         bet_text_lower = ".bet <win/lose> <amount>"
         _, _, w, h = draw_text.textbbox((0, 0), bet_text_upper, font=myFont)
-        draw_text.text(((1100-w)/2, 925+(50-h)/2), bet_text_upper, font=myFont, fill=(255, 255, 255))
+        draw_text.text(((1100 - w) / 2, 925 + (50 - h) / 2), bet_text_upper, font=myFont, fill=(255, 255, 255))
         _, _, w, h = draw_text.textbbox((0, 0), bet_text_lower, font=myFont)
-        draw_text.text(((1100-w)/2, 955+(50-h)/2), bet_text_lower, font=myFont, fill=(255, 255, 255))
+        draw_text.text(((1100 - w) / 2, 955 + (50 - h) / 2), bet_text_lower, font=myFont, fill=(255, 255, 255))
         myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 50)
         _, _, w, h = draw_text.textbbox((0, 0), self.game_mode, font=myFont)
-        draw_text.text(((1100-w)/2, (100-h)/2), self.game_mode, font=myFont, fill=(255, 255, 255))
+        draw_text.text(((1100 - w) / 2, (100 - h) / 2), self.game_mode, font=myFont, fill=(255, 255, 255))
         return self.img_to_bytes(base_image)
 
     def img_to_bytes(self, image: Image):
@@ -50,7 +50,7 @@ class imageCreator():
         return bytes
 
     async def champion_splash(self, champion):
-        version = await self.riot_api.get_latest_ddragon()
+        version = await get_latest_ddragon()
         async with aiohttp.ClientSession() as session:
             url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
             async with session.get(url) as resp:
