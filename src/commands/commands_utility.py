@@ -1,7 +1,7 @@
 from redis.exceptions import ConnectionError
 from config import Settings
 import functools
-from main_db import MainDB
+from databases.main_db import MainDB
 
 
 def role_check(func):

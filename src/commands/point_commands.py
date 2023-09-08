@@ -4,9 +4,8 @@ import discord
 import random
 import datetime
 from commands_utility import role_check
-from main_db import MainDB
-from betting_db import BettingDB
-
+from databases.betting_db import BettingDB
+from databases.main_db import MainDB
 
 class PointCommands(commands.Cog):
     def __init__(self, main_db, betting_db, g_role) -> None:

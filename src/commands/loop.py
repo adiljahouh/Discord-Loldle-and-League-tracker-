@@ -1,13 +1,13 @@
 from discord.ext import commands, tasks
 import discord
-from riot import riotAPI
+from api.riot import riotAPI
 from config import Settings
 from utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
-from main_db import MainDB
-from betting_db import BettingDB
+from databases.betting_db import BettingDB
+from databases.main_db import MainDB
 
 
 class loops(commands.Cog):

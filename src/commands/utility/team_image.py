@@ -1,7 +1,7 @@
 from io import BytesIO
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
-from ddragon import get_latest_ddragon
+from api.ddragon import get_latest_ddragon
 
 
 class imageCreator():

@@ -4,7 +4,7 @@ import asyncio
 import copy
 from ddragon import get_champion_list
 from merakia import pull_data
-from utility.get_roles import get_roles
+from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error

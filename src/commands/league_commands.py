@@ -1,10 +1,10 @@
 from discord.ext import commands
-from riot import riotAPI
+from api.riot import riotAPI
 import aiohttp
 from config import Settings
 import discord
 from commands_utility import role_check, mod_check
-from main_db import MainDB
+from databases.main_db import MainDB
 
 
 class LeagueCommands(riotAPI, commands.Cog):

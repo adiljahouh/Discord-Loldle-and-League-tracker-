@@ -2,6 +2,7 @@ from discord_handler import discBot, add_cog
 import asyncio
 from config import Settings
 
+import sys
 
 async def main():
     settings = Settings()
