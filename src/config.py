@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     REDISURL: str
     PLAYERROLE: int
     GROLE: int
+    PINGROLE: int
 
     class Config:
         env_file = ".env"

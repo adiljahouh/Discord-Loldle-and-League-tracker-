@@ -110,7 +110,8 @@ class PointCommands(commands.Cog):
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
             if state:
-                embed = discord.Embed(title=f"{str(ctx.author.name)} has bet {amount} points on {decision}")
+                embed = discord.Embed(title=f"{str(ctx.author.name)} has bet {amount} points on {decision}",
+                                      color=0xFF0000)
                 await ctx.send(embed=embed)
             else:
                 await ctx.send(f"Bet amount > point")
@@ -129,7 +130,7 @@ class PointCommands(commands.Cog):
             points = 0
         else:
             points = points.decode('utf8')
-        embed = discord.Embed(title=f"You have {points} points")
+        embed = discord.Embed(title=f"You have {points} points", color=0xFF0000)
         try:
             await ctx.send(embed=embed)
             print("Message sent successfully.")
