@@ -96,13 +96,13 @@ class EndImage:
         col_gray = (60, 60, 60)
         col_black = (0, 0, 0)
         # Define fonts
-        font_xll = ImageFont.truetype('./assets/image_generator/Social Gothic Bold.otf', 90)
-        font_big = ImageFont.truetype('./assets/image_generator/Social Gothic Bold.otf', 50)
-        font_small = ImageFont.truetype('./assets/image_generator/Social Gothic Bold.otf', 25)
-        font_text_middle = ImageFont.truetype('./assets/image_generator/nimbussannovt.ttf', 35)
+        font_xll = ImageFont.truetype('/assets/image_generator/Social Gothic Bold.otf', 90)
+        font_big = ImageFont.truetype('/assets/image_generator/Social Gothic Bold.otf', 50)
+        font_small = ImageFont.truetype('/assets/image_generator/Social Gothic Bold.otf', 25)
+        font_text_middle = ImageFont.truetype('/assets/image_generator/nimbussannovt.ttf', 35)
 
         base_image = Image.new(mode="RGB", size=(1920, 1080))
-        img = Image.open('./assets/image_generator/end_image.png')
+        img = Image.open('/assets/image_generator/end_image.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
         draw_text = ImageDraw.Draw(base_image)
@@ -190,12 +190,12 @@ class EndImage:
                 base_image.paste(champ_image, pos, champ_image)
                 if player["hero"]:
                     if self.won_team_id == self.player_team_id:
-                        img = Image.open('./assets/image_generator/crown.png')
+                        img = Image.open('/assets/image_generator/crown.png')
                         img = img.rotate(25)
                         img = img.resize((75, 75))
                         base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
                     else:
-                        img = Image.open('./assets/image_generator/dunce.png')
+                        img = Image.open('/assets/image_generator/dunce.png')
                         img = img.rotate(35)
                         img = img.resize((75, 75))
                         base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
