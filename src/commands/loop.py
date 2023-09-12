@@ -210,11 +210,6 @@ class loops(commands.Cog):
             print(e)
             return
         result = False
-        score = ""
-        for player in match_data['info']['participants']:
-            if player['summonerName'].lower() == self.active_user.lower():
-                result = player['win']
-                score = f"{player['kills']} / {player['deaths']} / {player['assists']}, bait pings: {player['baitPings']}\n"
         if result:
             description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
             winners = "believers"
@@ -222,7 +217,6 @@ class loops(commands.Cog):
             description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
             winners = "doubters"
 
-        description += score
         message: discord.Message = await channel.fetch_message(self.active_message_id)
         embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
                               description=description,

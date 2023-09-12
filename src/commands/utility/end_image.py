@@ -1,6 +1,4 @@
 from io import BytesIO
-import aiohttp
-import copy
 from api.ddragon import get_champion_list, champion_splash
 from PIL import Image, ImageDraw, ImageFont
 
@@ -78,7 +76,8 @@ class EndImage:
         hero = False
         if self.puuid == player["puuid"]:
             hero = True
-        team["players"].append({"name": player["summonerName"], "champ_id": player["championId"],
+        team["players"].append({"name": player["summonerName"],
+                                "champ_id": player["championId"],
                                 "champ_name": player["championName"],
                                 "damage_dealt": player["totalDamageDealtToChampions"],
                                 "damage_taken": player["totalDamageTaken"],
@@ -135,7 +134,7 @@ class EndImage:
         champ_list = await get_champion_list()
         for team_indx, team in enumerate(self.teams):
             for indx, ban in enumerate(team["bans"]):
-                # No bans should be skipped
+                # No-bans should be skipped
                 if str(ban) == "-1":
                     continue
                 champ_image: Image = await champion_splash(champ_list[str(ban)])
@@ -203,5 +202,4 @@ class EndImage:
                 # Player kda
                 _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
                 draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
-        # base_image.show()
         return img_to_bytes(base_image)
