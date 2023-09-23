@@ -1,7 +1,7 @@
 from io import BytesIO
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
-from api.ddragon import get_latest_ddragon
+from api.ddragon import champion_splash
 
 
 class imageCreator():
@@ -19,14 +19,14 @@ class imageCreator():
 
     async def get_team_image(self):
         base_image = Image.new(mode="RGB", size=(1100, 1020))
-        img = Image.open('/assets/team_background.png')
+        img = Image.open('/assets/image_generator/team_background.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
-        myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 37)
+        myFont = ImageFont.truetype('/assets/image_generator/Gidole-Regular.ttf', 37)
         draw_text = ImageDraw.Draw(base_image)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):
-                champ_image: Image = await self.champion_splash(champ)
+                champ_image: Image = await champion_splash(champ)
                 champ_image = champ_image.convert('RGBA')
                 position = (70 + (520 * team_num), 110 + (170 * champ_num))
                 base_image.paste(champ_image, position, champ_image)
@@ -38,7 +38,7 @@ class imageCreator():
         draw_text.text(((1100 - w) / 2, 925 + (50 - h) / 2), bet_text_upper, font=myFont, fill=(255, 255, 255))
         _, _, w, h = draw_text.textbbox((0, 0), bet_text_lower, font=myFont)
         draw_text.text(((1100 - w) / 2, 955 + (50 - h) / 2), bet_text_lower, font=myFont, fill=(255, 255, 255))
-        myFont = ImageFont.truetype('/assets/Gidole-Regular.ttf', 50)
+        myFont = ImageFont.truetype('/assets/image_generator/Gidole-Regular.ttf', 50)
         _, _, w, h = draw_text.textbbox((0, 0), self.game_mode, font=myFont)
         draw_text.text(((1100 - w) / 2, (100 - h) / 2), self.game_mode, font=myFont, fill=(255, 255, 255))
         return self.img_to_bytes(base_image)
@@ -48,13 +48,3 @@ class imageCreator():
         image.save(bytes, format="PNG")
         bytes.seek(0)
         return bytes
-
-    async def champion_splash(self, champion):
-        version = await get_latest_ddragon()
-        async with aiohttp.ClientSession() as session:
-            url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
-            async with session.get(url) as resp:
-                resp.raise_for_status()
-                if resp.status == 200:
-                    content = await resp.read()
-                    return Image.open(BytesIO(content))

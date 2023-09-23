@@ -69,14 +69,14 @@ class riotAPI():
                     content = await response.json()
                     return content
 
-    async def get_match_details_by_matchID(self, match_id):
+    async def get_full_match_details_by_matchID(self, match_id):
         # /lol/match/v5/matches/{matchId}
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
                                    params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
-                return content['info']['participants']
+                return content
 
     async def get_match_detail_by_matchID_and_filter_for_puuid(self, match_id, puuid):
         """
