@@ -203,3 +203,6 @@ class EndImage:
                 _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
                 draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
         return img_to_bytes(base_image)
+
+    def getGameResult(self):
+        return self.player_team_id == self.won_team_id
