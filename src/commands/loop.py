@@ -205,12 +205,12 @@ class loops(commands.Cog):
         try:
             endIm = EndImage(match_data, self.active_user)
             end_image = await endIm.get_team_image()
+            end_result = endIm.getGameResult()
             picture = discord.File(fp=end_image, filename="team.png")
         except Exception as e:
             print(e)
             return
-        result = False
-        if result:
+        if end_result:
             description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
             winners = "believers"
         else:
