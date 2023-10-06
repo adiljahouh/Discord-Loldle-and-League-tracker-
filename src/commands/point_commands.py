@@ -130,7 +130,7 @@ class PointCommands(commands.Cog):
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
             if state:
-                embed = discord.Embed(title=f"{str(ctx.author.name)} has bet {amount} points on {decision}",
+                embed = discord.Embed(title=f"{str(ctx.author.display_name)} has bet {amount} points on {decision}",
                                       color=0xFF0000)
                 await ctx.send(embed=embed)
             else:
