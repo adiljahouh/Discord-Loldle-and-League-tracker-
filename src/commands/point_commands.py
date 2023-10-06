@@ -128,7 +128,7 @@ class PointCommands(commands.Cog):
             await ctx.send("Specify a whole number larger than 0")
             return
         try:
-            state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.name), decision, amount)
+            state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.display_name), decision, amount)
             if state:
                 embed = discord.Embed(title=f"{str(ctx.author.display_name)} has bet {amount} points on {decision}",
                                       color=0xFF0000)
