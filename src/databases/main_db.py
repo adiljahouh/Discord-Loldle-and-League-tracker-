@@ -51,9 +51,14 @@ class MainDB():
         self.connect()
         return self.client.keys('*')
     
-    def get_all_users_sorted_by_field(self, field, desc, start, number) -> list[str]:
+    def get_all_users_sorted_by_field(self, field, desc, start, number) -> list[str, int]:
+        # Does only work if the field stores somes kind of integer :)
         self.connect()
-        return self.client.sort(f'*->{field}', desc=desc, start=start, number=number)
+        combo = [[user.decode('utf8'), int(self.get_user_field(user, field).decode('utf8'))] for user in self.get_all_users()]
+        combo.sort(key=lambda x: x[1], reverse=desc)
+        # This just works for some reason
+        # Idk why but it does not error even when accessing elements outside of the array
+        return combo[start:start+number+1]
 
     def check_user_existence(self, discord_id):
         self.connect()
