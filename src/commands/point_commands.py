@@ -172,6 +172,7 @@ class PointCommands(commands.Cog):
             leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, 0, 9)
         else:
             try:
+                page_number = int(args[0])
                 if page_number <= 0:
                     await ctx.send("Specify a whole number larger than 0")
                     return
