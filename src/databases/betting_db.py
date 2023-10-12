@@ -33,7 +33,7 @@ class BettingDB():
             return False
         return True if state.decode('utf8') == 'true' else False
 
-    def store_bet(self, discord_id, author_discord_tag, decision, amount):
+    def store_bet(self, discord_id, author_discord_display_name, decision, amount):
         points = self.DB_MAIN.get_user_field(discord_id, "points")
         if points is None:
             print("Not enough points")
@@ -50,7 +50,7 @@ class BettingDB():
             if bet == 0:
                 print("Bet does not exist")
                 self.client.hset(key, "amount", amount)
-                self.client.hset(key, "discord_tag", author_discord_tag)
+                self.client.hset(key, "discord_display_name", author_discord_display_name)
             else:
                 print("Bet does exist")
                 self.client.hincrby(key, "amount", amount)
@@ -83,11 +83,11 @@ class BettingDB():
             for decision in ['believers', 'doubters']:
                 key = discord_id + "_" + decision
                 amount = self.client.hget(key, "amount")
-                discord_tag = self.client.hget(key, "discord_tag")
-                if amount is None or discord_tag is None:
+                discord_display_name = self.client.hget(key, "discord_display_name")
+                if amount is None or discord_display_name is None:
                     continue
                 result[decision].append(
-                    {"name": discord_tag.decode('utf8'), "amount": amount.decode('utf8'), "discord_id": discord_id})
+                    {"name": discord_display_name.decode('utf8'), "amount": amount.decode('utf8'), "discord_id": discord_id})
         print(result)
         return result
 
