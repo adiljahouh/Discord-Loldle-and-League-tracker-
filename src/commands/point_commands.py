@@ -187,7 +187,7 @@ class PointCommands(commands.Cog):
         leaderboard_text = ''
         for index, user in enumerate(leaderboard):
             leaderboard_text += f'\n{index + 1 + ((page_number * 10) - 10)}. <@{user["discord_tag"]}> | {user["points"]} points'
-        description = f"99 percent of gamblers quit right before they hit it big! \n This is page {page_number}, to look at the next page use '.leaderboard 2'"
+        description = f"99 percent of gamblers quit right before they hit it big! \n This is page {page_number}, to look at the next page use '.leaderboard {page_number+1}'"
         embed = discord.Embed(title="Biggest gambling addicts 🃏\n\n", description=f"{description}", color=0xFF0000)
         embed.add_field(name="Top 10 point havers on the server", value=leaderboard_text)
         await ctx.send(embed=embed)
