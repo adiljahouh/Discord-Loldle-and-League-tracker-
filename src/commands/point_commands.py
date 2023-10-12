@@ -168,12 +168,11 @@ class PointCommands(commands.Cog):
         print("Leaderboard command")
         leaderboard = None
         page_number = 1
-        if args is None:
+        if len(args) == 0:
             leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, 0, 9)
         else:
             try:
-                page_number = int(args[0])
-                if(page_number < 0):
+                if page_number <= 0:
                     await ctx.send("Specify a whole number larger than 0")
                     return
                 page_size = 10
@@ -183,10 +182,9 @@ class PointCommands(commands.Cog):
             except ValueError:
                 await ctx.send("Specify a whole number larger than 0")
                 return
-        leaderboard = [user.decode('utf8') for user in leaderboard]
         leaderboard_text = ''
         for index, user in enumerate(leaderboard):
-            leaderboard_text += f'\n{index + 1 + ((page_number * 10) - 10)}. <@{user["discord_tag"]}> | {user["points"]} points'
+            leaderboard_text += f'\n{index + 1 + ((page_number * 10) - 10)}. <@{user[0]}> | {user[1]} points'
         description = f"99 percent of gamblers quit right before they hit it big! \n This is page {page_number}, to look at the next page use '.leaderboard {page_number+1}'"
         embed = discord.Embed(title="Biggest gambling addicts 🃏\n\n", description=f"{description}", color=0xFF0000)
         embed.add_field(name="Top 10 point havers on the server", value=leaderboard_text)
