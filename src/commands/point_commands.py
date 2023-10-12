@@ -159,6 +159,38 @@ class PointCommands(commands.Cog):
         except discord.HTTPException:
             print("Failed to send the message.")
 
+    @commands.command()
+    @role_check
+    async def leaderboard(self, ctx, *args):
+        """
+            Returns point leaderboard with pagination support
+        """
+        print("Leaderboard command")
+        leaderboard = None
+        page_number = 1
+        if args is None:
+            leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, 0, 9)
+        else:
+            try:
+                page_number = int(args[0])
+                if(page_number < 0):
+                    await ctx.send("Specify a whole number larger than 0")
+                    return
+                page_size = 10
+                start = (page_number - 1) * page_size
+                end = start + page_size - 1
+                leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, start, end)
+            except ValueError:
+                await ctx.send("Specify a whole number larger than 0")
+                return
+        leaderboard = [user.decode('utf8') for user in leaderboard]
+        leaderboard_text = ''
+        for index, user in enumerate(leaderboard):
+            leaderboard_text += f'\n{index + 1 + ((page_number * 10) - 10)}. <@{user["discord_tag"]}> | {user["points"]} points'
+        description = f"99 percent of gamblers quit right before they hit it big! \n This is page {page_number}, to look at the next page use '.leaderboard {page_number+1}'"
+        embed = discord.Embed(title="Biggest gambling addicts 🃏\n\n", description=f"{description}", color=0xFF0000)
+        embed.add_field(name="Top 10 point havers on the server", value=leaderboard_text)
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     settings = Settings()

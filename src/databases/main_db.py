@@ -50,6 +50,10 @@ class MainDB():
     def get_all_users(self) -> list[str]:
         self.connect()
         return self.client.keys('*')
+    
+    def get_all_users_sorted_by_field(self, field, desc, start, number) -> list[str]:
+        self.connect()
+        return self.client.sort(f'*->{field}', desc=desc, start=start, number=number)
 
     def check_user_existence(self, discord_id):
         self.connect()
