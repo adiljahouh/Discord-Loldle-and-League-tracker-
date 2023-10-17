@@ -38,9 +38,22 @@ class LeagueCommands(riotAPI, commands.Cog):
                     message = "Internal Server Error"
                 await ctx.send(message)
                 return
-            self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
-            response = f"**Riot ID**: {discord_userid}\
-            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
+            print(self.main_db.check_user_existence(discord_userid))
+            if self.main_db.check_user_existence(discord_userid) != 1:
+                print("doesnt exists")
+                self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
+                response = f"**Riot ID**: {discord_userid}\
+                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
+            else:
+                print("exists")
+                try:
+                    self.main_db.set_user_field(discord_userid, "riot_user", riot_name)
+                    self.main_db.set_user_field(discord_userid, "puuid", puuid)
+                    user :dict = self.main_db.get_user(discord_userid)
+                except Exception as ex:
+                    print(ex)
+                response = f"**Riot ID**: {discord_userid}\
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user['strikes']}\n**Points:** {user['points']}"
             try:
                 g_role = ctx.guild.get_role(self.g_role)
                 await ctx.author.add_roles(g_role)

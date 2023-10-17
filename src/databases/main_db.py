@@ -22,6 +22,13 @@ class MainDB():
         self.client.hset(discord_id, "strikes", strikes)
         self.client.hset(discord_id, "points", 500)
 
+    def get_user(self, discord_id) -> dict:
+        self.connect()
+        user_data = self.client.hgetall(discord_id)
+        if user_data:
+            # Convert byte literals to strings if needed
+            user_data = {k.decode('utf-8'): v.decode('utf-8') for k, v in user_data.items()}
+        return user_data
     def get_user_field(self, discord_id, field) -> (bytes | None):
         # field can be riot_user or puuid, strikes, daily
         # e.g.  121210930139 -> meshh -> 12132323
