@@ -54,7 +54,12 @@ class MainDB():
     def get_all_users_sorted_by_field(self, field, desc, start, number) -> list[str, int]:
         # Does only work if the field stores somes kind of integer :)
         self.connect()
-        combo = [[user.decode('utf8'), int(self.get_user_field(user, field).decode('utf8'))] for user in self.get_all_users()]
+        # for i in self.get_all_users():
+        #     print(i.decode('utf-8'))
+        #     print("points",  self.get_user_field(i.decode('utf-8'), "points"))
+        combo = [[user.decode('utf-8'), self.get_user_field(user.decode('utf-8'), field)] for user in self.get_all_users()]
+        combo = [[user[0], user[1].decode('utf-8')] for user in combo if user[1] is not None]
+        print("combo" ,combo)
         combo.sort(key=lambda x: x[1], reverse=desc)
         # This just works for some reason
         # Idk why but it does not error even when accessing elements outside of the array
