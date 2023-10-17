@@ -84,24 +84,24 @@ class LeagueCommands(riotAPI, commands.Cog):
                                   color=0xFF0000)
             await ctx.send(embed=embed)
 
-    @commands.command()
-    @mod_check
-    async def deregister(self, ctx):
-        """ deregister a user by calling .deregister <your_league_name>"""
-        async with ctx.typing():
-            author_discord_tag = str(ctx.author)
-            userid = str(ctx.author.id)
-            userinfo: dict = self.main_db.remove_and_return_all(userid)
-            if userinfo is not None:
-                response = f"**Riot ID**: {userid}\
-                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {userinfo[b'riot_user'].decode('utf-8')}\n" \
-                    f"**Strikes:** {userinfo[b'strikes'].decode('utf-8')}"
-            else:
-                response = "No user found for discord ID"
-            embed = discord.Embed(title="📠Deregistering User📠\n\n",
-                                  description=f"{response}",
-                                  color=0xFF0000)
-            await ctx.send(embed=embed)
+    # @commands.command()
+    # @mod_check
+    # async def deregister(self, ctx):
+    #     """ deregister a user by calling .deregister <your_league_name>"""
+    #     async with ctx.typing():
+    #         author_discord_tag = str(ctx.author)
+    #         userid = str(ctx.author.id)
+    #         userinfo: dict = self.main_db.remove_and_return_all(userid)
+    #         if userinfo is not None:
+    #             response = f"**Riot ID**: {userid}\
+    #             \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {userinfo[b'riot_user'].decode('utf-8')}\n" \
+    #                 f"**Strikes:** {userinfo[b'strikes'].decode('utf-8')}"
+    #         else:
+    #             response = "No user found for discord ID"
+    #         embed = discord.Embed(title="📠Deregistering User📠\n\n",
+    #                               description=f"{response}",
+    #                               color=0xFF0000)
+    #         await ctx.send(embed=embed)
 
     @commands.command()
     @role_check
