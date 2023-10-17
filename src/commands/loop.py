@@ -19,15 +19,9 @@ class loops(commands.Cog):
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
         self.ping_role = ping_role
-        self.old_active_game: int = 0
-        self.active_game: int = 0
-        self.active_message_id: discord.Message.id = 0
-        self.active_user = "nightlon"
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.active_game_searcher.start()
-        self.active_game_finisher.start()
         self.leaderboard.start()
         await asyncio.sleep(36000)  # 1800
         self.send_message.start()
@@ -120,151 +114,7 @@ class loops(commands.Cog):
             embed.add_field(name="Top Damage Taken Past 5 Games", value=leaderboard_text)
             await channel.send(embed=embed)
 
-    @tasks.loop(minutes=1.0)
-    async def active_game_searcher(self):
-        try:
-            print("active_game_searcher")
-            channel_id: int = self.channel_id
-            channel = self.bot.get_channel(channel_id)
-            try:
-                (active, data) = await self.riot_api.get_active_game_status(self.active_user)
-            except aiohttp.ClientResponseError as e:
-                # print("Failed to get active game status with error: ", e)
-                return
-            if not active or data[0] == self.active_game or data[0] == self.old_active_game:
-                return
-            message: discord.Message = None
-            embed = None
-            async with channel.typing():
-                self.active_game = data[0]
-                embed = discord.Embed(title=":skull::skull:  JEROEN IS IN GAME :skull::skull:\n"
-                                            "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
-                                      description="HE WILL SURELY WIN, RIGHT?",
-                                      color=0xFF0000)
-                champions = [[player[1] for player in team] for team in data[1]]
-                players = [[player[0] for player in team] for team in data[1]]
-                image_creator: imageCreator = imageCreator(champions, players, data[2])
-                try:
-                    img = await image_creator.get_team_image()
-                except aiohttp.ClientResponseError as e:
-                    print("Failed to get images for image creator with exception: ", e)
-                    return
-                picture = discord.File(fp=img, filename="team.png")
-                embed.set_image(url="attachment://team.png")
 
-                if channel is not None:
-                    try:
-                        if data[2] != "Custom":
-                            self.betting_db.enable_betting()
-                            message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
-                        else:
-                            message = await channel.send(file=picture, embed=embed)
-                        print("Message sent successfully.")
-                    except discord.Forbidden:
-                        print("I don't have permission to send messages to that channel.")
-                    except discord.HTTPException:
-                        print("Failed to send the message.")
-            if message is None:
-                return
-            if data[2] == "Custom":
-                return
-            self.active_message_id = message.id
-            await asyncio.sleep(self.betting_db.betting_time)
-            async with channel.typing():
-                all_bets = self.betting_db.get_all_bets()
-                for decision in all_bets.keys():
-                    text = ""
-                    for user in all_bets[decision]:
-                        text += f"{user['name']} **{user['amount']}**\n"
-                    embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
-                    if decision == "believers":
-                        embed.add_field(name='\u200b', value='\u200b')
-                try:
-                    await message.edit(embed=embed)
-                    embed = discord.Embed(title="Betting is no longer enabled",
-                                          color=0xFF0000)
-                    await channel.send(embed=embed)
-                    print("Message sent successfully.")
-                except discord.Forbidden:
-                    print("I don't have permission to send messages to that channel.")
-                except discord.HTTPException:
-                    print("Failed to send the message.")
-        except Exception as e:
-            print(e)
-            try:
-                channel_id: int = self.channel_id
-                channel = self.bot.get_channel(channel_id)
-                await channel.send(f"{e}")
-            except Exception as e:
-                print(e)
-
-    @tasks.loop(minutes=1.0)
-    async def active_game_finisher(self):
-        try:
-            print("active_game_finisher")
-            channel_id: int = self.channel_id
-            channel = self.bot.get_channel(channel_id)
-            if self.active_game == 0:
-                return
-            match_id = f'EUW1_{self.active_game}'
-            try:
-                match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
-            except aiohttp.ClientResponseError:
-                print("Game is still in progress")
-                return
-            try:
-                endIm = EndImage(match_data, self.active_user)
-                end_image = await endIm.get_team_image()
-                end_result = endIm.getGameResult()
-                picture = discord.File(fp=end_image, filename="team.png")
-            except Exception as e:
-                print(e)
-                return
-            if end_result:
-                description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
-                winners = "believers"
-            else:
-                description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
-                winners = "doubters"
-
-            message: discord.Message = await channel.fetch_message(self.active_message_id)
-            embed = discord.Embed(title=":skull::skull:  JEROEN'S GAME RESULT IS IN :skull::skull:\n\n",
-                                  description=description,
-                                  color=0xFF0000)
-            embed.set_image(url="attachment://team.png")
-            all_bets = self.betting_db.get_all_bets()
-            for decision in all_bets.keys():
-                text = ""
-                decide = "won" if decision == winners else "lost"
-                for user in all_bets[decision]:
-                    if decision == winners:
-                        self.main_db.increment_field(user['discord_id'], "points", 2*int(user['amount']))
-                    if decide == "won":
-                        text += f"{user['name']} has {decide} {2*int(user['amount'])} points\n"
-                    else:
-                        text += f"{user['name']} has {decide} {user['amount']} points\n"
-                embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
-                if decision == "believers":
-                    embed.add_field(name='\u200b', value='\u200b')
-            self.old_active_game = self.active_game
-            self.active_game = 0
-            if channel is not None:
-                try:
-                    self.betting_db.remove_all_bets()
-                    await channel.send(embed=embed, reference=message, file=picture)
-                    print("Message sent successfully.")
-                except discord.Forbidden:
-                    print("I don't have permission to send messages to that channel.")
-                except discord.HTTPException:
-                    print("Failed to send the message.")
-        except Exception as e:
-            print(e)
-            try:
-                channel_id: int = self.channel_id
-                channel = self.bot.get_channel(channel_id)
-                await channel.send(f"{e}")
-            except Exception as e:
-                print(e)
 
 
 async def setup(bot):
