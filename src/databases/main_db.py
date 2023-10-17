@@ -58,7 +58,7 @@ class MainDB():
         #     print(i.decode('utf-8'))
         #     print("points",  self.get_user_field(i.decode('utf-8'), "points"))
         combo = [[user.decode('utf-8'), self.get_user_field(user.decode('utf-8'), field)] for user in self.get_all_users()]
-        combo = [[user[0], user[1].decode('utf-8')] for user in combo if user[1] is not None]
+        combo = [[user[0], int(user[1].decode('utf-8'))] for user in combo if user[1] is not None]
         print("combo" ,combo)
         combo.sort(key=lambda x: x[1], reverse=desc)
         # This just works for some reason
