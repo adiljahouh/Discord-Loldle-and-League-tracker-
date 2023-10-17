@@ -8,11 +8,12 @@ from databases.main_db import MainDB
 
 
 class LeagueCommands(riotAPI, commands.Cog):
-    def __init__(self, main_db, riot_api, player_role_id, g_role) -> None:
+    def __init__(self, main_db, riot_api, player_role_id, g_role, jail_role) -> None:
         self.main_db = main_db
         self.riot_api: riotAPI = riot_api
         self.player_role = player_role_id
         self.g_role = g_role
+        self.jail_role = jail_role
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -22,6 +23,11 @@ class LeagueCommands(riotAPI, commands.Cog):
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
         async with ctx.typing():
+
+            has_jail_role = any(role.id == self.jail_role for role in ctx.author.roles)
+            if has_jail_role:
+                await ctx.send("HAHAHAHAHAHAH LOL!!! CONFESS YOUR SINS TO THE JUDGES")
+                return
             print("register")
             riot_name = "".join(args)
             if len(riot_name) == 0:
@@ -184,4 +190,4 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(LeagueCommands(main_db, riot_api, settings.PLAYERROLE, settings.GROLE))
+    await bot.add_cog(LeagueCommands(main_db, riot_api, settings.PLAYERROLE, settings.GROLE, settings.JAILROLE))
