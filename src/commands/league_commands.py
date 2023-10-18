@@ -8,11 +8,12 @@ from databases.main_db import MainDB
 
 
 class LeagueCommands(riotAPI, commands.Cog):
-    def __init__(self, main_db, riot_api, player_role_id, g_role) -> None:
+    def __init__(self, main_db, riot_api, player_role_id, g_role, jail_role) -> None:
         self.main_db = main_db
         self.riot_api: riotAPI = riot_api
         self.player_role = player_role_id
         self.g_role = g_role
+        self.jail_role = jail_role
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -22,6 +23,11 @@ class LeagueCommands(riotAPI, commands.Cog):
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
         async with ctx.typing():
+
+            has_jail_role = any(role.id == self.jail_role for role in ctx.author.roles)
+            if has_jail_role:
+                await ctx.send("HAHAHAHAHAHAH LOL!!! CONFESS YOUR SINS TO THE JUDGES")
+                return
             print("register")
             riot_name = "".join(args)
             if len(riot_name) == 0:
@@ -38,9 +44,22 @@ class LeagueCommands(riotAPI, commands.Cog):
                     message = "Internal Server Error"
                 await ctx.send(message)
                 return
-            self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
-            response = f"**Riot ID**: {discord_userid}\
-            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
+            print(self.main_db.check_user_existence(discord_userid))
+            if self.main_db.check_user_existence(discord_userid) != 1:
+                print("doesnt exists")
+                self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
+                response = f"**Riot ID**: {discord_userid}\
+                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
+            else:
+                print("exists")
+                try:
+                    self.main_db.set_user_field(discord_userid, "riot_user", riot_name)
+                    self.main_db.set_user_field(discord_userid, "puuid", puuid)
+                    user :dict = self.main_db.get_user(discord_userid)
+                except Exception as ex:
+                    print(ex)
+                response = f"**Riot ID**: {discord_userid}\
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user['strikes']}\n**Points:** {user['points']}"
             try:
                 g_role = ctx.guild.get_role(self.g_role)
                 await ctx.author.add_roles(g_role)
@@ -71,24 +90,24 @@ class LeagueCommands(riotAPI, commands.Cog):
                                   color=0xFF0000)
             await ctx.send(embed=embed)
 
-    @commands.command()
-    @mod_check
-    async def deregister(self, ctx):
-        """ deregister a user by calling .deregister <your_league_name>"""
-        async with ctx.typing():
-            author_discord_tag = str(ctx.author)
-            userid = str(ctx.author.id)
-            userinfo: dict = self.main_db.remove_and_return_all(userid)
-            if userinfo is not None:
-                response = f"**Riot ID**: {userid}\
-                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {userinfo[b'riot_user'].decode('utf-8')}\n" \
-                    f"**Strikes:** {userinfo[b'strikes'].decode('utf-8')}"
-            else:
-                response = "No user found for discord ID"
-            embed = discord.Embed(title="📠Deregistering User📠\n\n",
-                                  description=f"{response}",
-                                  color=0xFF0000)
-            await ctx.send(embed=embed)
+    # @commands.command()
+    # @mod_check
+    # async def deregister(self, ctx):
+    #     """ deregister a user by calling .deregister <your_league_name>"""
+    #     async with ctx.typing():
+    #         author_discord_tag = str(ctx.author)
+    #         userid = str(ctx.author.id)
+    #         userinfo: dict = self.main_db.remove_and_return_all(userid)
+    #         if userinfo is not None:
+    #             response = f"**Riot ID**: {userid}\
+    #             \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {userinfo[b'riot_user'].decode('utf-8')}\n" \
+    #                 f"**Strikes:** {userinfo[b'strikes'].decode('utf-8')}"
+    #         else:
+    #             response = "No user found for discord ID"
+    #         embed = discord.Embed(title="📠Deregistering User📠\n\n",
+    #                               description=f"{response}",
+    #                               color=0xFF0000)
+    #         await ctx.send(embed=embed)
 
     @commands.command()
     @role_check
@@ -171,4 +190,4 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(LeagueCommands(main_db, riot_api, settings.PLAYERROLE, settings.GROLE))
+    await bot.add_cog(LeagueCommands(main_db, riot_api, settings.PLAYERROLE, settings.GROLE, settings.JAILROLE))
