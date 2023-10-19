@@ -180,7 +180,7 @@ class LeagueCommands(riotAPI, commands.Cog):
             elif args[0] != "add" and args[0] != "remove":
                 await ctx.send("Use .stalk <add/remove> <ign>")
                 return
-            summoner = "".join(args[1:])
+            summoner = "".join(args[1:]).lower()
             if args[0] == "add":
                 self.stalking_db.store_user(summoner)
                 embed = discord.Embed(title=f"Victim added: {summoner}",

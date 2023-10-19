@@ -106,14 +106,14 @@ class EndImage:
         base_image.paste(img, (0, 0), img)
         draw_text = ImageDraw.Draw(base_image)
 
-        result = "Lost"
+        result = "LOST"
         color = col_red
         if self.player_team_id == self.won_team_id:
-            result = "Won"
+            result = "WON"
             color = col_green
         # Show gameresult
-        _, _, w, h = draw_text.textbbox((0, 0), f"Jeroen {result}", font=font_xll)
-        draw_text.text((105+(775-w)/2, (243-h)/2), f"Jeroen {result}", font=font_xll, fill=color)
+        _, _, w, h = draw_text.textbbox((0, 0), f"{self.name.upper()} {result}", font=font_xll)
+        draw_text.text((105+(775-w)/2, (243-h)/2), f"{self.name.upper()} {result}", font=font_xll, fill=color)
         # Show gametime
         _, _, w, h = draw_text.textbbox((0, 0), f"Gametime {self.game_time}", font=font_text_middle)
         draw_text.text((105+(775-w)/2, 180+(134-h)/2), f"Gametime {self.game_time}", font=font_text_middle, fill=col_white)

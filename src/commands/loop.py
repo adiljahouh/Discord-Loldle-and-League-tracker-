@@ -21,12 +21,12 @@ class loops(commands.Cog):
         self.riot_api: riotAPI = riot_api
         self.channel_id: int = channel_id
         self.ping_role = ping_role
-        self.victim = ""
+        self.active_message_id = 0
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.activate_stalking.start()
-        self.done_stalking.start()
+        self.end_stalking.start()
         self.leaderboard.start()
         await asyncio.sleep(36000)  # 1800
         self.send_message.start()
@@ -133,24 +133,28 @@ class loops(commands.Cog):
             found = False
             active = False
             data = None
-            for victim in victims:
+            victim = ""
+            for pos_victim in victims:
                 try:
-                    (active, data) = await self.riot_api.get_active_game_status(victim)
-                    print(f"{victim}: {active}")
+                    (active, data) = await self.riot_api.get_active_game_status(pos_victim)
+                    print(f"{pos_victim}: {active}")
                 except aiohttp.ClientResponseError as e:
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
                 if active:
-                    self.victim = victim
+                    victim = pos_victim
                     found = True
                     break
             if not found:
                 print("No active user was found")
                 return
+            # If game was already highlighted, dont show it again
+            if self.stalking_db.current_game == data[0]:
+                return
             message = None
             embed = None
             async with channel.typing():
-                embed = discord.Embed(title=f":skull::skull:  {self.victim.upper()} IS IN GAME :skull::skull:\n"
+                embed = discord.Embed(title=f":skull::skull:  {victim.upper()} IS IN GAME :skull::skull:\n"
                                             "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                       description="HE WILL SURELY WIN, RIGHT?",
                                       color=0xFF0000)
@@ -168,18 +172,21 @@ class loops(commands.Cog):
                 if channel is not None:
                     try:
                         if data[2] != "Custom":
+                            self.stalking_db.custom = False
                             self.betting_db.enable_betting()
                             message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
                         else:
+                            self.stalking_db.custom = True
                             message = await channel.send(file=picture, embed=embed)
                         print("Message sent successfully.")
                     except Exception as e:
                         print(e)
                         return
-            # TODO: Set the user status to True
-            # TODO: Set the active game
+            self.stalking_db.change_status(victim, True)
+            self.stalking_db.current_game = data[0]
             if data[2] == "Custom":
                 return
+            self.active_message_id = message.id
             await asyncio.sleep(self.betting_db.betting_time)
             async with channel.typing():
                 all_bets = self.betting_db.get_all_bets()
@@ -205,7 +212,72 @@ class loops(commands.Cog):
             except Exception as e:
                 print(e)
 
-    
+    @tasks.loop(minutes=1.0)
+    async def end_stalking(self):
+        print("End stalking")
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
+        try:
+            victim = self.stalking_db.get_active_user()
+            print(f"Active victim: {victim}")
+            if victim is None:
+                return
+            match_id = f'EUW1_{self.stalking_db.current_game}'
+            try:
+                match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
+            except aiohttp.ClientResponseError:
+                print("Game is still in progress")
+                return
+            try:
+                endIm = EndImage(match_data, victim)
+                end_image = await endIm.get_team_image()
+                end_result = endIm.getGameResult()
+                picture = discord.File(fp=end_image, filename="team.png")
+            except Exception as e:
+                print(e)
+                return
+            self.stalking_db.change_status(victim, False)
+            if end_result:
+                description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
+                winners = "believers"
+            else:
+                description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
+                winners = "doubters"
+
+            message: discord.Message = await channel.fetch_message(self.active_message_id)
+            embed = discord.Embed(title=f":skull::skull:  {victim.upper()}'S GAME RESULT IS IN :skull::skull:\n\n",
+                                  description=description,
+                                  color=0xFF0000)
+            embed.set_image(url="attachment://team.png")
+            all_bets = self.betting_db.get_all_bets()
+            for decision in all_bets.keys():
+                text = ""
+                decide = "won" if decision == winners else "lost"
+                for user in all_bets[decision]:
+                    if decision == winners:
+                        self.main_db.increment_field(user['discord_id'], "points", 2*int(user['amount']))
+                    if decide == "won":
+                        text += f"{user['name']} has {decide} {2*int(user['amount'])} points\n"
+                    else:
+                        text += f"{user['name']} has {decide} {user['amount']} points\n"
+                embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
+                if decision == "believers":
+                    embed.add_field(name='\u200b', value='\u200b')
+            if channel is not None:
+                try:
+                    self.betting_db.remove_all_bets()
+                    await channel.send(embed=embed, reference=message, file=picture)
+                    print("Message sent successfully.")
+                except discord.Forbidden:
+                    print("I don't have permission to send messages to that channel.")
+                except discord.HTTPException:
+                    print("Failed to send the message.")
+
+
+
+        except Exception as e:
+            print(e)
+
 
 
 

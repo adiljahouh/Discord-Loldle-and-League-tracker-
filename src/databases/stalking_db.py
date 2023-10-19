@@ -11,6 +11,8 @@ class StalkingDB():
     def __init__(self, url) -> None:
         self.url = url
         self.client = None
+        self.current_game = 0
+        self.custom = False
         pass
 
     def connect(self):
@@ -46,7 +48,6 @@ class StalkingDB():
         clients = self.client.keys('*')
         clients_deco = [str(client.decode('utf-8')) for client in clients]
         for client in clients_deco:
-            print(self.get_user_status(client))
             if self.get_user_status(client):
                 return client
         return None
