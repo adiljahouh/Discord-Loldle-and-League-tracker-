@@ -202,7 +202,7 @@ class LeagueCommands(riotAPI, commands.Cog):
         desc = ""
         for user in users:
             desc += f"\n{user}"
-        embed = discord.Embed(title=f"Victims of Stalking", description=f"{desc}",
+        embed = discord.Embed(title=f"Stalking Victims", description=f"{desc}",
                               color=0xFF0000)
         await ctx.send(embed=embed)
 
