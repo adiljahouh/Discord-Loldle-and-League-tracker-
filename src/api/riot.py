@@ -184,6 +184,7 @@ class riotAPI():
 
         return player_details
 
+    # Method must be caught with an aiohttp.ClientResponseError
     async def get_active_game_status(self, user):
         account_id = await self.get_account_id(user)
         async with aiohttp.ClientSession() as session:
@@ -218,11 +219,7 @@ class riotAPI():
                         team_one.append([summonerName, int(participant['championId'])])
                     else:
                         team_two.append([summonerName, int(participant['championId'])])
-                try:
-                    champion_roles = pull_data()
-                except Exception as e:
-                    print(e)
-                    return
+                champion_roles = await pull_data()
                 team_one = self.order_team(champion_roles, team_one, champion_list)
                 team_two = self.order_team(champion_roles, team_two, champion_list)
                 if team == 200:
