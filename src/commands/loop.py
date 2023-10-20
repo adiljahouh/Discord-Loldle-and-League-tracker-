@@ -208,9 +208,9 @@ class loops(commands.Cog):
         # Send the error in Discord
         except Exception as e:
             try:
-                await channel.send(f"{e}")
+                await channel.send(f"Activate stalking error: {e}")
             except Exception as e:
-                print(e)
+                print(f"Activate stalking error: {e}")
 
     @tasks.loop(minutes=1.0)
     async def end_stalking(self):
@@ -275,8 +275,12 @@ class loops(commands.Cog):
 
 
 
+        # Send the error in Discord
         except Exception as e:
-            print(e)
+            try:
+                await channel.send(f"End stalking error: {e}")
+            except Exception as e:
+                print(f"End stalking error: {e}")
 
 
 
