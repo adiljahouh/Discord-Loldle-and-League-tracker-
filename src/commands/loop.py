@@ -137,6 +137,8 @@ class loops(commands.Cog):
             for pos_victim in victims:
                 try:
                     (active, data) = await self.riot_api.get_active_game_status(pos_victim)
+                    # Small 1 second delay to not spam the requests
+                    await asyncio.sleep(1)
                     print(f"{pos_victim}: {active}")
                 except aiohttp.ClientResponseError as e:
                     # print(victim, " Failed to get active game status with error: ", e)
@@ -237,6 +239,7 @@ class loops(commands.Cog):
                 print(e)
                 return
             self.stalking_db.change_status(victim, False)
+            self.betting_db.disable_betting()
             if end_result:
                 description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
                 winners = "believers"

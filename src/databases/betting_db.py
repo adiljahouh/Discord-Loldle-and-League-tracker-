@@ -24,6 +24,13 @@ class BettingDB():
         self.client.set("enable", "true")
         self.client.expire("enable", time=self.betting_time)
 
+    # If the betting state is enabled, disable it
+    def disable_betting(self):
+        print("Betting disabled")
+        if self.get_betting_state():
+            self.connect()
+            self.client.delete("enable")
+
     # Get the current betting state
     # Returns a boolean
     def get_betting_state(self):
