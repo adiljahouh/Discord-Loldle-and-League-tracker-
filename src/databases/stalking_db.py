@@ -7,6 +7,8 @@ from redis.exceptions import ConnectionError
     Keys are the users getting stalked
     Status is if the user is currently getting bet on
 """
+
+
 class StalkingDB():
     def __init__(self, url):
         self.url = url
@@ -51,6 +53,3 @@ class StalkingDB():
             if self.get_user_status(client):
                 return client
         return None
-
-
-

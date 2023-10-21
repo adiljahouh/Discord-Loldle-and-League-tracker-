@@ -233,7 +233,7 @@ class loops(commands.Cog):
             try:
                 endIm = EndImage(match_data, victim)
                 end_image = await endIm.get_team_image()
-                end_result = endIm.getGameResult()
+                end_result = endIm.get_game_result()
                 picture = discord.File(fp=end_image, filename="team.png")
             except Exception as e:
                 print(e)
@@ -275,9 +275,6 @@ class loops(commands.Cog):
                     print("I don't have permission to send messages to that channel.")
                 except discord.HTTPException:
                     print("Failed to send the message.")
-
-
-
         # Send the error in Discord
         except Exception as e:
             try:

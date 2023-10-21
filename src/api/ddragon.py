@@ -22,6 +22,7 @@ async def get_champion_list():
                 champ_list.update({value['key']: attribute})
             return champ_list
 
+
 async def champion_splash(champion):
     version = await get_latest_ddragon()
     async with aiohttp.ClientSession() as session:

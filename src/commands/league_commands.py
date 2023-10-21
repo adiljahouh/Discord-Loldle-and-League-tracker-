@@ -171,7 +171,7 @@ class LeagueCommands(riotAPI, commands.Cog):
     @mod_check
     async def victim(self, ctx, *args):
         """
-            Add or remove a stalking victim: .stalk <add/remove> <ign>
+            Add or remove a stalking victim: .victim <add/remove> <ign>
         """
         async with ctx.typing():
             if len(args) < 2:
@@ -191,10 +191,9 @@ class LeagueCommands(riotAPI, commands.Cog):
                                       color=0xFF0000)
             await ctx.send(embed=embed)
 
-
     @commands.command()
-    @mod_check
-    async def get_victims(self, ctx):
+    @role_check
+    async def victims(self, ctx):
         """
             Return all victims
         """
@@ -205,18 +204,6 @@ class LeagueCommands(riotAPI, commands.Cog):
         embed = discord.Embed(title=f"Stalking Victims", description=f"{desc}",
                               color=0xFF0000)
         await ctx.send(embed=embed)
-
-    @commands.command()
-    @mod_check
-    async def get_active_victims(self, ctx):
-        await ctx.send(self.stalking_db.get_active_user())
-
-    @commands.command()
-    @mod_check
-    async def change_status(self, ctx, *args):
-        summoner = "".join(args[:])
-        self.stalking_db.change_status(summoner, True)
-
 
 
 async def setup(bot):
