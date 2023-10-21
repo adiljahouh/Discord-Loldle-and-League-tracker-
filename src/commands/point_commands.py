@@ -6,6 +6,7 @@ import datetime
 from commands.commands_utility import role_check, super_user_check
 from databases.betting_db import BettingDB
 from databases.main_db import MainDB
+import pytz
 
 class PointCommands(commands.Cog):
     def __init__(self, main_db, betting_db, g_role) -> None:
@@ -43,7 +44,8 @@ class PointCommands(commands.Cog):
     async def daily(self, ctx):
         async with ctx.typing():
             try:
-                today = datetime.datetime.now().date()
+                amsterdam_tz = pytz.timezone('Europe/Amsterdam')
+                today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_claim")
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
