@@ -26,12 +26,13 @@ def mod_check(func):
     @functools.wraps(func)
     async def inner(self, ctx, *args, **kwargs):
         print("In mod_check")
+        settings = Settings()
         try:
             for role in ctx.author.roles:
-                if role.id == self.player_role:
+                if role.id == settings.PLAYERROLE:
                     print("Moderator validated")
                     return await func(self, ctx, *args, **kwargs)
-            required_role = ctx.guild.get_role(self.player_role)
+            required_role = ctx.guild.get_role(settings.PLAYERROLE)
             await ctx.send(f"You need the {required_role.mention} role to use this command.")
         except Exception as e:
             await ctx.send(f"Error occured during role check, Error: {e}")
