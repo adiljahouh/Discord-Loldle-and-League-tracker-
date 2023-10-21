@@ -48,7 +48,7 @@ class LeagueCommands(riotAPI, commands.Cog):
             if self.main_db.check_user_existence(discord_userid) != 1:
                 print("doesnt exists")
                 self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
-                response = f"**Riot ID**: {discord_userid}\
+                response = f"**Discord ID**: {discord_userid}\
                 \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
             else:
                 print("exists")
@@ -58,7 +58,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     user :dict = self.main_db.get_user(discord_userid)
                 except Exception as ex:
                     print(ex)
-                response = f"**Riot ID**: {discord_userid}\
+                response = f"**Discord ID**: {discord_userid}\
             \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user['strikes']}\n**Points:** {user['points']}"
             try:
                 g_role = ctx.guild.get_role(self.g_role)
