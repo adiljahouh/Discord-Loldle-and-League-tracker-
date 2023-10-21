@@ -8,7 +8,7 @@ from redis.exceptions import ConnectionError
     Status is if the user is currently getting bet on
 """
 class StalkingDB():
-    def __init__(self, url) -> None:
+    def __init__(self, url):
         self.url = url
         self.client = None
         self.current_game = 0
@@ -33,12 +33,12 @@ class StalkingDB():
         self.connect()
         self.client.hset(ign, "status", str(status))
 
-    def get_all_users(self) -> list[str]:
+    def get_all_users(self):
         self.connect()
         clients = self.client.keys('*')
         return [str(client.decode('utf-8')) for client in clients]
 
-    def get_user_status(self, ign) -> bool:
+    def get_user_status(self, ign):
         self.connect()
         status = self.client.hget(ign, "status")
         return status.decode('utf-8') == 'True'
