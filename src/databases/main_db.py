@@ -70,7 +70,7 @@ class MainDB():
         combo.sort(key=lambda x: x[1], reverse=desc)
         # This just works for some reason
         # Idk why but it does not error even when accessing elements outside of the array
-        return combo[start:start+number+1]
+        return combo[start:start+number]
 
     def check_user_existence(self, discord_id):
         self.connect()

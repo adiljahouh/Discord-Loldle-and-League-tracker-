@@ -171,18 +171,17 @@ class PointCommands(commands.Cog):
             print("Leaderboard command")
             leaderboard = None
             page_number = 1
+            page_size = 10
             if len(args) == 0:
-                leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, 0, 9)
+                leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, 0, page_size)
             else:
                 try:
                     page_number = int(args[0])
                     if page_number <= 0:
                         await ctx.send("Specify a whole number larger than 0")
                         return
-                    page_size = 10
                     start = (page_number - 1) * page_size
-                    end = start + page_size - 1
-                    leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, start, end)
+                    leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, start, page_size)
                 except ValueError:
                     await ctx.send("Specify a whole number larger than 0")
                     return
