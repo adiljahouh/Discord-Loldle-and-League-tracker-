@@ -5,11 +5,13 @@ from config import Settings
 import discord
 from commands.commands_utility import role_check, mod_check
 from databases.main_db import MainDB
+from databases.stalking_db import StalkingDB
 
 
 class LeagueCommands(riotAPI, commands.Cog):
-    def __init__(self, main_db, riot_api, player_role_id, g_role, jail_role) -> None:
+    def __init__(self, main_db, stalking_db, riot_api, player_role_id, g_role, jail_role) -> None:
         self.main_db = main_db
+        self.stalking_db = stalking_db
         self.riot_api: riotAPI = riot_api
         self.player_role = player_role_id
         self.g_role = g_role
@@ -184,10 +186,49 @@ class LeagueCommands(riotAPI, commands.Cog):
                         message = "Player is not in a clash team"
                     await ctx.send(message)
 
+    @commands.command()
+    @mod_check
+    async def victim(self, ctx, *args):
+        """
+            Add or remove a stalking victim: .victim <add/remove> <ign>
+        """
+        async with ctx.typing():
+            if len(args) < 2:
+                await ctx.send("Use .stalk <add/remove> <ign>")
+                return
+            elif args[0] != "add" and args[0] != "remove":
+                await ctx.send("Use .stalk <add/remove> <ign>")
+                return
+            summoner = " ".join(args[1:]).lower()
+            if args[0] == "add":
+                self.stalking_db.store_user(summoner)
+                embed = discord.Embed(title=f"Victim added: {summoner}",
+                                      color=0xFF0000)
+            else:
+                self.stalking_db.remove_user(summoner)
+                embed = discord.Embed(title=f"Victim removed: {summoner}",
+                                      color=0xFF0000)
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @role_check
+    async def victims(self, ctx):
+        """
+            Return all victims
+        """
+        users = self.stalking_db.get_all_users()
+        desc = ""
+        for user in users:
+            desc += f"\n{user}"
+        embed = discord.Embed(title=f"Stalking Victims", description=f"{desc}",
+                              color=0xFF0000)
+        await ctx.send(embed=embed)
+
 
 async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
+    stalking_db = StalkingDB(settings.REDISURL)
     riot_api = riotAPI(settings.RIOTTOKEN)
     print("adding commands...")
-    await bot.add_cog(LeagueCommands(main_db, riot_api, settings.PLAYERROLE, settings.GROLE, settings.JAILROLE))
+    await bot.add_cog(LeagueCommands(main_db, stalking_db, riot_api, settings.PLAYERROLE, settings.GROLE, settings.JAILROLE))

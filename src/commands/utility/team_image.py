@@ -1,5 +1,4 @@
 from io import BytesIO
-import aiohttp
 from PIL import Image, ImageDraw, ImageFont
 from api.ddragon import champion_splash
 
