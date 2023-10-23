@@ -3,7 +3,7 @@ from api.riot import riotAPI
 import aiohttp
 from config import Settings
 import discord
-from commands.commands_utility import role_check, mod_check
+from commands.commands_utility import role_check, mod_check, super_user_check
 from databases.main_db import MainDB
 from databases.stalking_db import StalkingDB
 
@@ -187,7 +187,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     await ctx.send(message)
 
     @commands.command()
-    @mod_check
+    @super_user_check
     async def victim(self, ctx, *args):
         """
             Add or remove a stalking victim: .victim <add/remove> <ign>
