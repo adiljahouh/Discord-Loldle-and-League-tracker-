@@ -187,7 +187,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     await ctx.send(message)
 
     @commands.command()
-    @super_user_check
+    @mod_check
     async def victim(self, ctx, *args):
         """
             Add or remove a stalking victim: .victim <add/remove> <ign>
