@@ -136,22 +136,20 @@ class loops(commands.Cog):
             victim = ""
             for pos_victim in victims:
                 try:
-                    (active, data) = await self.riot_api.get_active_game_status(pos_victim)
                     # Small 1 second delay to not spam the requests
                     await asyncio.sleep(1)
+                    (active, data) = await self.riot_api.get_active_game_status(pos_victim)
                     print(f"{pos_victim}: {active}")
                 except aiohttp.ClientResponseError as e:
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
-                if active:
+                # If game was already highlighted, dont show it again and look for another active game
+                if active and self.stalking_db.current_game != data[0]:
                     victim = pos_victim
                     found = True
                     break
             if not found:
                 print("No active user was found")
-                return
-            # If game was already highlighted, dont show it again
-            if self.stalking_db.current_game == data[0]:
                 return
             message = None
             embed = None
@@ -175,8 +173,8 @@ class loops(commands.Cog):
                     try:
                         if data[2] != "Custom":
                             self.stalking_db.custom = False
-                            self.betting_db.enable_betting()
                             message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
+                            self.betting_db.enable_betting()
                         else:
                             self.stalking_db.custom = True
                             message = await channel.send(file=picture, embed=embed)
@@ -184,12 +182,21 @@ class loops(commands.Cog):
                     except Exception as e:
                         print(e)
                         return
-            self.stalking_db.change_status(victim, True)
             self.stalking_db.current_game = data[0]
             if data[2] == "Custom":
                 return
+            # Only when there is no custom game we lock the highlighted player
+            # Otherwise, we just show the game screen and continue with our lives
+            self.stalking_db.change_status(victim, True)
             self.active_message_id = message.id
             await asyncio.sleep(self.betting_db.betting_time)
+            # Send betting is no longer available
+            try:
+                embed = discord.Embed(title="Betting is no longer enabled",
+                                      color=0xFF0000)
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"Betting no longer enabled message failed: {e}")
             async with channel.typing():
                 all_bets = self.betting_db.get_all_bets()
                 for decision in all_bets.keys():
@@ -201,12 +208,9 @@ class loops(commands.Cog):
                         embed.add_field(name='\u200b', value='\u200b')
                 try:
                     await message.edit(embed=embed)
-                    embed = discord.Embed(title="Betting is no longer enabled",
-                                          color=0xFF0000)
-                    await channel.send(embed=embed)
-                    print("Message sent successfully.")
+                    print("Starting message updated.")
                 except Exception as e:
-                    print(e)
+                    print(f"Failed to update message: {e}")
         # Send the error in Discord
         except Exception as e:
             try:
