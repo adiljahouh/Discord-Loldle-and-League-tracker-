@@ -74,10 +74,13 @@ class AnimalCommands(commands.Cog):
         """
         # TODO: add retry logic
         async with ctx.typing():
-            img = random.choice(os.listdir('/assets/catboys'))
+            try:
+                img = random.choice(os.listdir('/assets/catboys'))
+            except:
+                print("something wrong getting image")
             message = "coming soon..."
             await ctx.send(message)
-            
+
     @commands.command()
     @role_check
     @mod_check
