@@ -76,10 +76,9 @@ class AnimalCommands(commands.Cog):
         async with ctx.typing():
             try:
                 img = random.choice(os.listdir('/assets/catboys'))
+                await ctx.send(img)
             except:
-                print("something wrong getting image")
-            message = "coming soon..."
-            await ctx.send(message)
+                ctx.send("Something wrong with getting image")
 
     @commands.command()
     @role_check

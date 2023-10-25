@@ -206,6 +206,7 @@ class riotAPI():
                     700: "Clash"
                 }
                 game_length = int(content['gameLength'])
+                game_type = int(content['gameQueueConfigId'])
                 game_mode = game_mode_mapping[int(content['gameQueueConfigId'])]
                 champion_list = await get_champion_list()
                 text_arr = [content['gameId'], []]
@@ -230,7 +231,7 @@ class riotAPI():
                     text_arr[1].append(team_one)
                     text_arr[1].append(team_two)
                 text_arr.append(game_mode)
-                return (True, text_arr), game_length
+                return (True, text_arr), game_length, game_type
 
     async def get_clash_team_id(self, account_id):
         async with aiohttp.ClientSession() as session:
