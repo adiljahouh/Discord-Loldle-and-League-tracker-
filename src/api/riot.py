@@ -195,7 +195,7 @@ class riotAPI():
                 content = await response.json()
                 status = response.status
                 if status == 404:
-                    return (False, "User not in game")
+                    return False, "User not in game", None, None
                 game_mode_mapping = {
                     0: "Custom",
                     400: "Normal",
@@ -207,7 +207,10 @@ class riotAPI():
                 }
                 game_length = int(content['gameLength'])
                 game_type = int(content['gameQueueConfigId'])
-                game_mode = game_mode_mapping[int(content['gameQueueConfigId'])]
+                if game_type in game_mode_mapping:
+                    game_mode = game_mode_mapping[game_type]
+                else:
+                    game_mode = content['gameMode']
                 champion_list = await get_champion_list()
                 text_arr = [content['gameId'], []]
                 team_one = []
@@ -231,7 +234,7 @@ class riotAPI():
                     text_arr[1].append(team_one)
                     text_arr[1].append(team_two)
                 text_arr.append(game_mode)
-                return (True, text_arr), game_length, game_type
+                return True, text_arr, game_length, game_type
 
     async def get_clash_team_id(self, account_id):
         async with aiohttp.ClientSession() as session:

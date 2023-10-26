@@ -137,19 +137,16 @@ class loops(commands.Cog):
             for pos_victim in victims:
                 try:
                     # Small 1 second delay to not spam the requests
-                    print("test, ", pos_victim)
+                    print(pos_victim)
                     await asyncio.sleep(1)
-                    (active, data), game_length, game_type = await self.riot_api.get_active_game_status(pos_victim)
-
-                    print(f"{pos_victim}: {active}")
-                    print(data[0])
+                    active, data, game_length, game_type = await self.riot_api.get_active_game_status(pos_victim)
                 except aiohttp.ClientResponseError as e:
                     print(e)
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
                 if game_length > 600 or game_type != 420:
-                    print("continueing, gametype/gamelength incorrect")
+                    print("Continuing, gametype/gamelength incorrect")
                     print(game_type, game_length)
                     continue
                 if active and self.stalking_db.current_game != data[0]:
@@ -200,9 +197,9 @@ class loops(commands.Cog):
             await asyncio.sleep(self.betting_db.betting_time)
             # Send betting is no longer available
             try:
-                embed = discord.Embed(title="Betting is no longer enabled",
+                embed_bet = discord.Embed(title="Betting is no longer enabled",
                                       color=0xFF0000)
-                await channel.send(embed=embed)
+                await channel.send(embed=embed_bet)
             except Exception as e:
                 print(f"Betting no longer enabled message failed: {e}")
             async with channel.typing():
@@ -223,6 +220,7 @@ class loops(commands.Cog):
         except Exception as e:
             try:
                 await channel.send(f"Activate stalking error: {e}")
+                print(f"Activate stalking error: {e}")
             except Exception as e:
                 print(f"Activate stalking error: {e}")
 
@@ -291,6 +289,7 @@ class loops(commands.Cog):
         except Exception as e:
             try:
                 await channel.send(f"End stalking error: {e}")
+                print(f"End stalking error: {e}")
             except Exception as e:
                 print(f"End stalking error: {e}")
 
