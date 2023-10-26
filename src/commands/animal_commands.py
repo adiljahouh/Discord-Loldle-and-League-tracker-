@@ -68,6 +68,21 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
+    async def catboy(self, ctx):
+        """
+            Returns a catboy
+        """
+        # TODO: add retry logic
+        async with ctx.typing():
+            try:
+                img = random.choice(os.listdir('/assets/catboys'))
+                await ctx.send(file=discord.File(f'/assets/catboys/{img}'))
+            except Exception as e:
+                print(e)
+                await ctx.send("Something wrong with getting the image")
+
+    @commands.command()
+    @role_check
     @mod_check
     async def add(self, ctx, option: str, *args):
         """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""

@@ -137,13 +137,21 @@ class loops(commands.Cog):
             for pos_victim in victims:
                 try:
                     # Small 1 second delay to not spam the requests
+                    print("test, ", pos_victim)
                     await asyncio.sleep(1)
-                    (active, data) = await self.riot_api.get_active_game_status(pos_victim)
+                    (active, data), game_length, game_type = await self.riot_api.get_active_game_status(pos_victim)
+
                     print(f"{pos_victim}: {active}")
+                    print(data[0])
                 except aiohttp.ClientResponseError as e:
+                    print(e)
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
+                if game_length > 600 or game_type != 420:
+                    print("continueing, gametype/gamelength incorrect")
+                    print(game_type, game_length)
+                    continue
                 if active and self.stalking_db.current_game != data[0]:
                     victim = pos_victim
                     found = True
