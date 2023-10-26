@@ -76,9 +76,10 @@ class AnimalCommands(commands.Cog):
         async with ctx.typing():
             try:
                 img = random.choice(os.listdir('/assets/catboys'))
-                await ctx.send(img)
-            except:
-                ctx.send("Something wrong with getting image")
+                await ctx.send(file=discord.File(f'/assets/catboys/{img}'))
+            except Exception as e:
+                print(e)
+                await ctx.send("Something wrong with getting the image")
 
     @commands.command()
     @role_check
