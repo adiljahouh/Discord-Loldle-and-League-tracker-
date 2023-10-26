@@ -20,7 +20,8 @@ class LeagueCommands(riotAPI, commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
-
+        
+        
     @commands.command()
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
@@ -154,6 +155,35 @@ class LeagueCommands(riotAPI, commands.Cog):
                                       color=0xFF0000)
                 await ctx.send(embed=embed)
 
+                
+    @commands.command()
+    @role_check
+    async def rank(self, ctx, *args):
+
+        """ Temporary command to get the rank of a user"""
+        async with ctx.typing():
+            try:
+                user = "".join(args)
+                soloq_info = await self.riot_api.get_soloq_info_by_name(user)
+                if soloq_info is None:
+                    await ctx.send("User apparently doesnt play SOLOQ")
+                    return
+                message = f"W/L {soloq_info['wins']}/{soloq_info['losses']}\n Winrate {round(((soloq_info['wins']/(soloq_info['losses'] + soloq_info['wins']))*100), 2)}%"
+            except aiohttp.ClientResponseError as e:
+                if 400 <= e.status <= 500:
+                    message = "Bad request error, refresh the API key or re-register your user"
+                else:
+                    message = "Internal Server Error"
+            finally:
+                try:
+                    picture = discord.File(fp=f"/assets/ranks/{soloq_info['tier'].upper()}.png", filename=f"{soloq_info['tier'].upper()}.png")
+                    embed = discord.Embed(title=f"SOLODUO {soloq_info['tier']} {soloq_info['rank']} {soloq_info['leaguePoints']} LP\n",
+                                        description=f"{message}",
+                                        color=0xFF0000)
+                    embed.set_thumbnail(url=f"attachment://{soloq_info['tier'].upper()}.png")
+                    await ctx.send(embed=embed, file=picture)
+                except Exception as e:
+                    print(e)
     @commands.command()
     @role_check
     async def clash(self, ctx, *args):

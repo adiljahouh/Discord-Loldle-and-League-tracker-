@@ -34,6 +34,9 @@ class riotAPI():
     async def get_puuid(self, user):
         return (await self.get_summoner_values(user))['puuid']
 
+    async def get_encrypted_summoner_id(self, user):
+        return (await self.get_summoner_values(user))['id']
+    
     async def get_account_id(self, user):
         return (await self.get_summoner_values(user))['id']
 
@@ -45,6 +48,17 @@ class riotAPI():
                 content: dict = await response.json()
                 return content['name']
 
+    async def get_soloq_info_by_name(self, user):
+        id = await self.get_encrypted_summoner_id(user)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}",
+                                    params=self.params) as response:
+                response.raise_for_status()
+                content: dict = await response.json()
+                for queue in content:
+                    if queue['queueType'] == "RANKED_SOLO_5x5":
+                        return queue
+                return None
     async def get_match_ids(self, method, credentials, count=5, queue_id=None):
         """
             Returns a list of matches by ID's in the form of:

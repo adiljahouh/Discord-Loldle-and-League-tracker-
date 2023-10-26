@@ -148,6 +148,7 @@ class loops(commands.Cog):
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
+                # or if game is too far gone or isnt ranked dont track
                 if game_length > 600 or game_type != 420:
                     print("continueing, gametype/gamelength incorrect")
                     print(game_type, game_length)
