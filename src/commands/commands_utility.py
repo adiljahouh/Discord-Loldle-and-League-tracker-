@@ -54,3 +54,16 @@ def super_user_check(func):
             await ctx.send(f"Error occured during role check, Error: {e}")
             return
     return inner
+
+
+def fix_highlighted_player(main_db, betting_db, stalking_db):
+    active = stalking_db.get_active_user()
+    if active is None:
+        return
+    stalking_db.change_status(active, False)
+    all_bets = betting_db.get_all_bets()
+    for decision in all_bets.keys():
+        for user in all_bets[decision]:
+            main_db.increment_field(user['discord_id'], "points", int(user['amount']))
+            print(f"Refunding: {user['discord_id']}, {int(user['amount'])}")
+    betting_db.remove_all_bets()
