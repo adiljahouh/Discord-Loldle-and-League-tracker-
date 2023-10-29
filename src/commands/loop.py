@@ -10,6 +10,7 @@ from databases.betting_db import BettingDB
 from databases.main_db import MainDB
 from databases.stalking_db import StalkingDB
 from commands.utility.end_image import EndImage
+from commands.commands_utility import fix_highlighted_player
 
 
 class loops(commands.Cog):
@@ -22,6 +23,8 @@ class loops(commands.Cog):
         self.channel_id: int = channel_id
         self.ping_role = ping_role
         self.active_message_id = 0
+        # Fix the db if there is a highlighted player
+        fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
 
     @commands.Cog.listener()
     async def on_ready(self):

@@ -88,12 +88,12 @@ class AnimalCommands(commands.Cog):
         """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""
         if option == 'image':
             filepath = f"/assets/menno_dogs/{str(uuid.uuid4())}.jpg"
-            if ctx.message.attachments and ctx.message.attachments[0].url.lower().endswith(
+            if ctx.message.attachments and ctx.message.attachments[0].url.lower().split("?", 1)[0].endswith(
                     ('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 attachment_filename = ctx.message.attachments[0].filename
                 await ctx.message.attachments[0].save(filepath)  # doesnt work with relative paths
                 await ctx.send(f'Image added: {attachment_filename}')
-            elif args[-1].lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+            elif args[-1].lower().split("?", 1)[0].endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
                 try:
                     async with aiohttp.ClientSession() as session:
                         print(args[-1])

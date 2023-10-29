@@ -196,6 +196,43 @@ class PointCommands(commands.Cog):
             print(ex)
             await ctx.send(ex)
 
+    @commands.command()
+    @role_check
+    async def transfer(self, ctx, *args):
+        """
+            Transfer your points to another player .transfer <@player> <points>
+        """
+        try:
+            print(f"Transfer command: {args}")
+            if len(args) != 2 or len(args[0]) < 3:
+                await ctx.send("Use .transfer <@player> <points>")
+                return
+            discord_id = bytes(args[0][2:-1], 'utf-8')
+            try:
+                points = int(args[1])
+            except ValueError:
+                await ctx.send("Use .transfer <@player> <points>")
+                return
+            all_players = self.main_db.get_all_users()
+            if discord_id not in all_players:
+                await ctx.send("User is not registered")
+                return
+            if points <= 0:
+                await ctx.send("Points must be larger than 0")
+                return
+            player_points = int(self.main_db.get_user_field(ctx.author.id, "points"))
+            if player_points < points:
+                await ctx.send("You do not have enough points")
+                return
+            self.main_db.decrement_field(ctx.author.id, "points", points)
+            self.main_db.increment_field(discord_id, "points", points)
+            embed = discord.Embed(title=f"Transferred {points} points", color=0xFF0000)
+            await ctx.send(embed=embed)
+        except Exception as e:
+            print(e)
+            await ctx.send(e)
+
+
 async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
