@@ -6,7 +6,7 @@ import os
 import random
 import uuid
 from commands.commands_utility import role_check, mod_check
-from api.animals import cat_api, dog_api, duck_api
+from api.animals import cat_api, dog_api, duck_api, frog_api
 from databases.main_db import MainDB
 
 
@@ -68,6 +68,21 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
+    async def frog(self, ctx):
+        """
+            Returns a frog pic
+        """
+        # TODO: add retry logic
+        async with ctx.typing():
+            if random.randint(0, 100) == 1:
+                img = random.choice(os.listdir('/assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
+            else:
+                message = await frog_api()
+                await ctx.send(message)
+
+    @commands.command()
+    @role_check
     async def catboy(self, ctx):
         """
             Returns a catboy
@@ -76,7 +91,7 @@ class AnimalCommands(commands.Cog):
         async with ctx.typing():
             try:
                 img = random.choice(os.listdir('/assets/catboys'))
-                await ctx.send(file=discord.File(f'/assets/catboys/{img}'))
+                await ctx.send("Killed by management...")
             except Exception as e:
                 print(e)
                 await ctx.send("Something wrong with getting the image")

@@ -47,7 +47,16 @@ class riotAPI():
                 response.raise_for_status()
                 content: dict = await response.json()
                 return content['name']
+    
 
+    async def get_name_by_summoner_puuid(self, puuid):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
+                                   params=self.params) as response:
+                response.raise_for_status()
+                content: dict = await response.json()
+                return content['name']
+            
     async def get_soloq_info_by_name(self, user):
         id = await self.get_encrypted_summoner_id(user)
         async with aiohttp.ClientSession() as session:
