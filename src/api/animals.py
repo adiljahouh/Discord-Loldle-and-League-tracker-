@@ -27,7 +27,6 @@ async def frog_api():
         return "HTTP error, no frogs for you"
 
 
-
 async def dog_api():
     try:
         response = requests.get("https://dog.ceo/api/breeds/image/random")

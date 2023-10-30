@@ -81,20 +81,20 @@ class AnimalCommands(commands.Cog):
                 message = await frog_api()
                 await ctx.send(message)
 
-    @commands.command()
-    @role_check
-    async def catboy(self, ctx):
-        """
-            Returns a catboy
-        """
-        # TODO: add retry logic
-        async with ctx.typing():
-            try:
-                img = random.choice(os.listdir('/assets/catboys'))
-                await ctx.send("Killed by management...")
-            except Exception as e:
-                print(e)
-                await ctx.send("Something wrong with getting the image")
+    # @commands.command()
+    # @role_check
+    # async def catboy(self, ctx):
+    #     """
+    #         Returns a catboy
+    #     """
+    #     # TODO: add retry logic
+    #     async with ctx.typing():
+    #         try:
+    #             img = random.choice(os.listdir('/assets/catboys'))
+    #             await ctx.send(file=discord.File(f'/assets/catboys/{img}'))
+    #         except Exception as e:
+    #             print(e)
+    #             await ctx.send("Something wrong with getting the image")
 
     @commands.command()
     @role_check
