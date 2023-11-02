@@ -257,7 +257,7 @@ class loops(commands.Cog):
                 description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
                 winners = "believers"
             else:
-                description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
+                description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT THEIR FAULT 💀**\n"
                 winners = "doubters"
 
             message: discord.Message = await channel.fetch_message(self.active_message_id)
