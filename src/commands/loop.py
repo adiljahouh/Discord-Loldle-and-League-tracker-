@@ -58,7 +58,7 @@ class loops(commands.Cog):
             for index, discord_id in enumerate(discord_ids):
                 riot_id = self.main_db.get_user_field(discord_id, "puuid")
                 try:
-                    flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=10)
+                    flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5)
                 except aiohttp.ClientResponseError as e:
                     print(e.message)
                     await channel.send(e.message)
@@ -106,7 +106,7 @@ class loops(commands.Cog):
             for discord_id in discord_ids:
                 puuid = self.main_db.get_user_field(discord_id, "puuid")
                 tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=5,
-                                                                             sleep_time=delay, discord_id=discord_id))
+                                                                             discord_id=discord_id))
                 delay += 10
             try:
                 result = await asyncio.gather(*tasks)
@@ -141,7 +141,6 @@ class loops(commands.Cog):
                 try:
                     # Small 1 second delay to not spam the requests
                     print(pos_victim)
-                    await asyncio.sleep(1)
                     active, data, game_length, game_type = await self.riot_api.get_active_game_status(pos_victim)
                 except aiohttp.ClientResponseError as e:
                     print(e)
@@ -165,7 +164,7 @@ class loops(commands.Cog):
             async with channel.typing():
                 embed = discord.Embed(title=f":skull::skull:  {victim.upper()} IS IN GAME :skull::skull:\n"
                                             "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
-                                      description="HE WILL SURELY WIN, RIGHT?",
+                                      description="THEY WILL SURELY WIN, RIGHT?",
                                       color=0xFF0000)
                 champions = [[player[1] for player in team] for team in data[1]]
                 players = [[player[0] for player in team] for team in data[1]]
@@ -308,6 +307,6 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     betting_db = BettingDB(settings.REDISURL)
     stalking_db = StalkingDB(settings.REDISURL)
-    riot: riotAPI = riotAPI(settings.RIOTTOKEN)
+    riot: riotAPI = riotAPI(settings.RIOTTOKEN, bot.get_tokenbucket())
     print("adding loops..")
     await bot.add_cog(loops(bot, main_db, betting_db, stalking_db, riot, settings.CHANNELID, settings.PINGROLE))

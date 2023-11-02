@@ -1,10 +1,9 @@
 import datetime
-import aiohttp
-import asyncio
 import copy
 from api.ddragon import get_champion_list
 from api.merakia import pull_data
 from commands.utility.get_roles import get_roles
+from commands.utility.bucket import TokenBucket
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error
@@ -17,57 +16,42 @@ class riotAPI():
     """
 
     # FIXME: UNCOUPLE THIS
-    def __init__(self, api_key) -> None:
+    def __init__(self, api_key, tokenbucket) -> None:
         self.api_key = api_key
         self.params = {
             "api_key": self.api_key
         }
+        self.tokenbucket: TokenBucket = tokenbucket
 
     async def get_summoner_values(self, user):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{user}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content: dict = await response.json()
-                return content
+        return await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{user}",
+                                              params=self.params)
 
     async def get_puuid(self, user):
         return (await self.get_summoner_values(user))['puuid']
-
-    async def get_encrypted_summoner_id(self, user):
-        return (await self.get_summoner_values(user))['id']
     
     async def get_account_id(self, user):
         return (await self.get_summoner_values(user))['id']
 
     async def get_name_by_summoner_id(self, summoner_id):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content: dict = await response.json()
-                return content['name']
-    
+        content = await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}",
+                                                 params=self.params)
+        return content['name']
 
     async def get_name_by_summoner_puuid(self, puuid):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content: dict = await response.json()
-                return content['name']
-            
+        content = await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
+                                                 params=self.params)
+        return content['name']
+
     async def get_soloq_info_by_name(self, user):
-        id = await self.get_encrypted_summoner_id(user)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}",
-                                    params=self.params) as response:
-                response.raise_for_status()
-                content: dict = await response.json()
-                for queue in content:
-                    if queue['queueType'] == "RANKED_SOLO_5x5":
-                        return queue
-                return None
+        id = await self.get_account_id(user)
+        content = await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}",
+                                                 params=self.params)
+        for queue in content:
+            if queue['queueType'] == "RANKED_SOLO_5x5":
+                return queue
+        return None
+
     async def get_match_ids(self, method, credentials, count=5, queue_id=None):
         """
             Returns a list of matches by ID's in the form of:
@@ -85,40 +69,29 @@ class riotAPI():
                     params['type'] = queue_id
                 else:
                     params['queue'] = queue_id
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids",
-                                       params=params) as response:
-                    response.raise_for_status()
-                    content = await response.json()
-                    return content
+            return await self.tokenbucket.request(f"https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids",
+                                                  params=params)
 
     async def get_full_match_details_by_matchID(self, match_id):
         # /lol/match/v5/matches/{matchId}
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content = await response.json()
-                return content
+        return await self.tokenbucket.request(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
+                                              params=self.params)
 
     async def get_match_detail_by_matchID_and_filter_for_puuid(self, match_id, puuid):
         """
             Returns the details of a singular match for a singular player by passing the match ID and PUUID
         """
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content = await response.json()
-                matchinfo = dict()
-                matchinfo['game_end'], matchinfo['game_mode'], matchinfo['game_type'] = content['info'][
-                                                                                            'gameEndTimestamp'], \
-                                                                                        content['info']['gameMode'], \
-                                                                                        content['info']['queueId']
-                for player in content['info']['participants']:
-                    if player.get("puuid") == puuid:
-                        matchinfo['match_details'] = player
-                        return matchinfo
+        content = await self.tokenbucket.request(f"https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}",
+                                                 params=self.params)
+        matchinfo = dict()
+        matchinfo['game_end'], matchinfo['game_mode'], matchinfo['game_type'] = content['info'][
+                                                                                    'gameEndTimestamp'], \
+                                                                                content['info']['gameMode'], \
+                                                                                content['info']['queueId']
+        for player in content['info']['participants']:
+            if player.get("puuid") == puuid:
+                matchinfo['match_details'] = player
+                return matchinfo
 
     async def get_multiple_match_details_by_matchIDs_and_filter_for_puuid(self, puuid, matchIDs) -> list:
         """
@@ -152,8 +125,7 @@ class riotAPI():
             text += f'{result} **{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text if flame == False else flame_text + text
 
-    async def get_bad_kda_by_puuid(self, puuid, count=10, sleep_time=2):
-        await asyncio.sleep(sleep_time)
+    async def get_bad_kda_by_puuid(self, puuid, count=10):
         matchIDs: list = await self.get_match_ids("puuid", puuid, count=count)
         game_details_user: list = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid,
                                                                                                          matchIDs)
@@ -192,8 +164,7 @@ class riotAPI():
             text += f'{result} **{time_diff}** day(s) ago | {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text if flame == False else flame_text + text
 
-    async def get_highest_damage_taken_by_puuid(self, puuid, count, sleep_time, discord_id):
-        await asyncio.sleep(sleep_time)
+    async def get_highest_damage_taken_by_puuid(self, puuid, count, discord_id):
         matchIDs: list = await self.get_match_ids(method="puuid", credentials=puuid, count=count)
         game_details_user = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
         player_details = {}
@@ -210,70 +181,57 @@ class riotAPI():
     # Method must be caught with an aiohttp.ClientResponseError
     async def get_active_game_status(self, user):
         account_id = await self.get_account_id(user)
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                    f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",
-                    params=self.params) as response:
-                response.raise_for_status()
-                content = await response.json()
-                status = response.status
-                if status == 404:
-                    return False, "User not in game", None, None
-                game_mode_mapping = {
-                    0: "Custom",
-                    400: "Normal",
-                    420: "Ranked Solo/Duo",
-                    430: "Blind Pick",
-                    440: "Ranked Flex",
-                    450: "ARAM",
-                    700: "Clash"
-                }
-                game_length = int(content['gameLength'])
-                game_type = int(content['gameQueueConfigId'])
-                if game_type in game_mode_mapping:
-                    game_mode = game_mode_mapping[game_type]
-                else:
-                    game_mode = content['gameMode']
-                champion_list = await get_champion_list()
-                text_arr = [content['gameId'], []]
-                team_one = []
-                team_two = []
-                team = 0
-                for participant in content['participants']:
-                    if user.lower() == participant['summonerName'].lower():
-                        team = participant['teamId']
-                    summonerName = participant['summonerName']
-                    if participant['teamId'] == 100:
-                        team_one.append([summonerName, int(participant['championId'])])
-                    else:
-                        team_two.append([summonerName, int(participant['championId'])])
-                champion_roles = await pull_data()
-                team_one = self.order_team(champion_roles, team_one, champion_list)
-                team_two = self.order_team(champion_roles, team_two, champion_list)
-                if team == 200:
-                    text_arr[1].append(team_two)
-                    text_arr[1].append(team_one)
-                else:
-                    text_arr[1].append(team_one)
-                    text_arr[1].append(team_two)
-                text_arr.append(game_mode)
-                return True, text_arr, game_length, game_type
+        content = await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",
+                                                 params=self.params)
+        game_mode_mapping = {
+            0: "Custom",
+            400: "Normal",
+            420: "Ranked Solo/Duo",
+            430: "Blind Pick",
+            440: "Ranked Flex",
+            450: "ARAM",
+            700: "Clash"
+        }
+        game_length = int(content['gameLength'])
+        game_type = int(content['gameQueueConfigId'])
+        if game_type in game_mode_mapping:
+            game_mode = game_mode_mapping[game_type]
+        else:
+            game_mode = content['gameMode']
+        champion_list = await get_champion_list()
+        text_arr = [content['gameId'], []]
+        team_one = []
+        team_two = []
+        team = 0
+        for participant in content['participants']:
+            if user.lower() == participant['summonerName'].lower():
+                team = participant['teamId']
+            summonerName = participant['summonerName']
+            if participant['teamId'] == 100:
+                team_one.append([summonerName, int(participant['championId'])])
+            else:
+                team_two.append([summonerName, int(participant['championId'])])
+        champion_roles = await pull_data()
+        team_one = self.order_team(champion_roles, team_one, champion_list)
+        team_two = self.order_team(champion_roles, team_two, champion_list)
+        if team == 200:
+            text_arr[1].append(team_two)
+            text_arr[1].append(team_one)
+        else:
+            text_arr[1].append(team_one)
+            text_arr[1].append(team_two)
+        text_arr.append(game_mode)
+        return True, text_arr, game_length, game_type
 
     async def get_clash_team_id(self, account_id):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content = await response.json()
-                return content[0]['teamId']
+        content = await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}",
+                                                 params=self.params)
+        return content[0]['teamId']
 
     async def get_clash_players(self, team_id):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content = await response.json()
-                return content['players']
+        content = await self.tokenbucket.request(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}",
+                                                 params=self.params)
+        return content['players']
 
     async def get_clash_opgg(self, user):
         account_id = await self.get_account_id(user)

@@ -20,8 +20,8 @@ class LeagueCommands(riotAPI, commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         pass
-        
-        
+
+
     @commands.command()
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
@@ -155,7 +155,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                                       color=0xFF0000)
                 await ctx.send(embed=embed)
 
-                
+
     @commands.command()
     @role_check
     async def rank(self, ctx, *args):
@@ -263,6 +263,6 @@ async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     stalking_db = StalkingDB(settings.REDISURL)
-    riot_api = riotAPI(settings.RIOTTOKEN)
+    riot_api = riotAPI(settings.RIOTTOKEN, bot.get_tokenbucket())
     print("adding commands...")
     await bot.add_cog(LeagueCommands(main_db, stalking_db, riot_api, settings.PLAYERROLE, settings.GROLE, settings.JAILROLE))

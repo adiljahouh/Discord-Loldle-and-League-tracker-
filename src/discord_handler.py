@@ -1,13 +1,13 @@
 import discord
-import datetime
-import requests
-from discord.ext import tasks, commands
+from discord.ext import commands
+from commands.utility.bucket import TokenBucket
 
 
 class discBot(commands.Bot):
     def __init__(self, token, channel_id) -> None:
         self.token = token
         self.CHANNEL_ID = channel_id
+        self.bucket = TokenBucket(20, 100 / 120, 100, 120)
         intents = discord.Intents.all()
         # intents.messages = True
         super().__init__(command_prefix='.', intents=intents)  # initialize the bot
@@ -19,6 +19,9 @@ class discBot(commands.Bot):
 
     async def start_bot(self):
         await self.start(self.token)
+
+    def get_tokenbucket(self):
+        return self.bucket
 
 
 async def add_cog(bot, files: list):
