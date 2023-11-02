@@ -13,6 +13,18 @@ async def duck_api():
             return "Internal API error"
     except requests.exceptions.HTTPError as e:
         return "HTTP error, no ducks for you"
+    
+async def frog_api():
+    try:
+        response = requests.get("https://frogs.media/api/random")
+        content = json.loads(response.content.decode("utf-8"))
+        response.raise_for_status()
+        if content['url']:
+            return content['url']
+        else:
+            return "Internal API error"
+    except requests.exceptions.HTTPError as e:
+        return "HTTP error, no frogs for you"
 
 
 async def dog_api():
