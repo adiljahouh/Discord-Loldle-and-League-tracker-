@@ -37,7 +37,6 @@ class TokenBucket:
         now = time.time()
         indx = self.bin_search(self._sliding_logs, now - self.window_duration)
         self._sliding_logs = self._sliding_logs[indx:]
-        # self._sliding_logs = [ts for ts in self._sliding_logs if ts > (now - self.window_duration)]
         return self._sliding_logs
 
     @sliding_logs.setter
@@ -58,9 +57,9 @@ class TokenBucket:
 
     async def request(self, url, params=None):
         while not self.can_consume(1):
-            print(f"TIMEOUT, WAITING: {self._tokens}, {len(self._sliding_logs)}")
+            # print(f"TIMEOUT, WAITING: {self._tokens}, {len(self._sliding_logs)}")
             time.sleep(1)
-        print("REQUEST SENT")
+        # print("REQUEST SENT")
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
                 response.raise_for_status()
