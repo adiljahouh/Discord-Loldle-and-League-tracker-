@@ -7,12 +7,14 @@ from commands.utility.decorators import role_check, super_user_check
 from databases.betting import BettingDB
 from databases.main import MainDB
 import pytz
+import asyncio
 
 class PointCommands(commands.Cog):
-    def __init__(self, main_db, betting_db, g_role) -> None:
+    def __init__(self, main_db, betting_db, g_role, bot) -> None:
         self.main_db = main_db
         self.betting_db = betting_db
         self.g_role = g_role
+        self.bot : commands.bot.Bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -67,7 +69,10 @@ class PointCommands(commands.Cog):
             await ctx.send(embed=embed)
     @commands.command()
     @role_check
-    async def loldle(self, ctx):
+    async def loldle(self, ctx, option="classic"):
+        if option.lower() not in ["classic", "ability", "quote"]:
+            await ctx.send("Invalid option, use .loldle <classic/ability/quote>")
+            return
         async with ctx.typing():
             try:
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
@@ -77,6 +82,12 @@ class PointCommands(commands.Cog):
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "Starting a loldle"
                     # start LODLE api call and wait for response
+                    def check(m):
+                        return m.author == ctx.author and m.channel == ctx.channel
+                    try:
+                        msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.send('Sorry, you took too long to respond.')
                     self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                     # self.main_db.increment_field(userid, "points", 500)
                 else:
@@ -265,4 +276,4 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     betting_db = BettingDB(settings.REDISURL)
     print("adding commands...")
-    await bot.add_cog(PointCommands(main_db, betting_db, settings.GROLE))
+    await bot.add_cog(PointCommands(main_db, betting_db, settings.GROLE, bot))
