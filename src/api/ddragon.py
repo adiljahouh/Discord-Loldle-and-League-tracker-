@@ -22,6 +22,21 @@ async def get_champion_list():
                 champ_list.update({value['key']: attribute})
             return champ_list
 
+async def get_individual_champ_info(champion):
+    async with aiohttp.ClientSession() as session:
+        latest = await get_latest_ddragon()
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/{champion}.json") as response:
+            response.raise_for_status()
+            content = await response.json()
+            return content
+        
+async def get_abilities_of_champion(champion):
+    ## get all champs
+    ## random select 1
+    ## get abilities of that champ
+    ## distort the image
+    ## loldle
+    pass
 
 async def champion_splash(champion):
     version = await get_latest_ddragon()
