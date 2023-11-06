@@ -6,12 +6,15 @@ import os
 import uuid
 from commands.utility.decorators import role_check, mod_check
 from databases.main import MainDB
+import asyncio
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id) -> None:
+    def __init__(self, main_db, jail_role_id, confessional, bot) -> None:
+        self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
+        self.confessional = confessional
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -32,6 +35,7 @@ class discMod(commands.Cog):
                     filtered_args.append("No reason")
                 if self.main_db.check_user_existence(mention.id) == 1:
                     total = self.main_db.increment_field(mention.id, "strikes", 1)
+                    success = self.main_db.set_user_field(mention.id, f"strike_{total}", f"{' '.join(filtered_args)}")
                     if total >= 3:
                         success = self.main_db.set_user_field(mention.id, "strikes", 0)
                         if success == 0:
@@ -41,8 +45,20 @@ class discMod(commands.Cog):
                                     continue
                                 await user.remove_roles(current_role)
                             jail_role = ctx.guild.get_role(self.jail_role)
-                            await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)} BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
+                            await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
+                            strike_reasons = ""
+                            for strike in range(1,4):
+                                try:
+                                    reason = self.main_db.get_user_field(mention.id, f"strike_{strike}")
+                                    strike_reasons += f"Strike {strike}: {reason.decode('utf8')}\n"
+                                except Exception as e:
+                                    pass
                             await user.add_roles(jail_role)
+                            channel= self.bot.get_channel(self.confessional)
+                            embed = discord.Embed(title=f"You have been jailed for the following violations\n\n",
+                                  description=f"{strike_reasons}",
+                                  color=0xFF0000)
+                            await channel.send(embed=embed)
                         else:
                             await ctx.send(f"Couldnt reset your strikes, contact an admin")
                     else:
@@ -56,4 +72,4 @@ async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")
-    await bot.add_cog(discMod(main_db, settings.JAILROLE))
+    await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot))

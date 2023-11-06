@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     GROLE: int
     PINGROLE: int
     SUPERUSER: int
+    CONFESSIONALCHANNELID: int
 
     class Config:
         env_file = ".env"

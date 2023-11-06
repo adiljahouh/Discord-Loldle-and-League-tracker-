@@ -14,13 +14,16 @@ class MainDB():
         except ConnectionError:
             print("Cant connect to host")
 
-    def store_user(self, discord_id, riot_user, puuid, author_discord_tag, strikes=0, points=500) -> None:
+    def store_user(self, discord_id, riot_user, puuid, author_discord_tag, strikes=0, points=500, strike_1="", strike_2="", strike_3="") -> None:
         self.connect()
         self.client.hset(discord_id, "riot_user", riot_user)
         self.client.hset(discord_id, "puuid", puuid)
         self.client.hset(discord_id, "discord_tag", author_discord_tag)
         self.client.hset(discord_id, "strikes", strikes)
         self.client.hset(discord_id, "points", 500)
+        self.client.hset(discord_id, "strike_1", strike_1)
+        self.client.hset(discord_id, "strike_2", strike_2)
+        self.client.hset(discord_id, "strike_3", strike_3)
 
     def get_user(self, discord_id) -> dict:
         self.connect()
