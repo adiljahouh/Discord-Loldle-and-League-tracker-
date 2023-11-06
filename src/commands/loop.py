@@ -6,11 +6,11 @@ from commands.utility.team_image import imageCreator
 from redis.exceptions import ConnectionError
 import aiohttp
 import asyncio
-from databases.betting_db import BettingDB
-from databases.main_db import MainDB
-from databases.stalking_db import StalkingDB
+from databases.betting import BettingDB
+from databases.main import MainDB
+from databases.stalker import StalkingDB
 from commands.utility.end_image import EndImage
-from commands.commands_utility import fix_highlighted_player
+from commands.utility.decorators import fix_highlighted_player
 
 
 class loops(commands.Cog):

@@ -7,7 +7,7 @@ import sys
 async def main():
     settings = Settings()
     my_bot = discBot(token=settings.DISCORDTOKEN, channel_id=settings.CHANNELID)
-    my_cogs = ["commands.loop", "commands.league_commands", "commands.animal_commands", "commands.point_commands"]
+    my_cogs = ["commands.loop", "commands.league", "commands.animals", "commands.points"]
     for cog in my_cogs:
         await add_cog(my_bot, cog)
     await my_bot.start_bot()

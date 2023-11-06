@@ -3,9 +3,9 @@ from api.riot import riotAPI
 import aiohttp
 from config import Settings
 import discord
-from commands.commands_utility import role_check, mod_check, super_user_check
-from databases.main_db import MainDB
-from databases.stalking_db import StalkingDB
+from commands.utility.decorators import role_check, mod_check, super_user_check
+from databases.main import MainDB
+from databases.stalker import StalkingDB
 
 
 class LeagueCommands(riotAPI, commands.Cog):
@@ -42,7 +42,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                 puuid = await self.riot_api.get_puuid(riot_name)
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
-                    message = "Bad request error, refresh the API key or re-register your user"
+                    message = "Bad request error, make sure you pass a valid summoner name"
                 else:
                     message = "Internal Server Error"
                 await ctx.send(message)
@@ -146,7 +146,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     message = await self.riot_api.get_kda_by_puuid(puuid.decode('utf-8'), count)
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
-                    message = "Bad request error, refresh the API key or re-register your user"
+                    message = "Bad request error, make sure you pass a valid summoner name and game mode (solo, flex, normals, aram, clash, ranked)"
                 else:
                     message = "Internal Server Error"
             finally:
@@ -175,7 +175,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                 message = f"W/L {soloq_info['wins']}/{soloq_info['losses']}\n Winrate {round(((soloq_info['wins']/(soloq_info['losses'] + soloq_info['wins']))*100), 2)}%"
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
-                    message = "Bad request error, refresh the API key or re-register your user"
+                    message = "Bad request error, make sure you pass a valid summoner name and game mode (solo, flex, normals, aram, clash, ranked)"
                 else:
                     message = "Internal Server Error"
             finally:

@@ -5,9 +5,9 @@ import discord
 import os
 import random
 import uuid
-from commands.commands_utility import role_check, mod_check
+from commands.utility.decorators import role_check, mod_check
 from api.animals import cat_api, dog_api, duck_api, frog_api
-from databases.main_db import MainDB
+from databases.main import MainDB
 
 
 class AnimalCommands(commands.Cog):

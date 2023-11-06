@@ -3,9 +3,9 @@ from config import Settings
 import discord
 import random
 import datetime
-from commands.commands_utility import role_check, super_user_check
-from databases.betting_db import BettingDB
-from databases.main_db import MainDB
+from commands.utility.decorators import role_check, super_user_check
+from databases.betting import BettingDB
+from databases.main import MainDB
 import pytz
 
 class PointCommands(commands.Cog):
