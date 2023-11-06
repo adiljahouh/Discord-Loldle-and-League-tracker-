@@ -81,11 +81,13 @@ class PointCommands(commands.Cog):
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "Starting a loldle"
+                    await ctx.send(status)
                     # start LODLE api call and wait for response
                     def check(m):
                         return m.author == ctx.author and m.channel == ctx.channel
                     try:
                         msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                        print('Received message: {}'.format(msg.content))
                     except asyncio.TimeoutError:
                         await ctx.send('Sorry, you took too long to respond.')
                     self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
