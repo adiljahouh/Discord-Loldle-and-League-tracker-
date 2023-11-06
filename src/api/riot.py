@@ -2,7 +2,7 @@ import datetime
 import aiohttp
 import asyncio
 import copy
-from api.ddragon import get_champion_list
+from api.ddragon import get_champion_dict
 from api.merakia import pull_data
 from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
@@ -234,7 +234,7 @@ class riotAPI():
                     game_mode = game_mode_mapping[game_type]
                 else:
                     game_mode = content['gameMode']
-                champion_list = await get_champion_list()
+                champion_list = await get_champion_dict()
                 text_arr = [content['gameId'], []]
                 team_one = []
                 team_two = []

@@ -1,7 +1,7 @@
 import aiohttp
 from io import BytesIO
 from PIL import Image
-
+import random
 
 async def get_latest_ddragon():
     async with aiohttp.ClientSession() as session:
@@ -11,26 +11,32 @@ async def get_latest_ddragon():
             return content[0]
 
 
-async def get_champion_list():
+async def get_champion_dict() -> dict:
     async with aiohttp.ClientSession() as session:
         latest = await get_latest_ddragon()
         async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion.json") as response:
             response.raise_for_status()
             content = await response.json()
-            champ_list = {}
+            champ_dict = {}
             for attribute, value in content['data'].items():
-                champ_list.update({value['key']: attribute})
-            return champ_list
+                champ_dict.update({value['key']: attribute})
+            return champ_dict
 
 async def get_individual_champ_info(champion):
     async with aiohttp.ClientSession() as session:
         latest = await get_latest_ddragon()
-        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/{champion}.json") as response:
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{champion}.json") as response:
             response.raise_for_status()
             content = await response.json()
             return content
         
-async def get_abilities_of_champion(champion):
+async def get_loldle_data():
+    champion_list = await get_champion_dict()
+    champion = random.choice(list(champion_list.values()))
+    print(champion)
+    champ_info = await get_individual_champ_info(champion)
+    print(champ_info['data'][champion])
+    #print(champ_info['data'][champion]['spells'])
     ## get all champs
     ## random select 1
     ## get abilities of that champ

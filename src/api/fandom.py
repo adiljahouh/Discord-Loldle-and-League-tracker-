@@ -1,12 +1,12 @@
 # https://lol.fandom.com/api.php?action=cargofields&format=json&table=Champions
 # https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=499&tables=Champions&fields=Name%2CTitle%2CAttributes%2CKeyDdragon%2CReleaseDate%2CRealName%2CPronoun
-from ddragon import get_champion_list
+from ddragon import get_champion_dict, get_individual_champ_info, get_loldle_data
 import asyncio
 import aiohttp
 
 
 async def test():
-    test = await get_champion_list()
+    test = await get_loldle_data()
     print(test)
 asyncio.run(test())
 # async def get_champions():
