@@ -42,6 +42,7 @@ class PointCommands(commands.Cog):
     @commands.command()
     @role_check
     async def daily(self, ctx):
+        """ Get daily points (500)"""
         async with ctx.typing():
             try:
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
@@ -54,6 +55,32 @@ class PointCommands(commands.Cog):
                     self.main_db.increment_field(userid, "points", 500)
                 else:
                     status = "You already claimed your points for today"
+                points_bytes = self.main_db.get_user_field(userid, "points")
+            except Exception as e:
+                await ctx.send(e)
+                return
+            points = points_bytes.decode('utf-8')
+            message = f'Total points: {points}'
+            embed = discord.Embed(title=f"{status}\n\n",
+                                  description=f"{message}",
+                                  color=0xFF0000)
+            await ctx.send(embed=embed)
+    @commands.command()
+    @role_check
+    async def loldle(self, ctx):
+        async with ctx.typing():
+            try:
+                amsterdam_tz = pytz.timezone('Europe/Amsterdam')
+                today = datetime.datetime.now(amsterdam_tz).date()
+                userid = str(ctx.author.id)
+                last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
+                if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
+                    status = "Starting a loldle"
+                    # start LODLE api call and wait for response
+                    self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
+                    # self.main_db.increment_field(userid, "points", 500)
+                else:
+                    status = "You already played a LOLDLE today"
                 points_bytes = self.main_db.get_user_field(userid, "points")
             except Exception as e:
                 await ctx.send(e)
