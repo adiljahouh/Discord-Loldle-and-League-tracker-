@@ -8,7 +8,7 @@ from commands.utility.decorators import role_check, mod_check
 from databases.main import MainDB
 
 
-class AnimalCommands(commands.Cog):
+class discMod(commands.Cog):
     def __init__(self, main_db, jail_role_id) -> None:
         self.main_db = main_db
         self.jail_role = jail_role_id
@@ -20,7 +20,7 @@ class AnimalCommands(commands.Cog):
     @commands.command()
     @role_check
     @mod_check
-    async def image(self, ctx, *args):
+    async def strike(self, ctx, *args):
         mentions = ctx.message.mentions
         if len(mentions) == 0:
             await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
@@ -56,4 +56,4 @@ async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")
-    await bot.add_cog(AnimalCommands(main_db, settings.JAILROLE))
+    await bot.add_cog(discMod(main_db, settings.JAILROLE))
