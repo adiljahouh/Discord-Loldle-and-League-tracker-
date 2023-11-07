@@ -37,13 +37,6 @@ async def get_name_resource_ranged_type_class(champion):
     # classic_lodle['name'] = champion
     response = await get_individual_champ_info_raw(champion)
     champ_info = response['data'][champion]
-    # print(champ_info['data'][champion])
-    #print(champ_info['data'][champion]['spells'])
-    ## get all champs
-    ## random select 1
-    ## get abilities of that champ
-    ## distort the image
-    ## loldle
     champion_info = {
     'Name': champ_info.get('name'),
     'Resource': champ_info.get('partype'),

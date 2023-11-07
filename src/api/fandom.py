@@ -1,13 +1,10 @@
 # https://lol.fandom.com/api.php?action=cargofields&format=json&table=Champions
 # https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=499&tables=Champions&fields=Name%2CTitle%2CAttributes%2CKeyDdragon%2CReleaseDate%2CRealName%2CPronoun
-from ddragon import get_name_resource_ranged_type_class, get_random_champ
+from api.ddragon import get_name_resource_ranged_type_class, get_random_champ
 import asyncio
 import aiohttp
+from bs4 import BeautifulSoup
 
-
-# async def test():
-#     test = await get_loldle_data()
-# asyncio.run(test())
 async def get_gender_releaseDate_per_champ(champion):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=50&tables=Champions&fields=Name%2CPronoun%2CReleaseDate&where=Name%3D%22{champion}%22") as response:
@@ -23,15 +20,57 @@ async def get_gender_releaseDate_per_champ(champion):
 #             content = await response.json()
 #             return content
 
-async def get_loldle_data():
-    champ = await get_random_champ()
-    test = await get_name_resource_ranged_type_class(champ)
-    print(test)
-    test2 = await get_gender_releaseDate_per_champ(champ)
-    print(test2)
-    # test3 = await get_year_class_role_per_champ(champ)
-    # print(test3)
-    # await get_champions
-asyncio.run(get_loldle_data())
+async def get_region(champion):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"https://leagueoflegends.fandom.com/wiki/{champion}") as response:
+            # print(champion)
+            # print(f"https://leagueoflegends.fandom.com/wiki/{champion}")
+            
+            response.raise_for_status()
+            html = await response.text()
+            soup = BeautifulSoup(html, 'html.parser')
 
-# need region and roles (merakia)
+            region_header = soup.find('div', {'data-source': 'region'})
+            species_header = soup.find('div', {'data-source': 'species'})
+            regions=[]
+            species=[]
+            if region_header:
+                a_elements = region_header.find_all('a', href=True)
+                for a in a_elements:
+                    text = a.get_text(strip=True)
+                    if text:
+                        regions.append(text)
+            if species_header:
+                a_elements = species_header.find_all('a', href=True)
+                for a in a_elements:
+                    # Get the text of each 'a' element and add it to the list
+                    text = a.get_text(strip=True)
+                    if text:
+                        species.append(text)
+            return regions,species 
+            
+
+async def get_loldle_data(champ="random"):
+    if champ=="random":
+        champ = await get_random_champ()
+    name_resource_range_class = await get_name_resource_ranged_type_class(champ)
+    try:
+        gender_releasdate = await get_gender_releaseDate_per_champ(champ)
+    except IndexError as e:
+        gender_releasdate = await get_gender_releaseDate_per_champ(name_resource_range_class['Name'])
+    try:
+        region, species = await get_region(champ)
+    except Exception as e:
+        print('First attempt failed')
+        try:
+            region, species = await get_region(name_resource_range_class['Name'])
+        except Exception as e:
+            print("second attemtp failed")
+            spaceless_champ = champ.replace(" ", "_").replace("'","%27")
+            region, species = await get_region(spaceless_champ)
+    merged_dict = {**name_resource_range_class, **gender_releasdate}
+    merged_dict['Region'] = region
+    merged_dict['Species'] = species
+    return merged_dict
+
+# asyncio.run(get_loldle_data())

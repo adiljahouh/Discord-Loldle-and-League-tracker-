@@ -8,6 +8,7 @@ from databases.betting import BettingDB
 from databases.main import MainDB
 import pytz
 import asyncio
+from api.fandom import get_loldle_data
 
 class PointCommands(commands.Cog):
     def __init__(self, main_db, betting_db, g_role, bot) -> None:
@@ -67,6 +68,42 @@ class PointCommands(commands.Cog):
                                   description=f"{message}",
                                   color=0xFF0000)
             await ctx.send(embed=embed)
+
+    def compare_dicts_and_create_embed(self, dict1, dict2):
+        # Define the emojis
+        cross_emoji = "❌"
+        check_emoji = "✅"
+
+        # Create a Discord embed
+        embed = discord.Embed(title="Comparison Result", color=0x00ff00)
+
+        # Compare the dictionaries
+        for key in dict1:
+            if key in dict2:
+                if isinstance(dict1[key], list) and isinstance(dict2[key], list):
+                    # Both values are lists, compare items
+                    matching_items = [f"{check_emoji} {item}" for item in dict1[key] if item in dict2[key]]
+                    non_matching_items = [f"{cross_emoji} {item}" for item in dict1[key] if item not in dict2[key]]
+                    items_str = ', '.join(matching_items + non_matching_items)
+                    embed.add_field(name=key, value=items_str, inline=False)
+                elif dict1[key] == dict2[key]:
+                    # Values match
+                    embed.add_field(name=key, value=f"{check_emoji} {dict1[key]}", inline=False)
+                else:
+                    # Values don't match
+                    embed.add_field(name=key, value=f"{cross_emoji} {dict1[key]} -> {dict2[key]}", inline=False)
+            else:
+                # Key doesn't exist in the second dictionary
+                embed.add_field(name=key, value=f"{cross_emoji} {dict1[key]} -> Key not found", inline=False)
+
+        # Check for any extra keys in the second dictionary
+        for key in dict2:
+            if key not in dict1:
+                # Key doesn't exist in the first dictionary
+                embed.add_field(name=key, value=f"{cross_emoji} Key not found -> {dict2[key]}", inline=False)
+
+        return embed
+
     @commands.command()
     @role_check
     async def loldle(self, ctx, option="classic"):
@@ -78,13 +115,15 @@ class PointCommands(commands.Cog):
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
                 today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
+                #TODO: REMOVE!!!!
                 self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
-                #TODO: REMOVE!!!!
                 await ctx.send(last_claim.decode('utf-8'))
                 ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "Guess a champion and win 1000 points!"
+                    winning_guess_info = await get_loldle_data()  
+                    await ctx.send(winning_guess_info)
                     await ctx.send(status)
                     # start LODLE api call and wait for response
                     def check(m):
@@ -93,6 +132,14 @@ class PointCommands(commands.Cog):
                         msg = await self.bot.wait_for('message', check=check, timeout=60.0)
                         champion_guess = (msg.content.replace(" ", "")).capitalize()
                         await ctx.send('Your guess: {}'.format(champion_guess))
+                        try:
+                            champion_guess_info = await get_loldle_data(champion_guess)
+                            await ctx.send(champion_guess_info)
+                            embed = self.compare_dicts_and_create_embed(champion_guess_info, winning_guess_info)
+                            print(embed)
+                            await ctx.send(embed)
+                        except Exception as e:
+                            await ctx.send(e)
                     except asyncio.TimeoutError:
                         await ctx.send('Sorry, you took too long to respond.')
                         return
@@ -103,12 +150,12 @@ class PointCommands(commands.Cog):
             except Exception as e:
                 await ctx.send(e)
                 return
-            points = points_bytes.decode('utf-8')
-            self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
-            message = f'Total points: {points}'
-            embed = discord.Embed(title=f"{status}\n\n",
-                                  description=f"{message}",
-                                  color=0xFF0000)
+            # points = points_bytes.decode('utf-8')
+            # self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
+            # message = f'Total points: {points}'
+            # embed = discord.Embed(title=f"{status}\n\n",
+            #                       description=f"{message}",
+            #                       color=0xFF0000)
             await ctx.send(embed=embed)
 
     @commands.command()
