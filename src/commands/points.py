@@ -11,7 +11,7 @@ import asyncio
 
 class PointCommands(commands.Cog):
     def __init__(self, main_db, betting_db, g_role, bot) -> None:
-        self.main_db = main_db
+        self.main_db: MainDB = main_db
         self.betting_db = betting_db
         self.g_role = g_role
         self.bot : commands.bot.Bot = bot
@@ -78,19 +78,24 @@ class PointCommands(commands.Cog):
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
                 today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
+                self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
+                #TODO: REMOVE!!!!
+                await ctx.send(last_claim.decode('utf-8'))
+                ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status = "Starting a loldle"
+                    status = "Guess a champion and win 1000 points!"
                     await ctx.send(status)
                     # start LODLE api call and wait for response
                     def check(m):
                         return m.author == ctx.author and m.channel == ctx.channel
                     try:
                         msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-                        print('Received message: {}'.format(msg.content))
+                        champion_guess = (msg.content.replace(" ", "")).capitalize()
+                        await ctx.send('Your guess: {}'.format(champion_guess))
                     except asyncio.TimeoutError:
                         await ctx.send('Sorry, you took too long to respond.')
-                    self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
+                        return
                     # self.main_db.increment_field(userid, "points", 500)
                 else:
                     status = "You already played a LOLDLE today"
@@ -99,6 +104,7 @@ class PointCommands(commands.Cog):
                 await ctx.send(e)
                 return
             points = points_bytes.decode('utf-8')
+            self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
             message = f'Total points: {points}'
             embed = discord.Embed(title=f"{status}\n\n",
                                   description=f"{message}",

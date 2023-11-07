@@ -22,27 +22,35 @@ async def get_champion_dict() -> dict:
                 champ_dict.update({value['key']: attribute})
             return champ_dict
 
-async def get_individual_champ_info(champion):
+async def get_individual_champ_info_raw(champion):
     async with aiohttp.ClientSession() as session:
         latest = await get_latest_ddragon()
         async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{champion}.json") as response:
             response.raise_for_status()
             content = await response.json()
             return content
-        
-async def get_loldle_data():
+async def get_random_champ():
     champion_list = await get_champion_dict()
-    champion = random.choice(list(champion_list.values()))
-    print(champion)
-    champ_info = await get_individual_champ_info(champion)
-    print(champ_info['data'][champion])
+    return random.choice(list(champion_list.values()))    
+    
+async def get_name_resource_ranged_type(champion):
+    # classic_lodle['name'] = champion
+    response = await get_individual_champ_info_raw(champion)
+    champ_info = response['data'][champion]
+    # print(champ_info['data'][champion])
     #print(champ_info['data'][champion]['spells'])
     ## get all champs
     ## random select 1
     ## get abilities of that champ
     ## distort the image
     ## loldle
-    pass
+    champion_info = {
+    'Name': champ_info.get('name'),
+    'Resource': champ_info.get('partype'),
+    'range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 175 else 'Melee'
+}
+    return champion_info
+
 
 async def champion_splash(champion):
     version = await get_latest_ddragon()
