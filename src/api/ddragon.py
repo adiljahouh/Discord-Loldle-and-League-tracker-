@@ -33,7 +33,7 @@ async def get_random_champ():
     champion_list = await get_champion_dict()
     return random.choice(list(champion_list.values()))    
     
-async def get_name_resource_ranged_type(champion):
+async def get_name_resource_ranged_type_class(champion):
     # classic_lodle['name'] = champion
     response = await get_individual_champ_info_raw(champion)
     champ_info = response['data'][champion]
@@ -47,7 +47,8 @@ async def get_name_resource_ranged_type(champion):
     champion_info = {
     'Name': champ_info.get('name'),
     'Resource': champ_info.get('partype'),
-    'range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 175 else 'Melee'
+    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 175 else 'Melee',
+    'Class': champ_info.get('tags')
 }
     return champion_info
 
