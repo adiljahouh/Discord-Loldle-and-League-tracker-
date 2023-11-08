@@ -13,11 +13,12 @@ import asyncio
 from api.fandom import get_loldle_data
 
 class PointCommands(commands.Cog):
-    def __init__(self, main_db, betting_db, g_role, bot) -> None:
+    def __init__(self, main_db, betting_db, g_role, bot, cashoutchannelid) -> None:
         self.main_db: MainDB = main_db
         self.betting_db = betting_db
         self.g_role = g_role
         self.bot : commands.bot.Bot = bot
+        self.cashoutCID = cashoutchannelid
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -71,11 +72,8 @@ class PointCommands(commands.Cog):
                                   color=0xFF0000)
             await ctx.send(embed=embed)
     def compare_dicts_and_create_text(self, dict1, dict2)-> tuple:
-        # Define the emojis
         cross_emoji = "❌"
         check_emoji = "✅"
-
-        # Initialize the result string
         result_text = "Comparison Result:\n\n"
         
         # Initialize a flag to track if all values match
@@ -125,16 +123,15 @@ class PointCommands(commands.Cog):
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
                 today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
-                #TODO: REMOVE!!!!
-                self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
+                # #TODO: REMOVE!!!!
+                # self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
-                # await ctx.send(last_claim.decode('utf-8'))
                 ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "Guess a champion and win 2000 points, for each guess wrong you lose 200 points"
                     winning_guess_info = await get_loldle_data()
                     ddragon_list = await get_champion_ddrag_format_list()
-                    await ctx.send(winning_guess_info)
+                    # await ctx.send(winning_guess_info)
 
                     correct_guess = False
                     attempts = 0
@@ -181,13 +178,19 @@ class PointCommands(commands.Cog):
             except Exception as e:
                 await ctx.send(e)
                 return
-            # points = points_bytes.decode('utf-8')
-            # self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
-            # message = f'Total points: {points}'
-            # embed = discord.Embed(title=f"{status}\n\n",
-            #                       description=f"{message}",
-            #                       color=0xFF0000)
+    @commands.command()
+    @role_check
+    async def cashout(self, ctx, option=""):
+        if option=="":
+            cashout_options ={
+                "3000"
+            }
+            await ctx.send(cashout_options)
+            return
+        else:
+            pass
 
+    
     @commands.command()
     @role_check
     async def roll(self, ctx, *args):
@@ -247,10 +250,10 @@ class PointCommands(commands.Cog):
         try:
             amount = int(args[1])
         except ValueError:
-            await ctx.send("Specify a whole number larger than 0")
+            await ctx.send("Specify a whole number between 0-1000")
             return
-        if amount <= 0:
-            await ctx.send("Specify a whole number larger than 0")
+        if amount <= 0 or amount > 1000:
+            await ctx.send("Specify a whole number between 0-1000")
             return
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.display_name), decision, amount)
@@ -361,4 +364,4 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     betting_db = BettingDB(settings.REDISURL)
     print("adding commands...")
-    await bot.add_cog(PointCommands(main_db, betting_db, settings.GROLE, bot))
+    await bot.add_cog(PointCommands(main_db, betting_db, settings.GROLE, bot, settings.CASHOUTCHANNELID))

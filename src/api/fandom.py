@@ -24,8 +24,6 @@ async def get_region(champion):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://leagueoflegends.fandom.com/wiki/{champion}") as response:
             # print(champion)
-            print("link i used for region!!")
-            print(f"https://leagueoflegends.fandom.com/wiki/{champion}")
             
             response.raise_for_status()
             html = await response.text()
@@ -80,7 +78,7 @@ async def get_loldle_data(ddrag="random"):
         release_date = gender_releasdate['ReleaseDate']
         release_year = release_date.split('-')[0]  # Get the year part
         gender_releasdate['ReleaseDate'] = release_year
-    print("REGION ", region)
+    # print("REGION ", region)
     merged_dict = {**name_resource_range_class, **gender_releasdate}
     merged_dict['Region'] = region
     merged_dict['Species'] = species
