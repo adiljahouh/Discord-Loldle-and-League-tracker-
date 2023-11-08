@@ -45,7 +45,7 @@ async def get_name_resource_ranged_type_class(champion):
     champion_info = {
     'Name': champ_info.get('name'),
     'Resource': champ_info.get('partype'),
-    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 175 else 'Melee',
+    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 325 else 'Melee',
     'Class': champ_info.get('tags')
 }
     return champion_info
