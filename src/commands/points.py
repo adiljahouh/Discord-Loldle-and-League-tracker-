@@ -124,11 +124,11 @@ class PointCommands(commands.Cog):
                 today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
                 # #TODO: REMOVE!!!!
-                # self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
+                self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
                 ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status = "Guess a champion and win 2000 points, for each guess wrong you lose 200 points"
+                    status = f"Guess a champion and win 2000 points, for each guess wrong you lose 200 points. Not replying for over 60 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
                     winning_guess_info = await get_loldle_data()
                     ddragon_list = await get_champion_ddrag_format_list()
                     # await ctx.send(winning_guess_info)
@@ -154,25 +154,26 @@ class PointCommands(commands.Cog):
                                 champion_guess_info = await get_loldle_data(ddrag_name)
                                 # await ctx.send(champion_guess_info)
                                 is_match_and_text = self.compare_dicts_and_create_text(champion_guess_info, winning_guess_info)
-                                await ctx.send(is_match_and_text[1])
+                                mention_and_text = is_match_and_text[1] + f"\n<@{userid}>"
+                                await ctx.send(mention_and_text)
                                 if is_match_and_text[0]:
                                     correct_guess = True
                             except Exception as e:
                                 await ctx.send(e)
                         except asyncio.TimeoutError:
-                            await ctx.send('You took too long to respond... Your game ended.')
+                            await ctx.send(f'You took too long to respond... Your game ended <@{userid}>.')
                             self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                             return
                     if correct_guess:
                         points = 2000 - (attempts-1)*200
-                        result = f"Correct guess! You earned {points} points"
+                        result = f"Correct guess! You earned {points} points <@{userid}>"
                     else:
                         points = 0
-                        result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points"
+                        result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{userid}>"
                     self.main_db.increment_field(userid, "points", points)
                     self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                 else:
-                    result = "You already played a LOLDLE today"
+                    result = f"You already played a LOLDLE today <@{userid}>"
                 total_points = self.main_db.get_user_field(userid, "points")
                 await ctx.send(f"{result}, total points {total_points.decode()}")
             except Exception as e:
