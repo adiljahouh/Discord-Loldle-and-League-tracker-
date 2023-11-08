@@ -24,6 +24,7 @@ class discMod(commands.Cog):
     @role_check
     @mod_check
     async def strike(self, ctx, *args):
+        """Strike someone by using .strike @<user> <reason>"""
         mentions = ctx.message.mentions
         if len(mentions) == 0:
             await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")

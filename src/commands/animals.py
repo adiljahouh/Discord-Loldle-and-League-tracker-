@@ -98,7 +98,7 @@ class AnimalCommands(commands.Cog):
     @role_check
     @mod_check
     async def image(self, ctx, *args):
-        """Adds an image to the 1/100 roll, use with the discord file system (and using .add image before) or by using .add image <url>"""
+        """Adds an image to the 1/100 roll, use with the discord file system by using .image or by using .image <url>"""
         filepath = f"/assets/menno_dogs/{str(uuid.uuid4())}.jpg"
         if ctx.message.attachments and ctx.message.attachments[0].url.lower().split("?", 1)[0].endswith(
                 ('.png', '.jpg', '.jpeg', '.gif', '.webp')):
@@ -118,8 +118,7 @@ class AnimalCommands(commands.Cog):
             except aiohttp.ClientResponseError as e:
                 ctx.send(e)
         else:
-            await ctx.send(
-                    'No valid image attached. Please attach an image using `.add image`. Links either ending in jpg/png/jpeg or embedded pictures.')
+            await ctx.send('No valid image attached. Please attach an image using `.add image`. Links either ending in jpg/png/jpeg or embedded pictures.')
 
 
 async def setup(bot):

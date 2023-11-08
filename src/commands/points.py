@@ -27,6 +27,7 @@ class PointCommands(commands.Cog):
     @commands.command()
     @super_user_check
     async def give(self, ctx, _, amount):
+        """Give points to a user by .give @user <number>"""
         async with ctx.typing():
             try:
                 mentions = ctx.message.mentions
@@ -179,6 +180,9 @@ class PointCommands(commands.Cog):
     @commands.command()
     @role_check
     async def cashout(self, ctx, option=""):
+        """
+            Buy rewards by using .cashout <number> or to view rewars use .cashout
+        """
         async with ctx.typing():
             userid = str(ctx.author.id)
             total_points = self.main_db.get_user_field(userid, "points")
@@ -226,15 +230,16 @@ class PointCommands(commands.Cog):
                         else:
                             await ctx.send(f"You dont have enough points for this option, total points {total_points.decode()}")
                     except IndexError:
-                        await ctx.send("Pick a valid number")
+                        await ctx.send("Pick a valid number by using .cashout <number>")
                         return
                 else:
-                    await ctx.send("Please pick a reward")
+                    await ctx.send("Please pick a reward by using .cashout <number>")
 
     
     @commands.command()
     @role_check
     async def roll(self, ctx, *args):
+        """Roll your points by using .roll <points>"""
         async with ctx.typing():
             userid = str(ctx.author.id)
             points_bytes = self.main_db.get_user_field(userid, "points")
