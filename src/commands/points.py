@@ -181,8 +181,9 @@ class PointCommands(commands.Cog):
     async def cashout(self, ctx, option=""):
         async with ctx.typing():
             userid = str(ctx.author.id)
+            total_points = self.main_db.get_user_field(userid, "points")
             cashout_options = {
-                    "1000": "Buy a lodle",
+                    "1000": "Buy a loldle",
                     "100000": "Change someones discord name for a day",
                     "150000": "Custom soundboard for a day",
                     "300000": "Pick anyone with the Player role's next champ",
@@ -201,10 +202,16 @@ class PointCommands(commands.Cog):
                 await ctx.send(embed=embed)
                 return
             elif option=="1":
-                self.main_db.set_user_field(userid, "last_loldle", "2017-03-01")
                 cost = [i for i in cashout_options.keys()][int(option)-1]
-                self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
-                total_points = self.main_db.get_user_field(userid, "points")
+                print(cost)
+                print(int(total_points.decode()))
+                if int(total_points.decode()) >= int(cost):
+                    print("yes")
+                    self.main_db.set_user_field(userid, "last_loldle", "2017-03-01")
+                    self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
+                else:
+                    await ctx.send("not enough points to buy a loldle")
+                    return
                 await ctx.send(f"You are able to play a lodle again <@{userid}>, total points {total_points.decode()}")
                 pass
             else:
@@ -213,7 +220,6 @@ class PointCommands(commands.Cog):
                         channel = self.bot.get_channel(self.cashoutCID)
                         reward = [i for i in cashout_options.values()][int(option)-1]
                         cost = [i for i in cashout_options.keys()][int(option)-1]
-                        total_points = self.main_db.get_user_field(userid, "points")
                         if int(total_points.decode()) >= int(cost):
                             self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
                             await channel.send(f"<@{userid}> cashed out: {reward}")
