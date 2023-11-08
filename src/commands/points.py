@@ -123,12 +123,10 @@ class PointCommands(commands.Cog):
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
                 today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
-                # #TODO: REMOVE!!!!
-                self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
                 ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status = f"Guess a champion and win 2000 points, for each guess wrong you lose 200 points. Not replying for over 60 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
+                    status = f"Guess a champion and win 2000 points, for each guess wrong you lose 200 points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
                     winning_guess_info = await get_loldle_data()
                     ddragon_list = await get_champion_ddrag_format_list()
                     # await ctx.send(winning_guess_info)
@@ -145,7 +143,7 @@ class PointCommands(commands.Cog):
                     while not correct_guess and attempts < max_attempts:
                         attempts += 1
                         try:
-                            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                            msg = await self.bot.wait_for('message', check=check, timeout=90.0)
                             champion_guess = (msg.content.replace(" ", "")).capitalize()
                             score_and_ddrag_name = find_closest_name(champion_guess, ddragon_list)
                             ddrag_name = score_and_ddrag_name[0]
