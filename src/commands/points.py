@@ -182,6 +182,7 @@ class PointCommands(commands.Cog):
         async with ctx.typing():
             userid = str(ctx.author.id)
             cashout_options = {
+                    "1000": "Buy a lodle",
                     "100000": "Change someones discord name for a day",
                     "150000": "Custom soundboard for a day",
                     "300000": "Pick anyone with the Player role's next champ",
@@ -199,6 +200,13 @@ class PointCommands(commands.Cog):
                         color=0xFF0000)
                 await ctx.send(embed=embed)
                 return
+            elif option=="1":
+                self.main_db.set_user_field(userid, "last_loldle", "2017-03-01")
+                cost = [i for i in cashout_options.keys()][int(option)-1]
+                self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
+                total_points = self.main_db.get_user_field(userid, "points")
+                await ctx.send(f"You are able to play a lodle again <@{userid}>, total points {total_points.decode()}")
+                pass
             else:
                 if option.isdigit():
                     try:

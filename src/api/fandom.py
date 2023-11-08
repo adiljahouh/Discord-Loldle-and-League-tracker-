@@ -1,7 +1,4 @@
-# https://lol.fandom.com/api.php?action=cargofields&format=json&table=Champions
-# https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=499&tables=Champions&fields=Name%2CTitle%2CAttributes%2CKeyDdragon%2CReleaseDate%2CRealName%2CPronoun
 from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_champion_dict
-import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
 
