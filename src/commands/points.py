@@ -161,7 +161,7 @@ class PointCommands(commands.Cog):
                             except Exception as e:
                                 await ctx.send(e)
                         except asyncio.TimeoutError:
-                            await ctx.send(f'You took too long to respond... Your game ended <@{userid}>.')
+                            await ctx.send(f'You took too long to respond, the champion was {winning_guess_info["Name"]}... Your game ended <@{userid}>.')
                             self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                             return
                     if correct_guess:
