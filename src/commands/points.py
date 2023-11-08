@@ -74,7 +74,7 @@ class PointCommands(commands.Cog):
     def compare_dicts_and_create_text(self, dict1, dict2)-> tuple:
         cross_emoji = "❌"
         check_emoji = "✅"
-        result_text = "Comparison Result:\n\n"
+        result_text = ""
         
         # Initialize a flag to track if all values match
         all_values_match = True
@@ -279,10 +279,10 @@ class PointCommands(commands.Cog):
         try:
             amount = int(args[1])
         except ValueError:
-            await ctx.send("Specify a whole number between 0-1000")
+            await ctx.send("Specify a whole number between 0-5000")
             return
-        if amount <= 0 or amount > 1000:
-            await ctx.send("Specify a whole number between 0-1000")
+        if amount <= 0 or amount > 5000:
+            await ctx.send("Specify a whole number between 0-5000")
             return
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.display_name), decision, amount)
