@@ -128,10 +128,10 @@ class PointCommands(commands.Cog):
                 #TODO: REMOVE!!!!
                 self.main_db.set_user_field(userid, "last_loldle", "2017-03-21")
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
-                await ctx.send(last_claim.decode('utf-8'))
+                # await ctx.send(last_claim.decode('utf-8'))
                 ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status = "Guess a champion and win 1000 points, for each guess wrong you lose 100 points"
+                    status = "Guess a champion and win 2000 points, for each guess wrong you lose 200 points"
                     winning_guess_info = await get_loldle_data()
                     ddragon_list = await get_champion_ddrag_format_list()
                     await ctx.send(winning_guess_info)
@@ -150,12 +150,9 @@ class PointCommands(commands.Cog):
                         try:
                             msg = await self.bot.wait_for('message', check=check, timeout=60.0)
                             champion_guess = (msg.content.replace(" ", "")).capitalize()
-                            await ctx.send('Your guess: {}'.format(champion_guess))
-                            # for ddragon i want the ddragname
-                            # for 
                             score_and_ddrag_name = find_closest_name(champion_guess, ddragon_list)
                             ddrag_name = score_and_ddrag_name[0]
-                            await ctx.send(f"your guess has been converted to {ddrag_name}")
+                            await ctx.send(f"Your guess has been converted to {ddrag_name}")
                             try:
                                 champion_guess_info = await get_loldle_data(ddrag_name)
                                 await ctx.send(champion_guess_info)
@@ -170,12 +167,17 @@ class PointCommands(commands.Cog):
                             self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                             return
                     if correct_guess:
-                        points = 1000 - (attempts-1)*100
-                        await ctx.send(f"You gained {points}")
-                    # self.main_db.increment_field(userid, "points", 500)
+                        points = 2000 - (attempts-1)*200
+                        result = f"You earned {points} points"
+                    else:
+                        points = 0
+                        result = f"You earned {points} points"
+                    self.main_db.increment_field(userid, "points", points)
+                    self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                 else:
-                    status = "You already played a LOLDLE today"
-                points_bytes = self.main_db.get_user_field(userid, "points")
+                    result = "You already played a LOLDLE today"
+                total_points = self.main_db.get_user_field(userid, "points")
+                await ctx.send(f"{result}, total points {total_points.decode()}")
             except Exception as e:
                 await ctx.send(e)
                 return
@@ -185,7 +187,6 @@ class PointCommands(commands.Cog):
             # embed = discord.Embed(title=f"{status}\n\n",
             #                       description=f"{message}",
             #                       color=0xFF0000)
-            await ctx.send(embed=embed)
 
     @commands.command()
     @role_check
