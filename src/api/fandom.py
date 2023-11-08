@@ -24,7 +24,8 @@ async def get_region(champion):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://leagueoflegends.fandom.com/wiki/{champion}") as response:
             # print(champion)
-            # print(f"https://leagueoflegends.fandom.com/wiki/{champion}")
+            print("link i used for region!!")
+            print(f"https://leagueoflegends.fandom.com/wiki/{champion}")
             
             response.raise_for_status()
             html = await response.text()
@@ -58,28 +59,28 @@ async def get_loldle_data(ddrag="random"):
     print(f"Real Name returned from ddragquery:  {name_resource_range_class['Name']}")
     try:
         gender_releasdate = await get_gender_releaseDate_per_champ(ddrag)
-        if 'ReleaseDate__precision' in gender_releasdate:
-            del gender_releasdate['ReleaseDate__precision']
-            
-            # Convert the ReleaseDate to just the year
-        if 'ReleaseDate' in gender_releasdate:
-            # Assuming the date is in a standard format like 'YYYY-MM-DD'
-            release_date = gender_releasdate['ReleaseDate']
-            release_year = release_date.split('-')[0]  # Get the year part
-            gender_releasdate['ReleaseDate'] = release_year
     except IndexError as e:
         gender_releasdate = await get_gender_releaseDate_per_champ(name_resource_range_class['Name'])
     try:
-        region, species = await get_region(ddrag)
+        region, species = await get_region(name_resource_range_class['Name'])
     except Exception as e:
-        print(f'First attempt {ddrag} failed')
+        print(f'First attempt {name_resource_range_class["Name"]} failed')
         try:
-            region, species = await get_region(name_resource_range_class['Name'])
-        except Exception as e:
-            print(f"second attemtp {name_resource_range_class['Name']} failed")
             spaceless_champ = name_resource_range_class['Name'].replace(" ", "_").replace("'","%27")
-            print(f"Third: {spaceless_champ}")
+            print(f"second: {spaceless_champ}")
             region, species = await get_region(spaceless_champ)
+        except Exception as e:
+            region, species = await get_region(ddrag)
+    if 'ReleaseDate__precision' in gender_releasdate:
+        del gender_releasdate['ReleaseDate__precision']
+        
+        # Convert the ReleaseDate to just the year
+    if 'ReleaseDate' in gender_releasdate:
+        # Assuming the date is in a standard format like 'YYYY-MM-DD'
+        release_date = gender_releasdate['ReleaseDate']
+        release_year = release_date.split('-')[0]  # Get the year part
+        gender_releasdate['ReleaseDate'] = release_year
+    print("REGION ", region)
     merged_dict = {**name_resource_range_class, **gender_releasdate}
     merged_dict['Region'] = region
     merged_dict['Species'] = species

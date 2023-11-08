@@ -152,10 +152,10 @@ class PointCommands(commands.Cog):
                             champion_guess = (msg.content.replace(" ", "")).capitalize()
                             score_and_ddrag_name = find_closest_name(champion_guess, ddragon_list)
                             ddrag_name = score_and_ddrag_name[0]
-                            await ctx.send(f"Your guess has been converted to {ddrag_name}")
+                            # await ctx.send(f"Your guess has been converted to {ddrag_name}")
                             try:
                                 champion_guess_info = await get_loldle_data(ddrag_name)
-                                await ctx.send(champion_guess_info)
+                                # await ctx.send(champion_guess_info)
                                 is_match_and_text = self.compare_dicts_and_create_text(champion_guess_info, winning_guess_info)
                                 await ctx.send(is_match_and_text[1])
                                 if is_match_and_text[0]:
@@ -168,10 +168,10 @@ class PointCommands(commands.Cog):
                             return
                     if correct_guess:
                         points = 2000 - (attempts-1)*200
-                        result = f"You earned {points} points"
+                        result = f"Correct guess! You earned {points} points"
                     else:
                         points = 0
-                        result = f"You earned {points} points"
+                        result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points"
                     self.main_db.increment_field(userid, "points", points)
                     self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                 else:
