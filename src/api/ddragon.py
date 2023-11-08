@@ -21,6 +21,10 @@ async def get_champion_dict() -> dict:
             for attribute, value in content['data'].items():
                 champ_dict.update({value['key']: attribute})
             return champ_dict
+        
+async def get_champion_ddrag_format_list()->list:
+    champdict = await get_champion_dict()
+    return list(champdict.values())
 
 async def get_individual_champ_info_raw(champion):
     async with aiohttp.ClientSession() as session:
@@ -29,6 +33,7 @@ async def get_individual_champ_info_raw(champion):
             response.raise_for_status()
             content = await response.json()
             return content
+        
 async def get_random_champ():
     champion_list = await get_champion_dict()
     return random.choice(list(champion_list.values()))    

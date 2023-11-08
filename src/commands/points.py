@@ -4,6 +4,8 @@ import discord
 import random
 import datetime
 from commands.utility.decorators import role_check, super_user_check
+from api.ddragon import get_champion_ddrag_format_list
+from commands.utility.get_closest_word import find_closest_name
 from databases.betting import BettingDB
 from databases.main import MainDB
 import pytz
@@ -68,14 +70,16 @@ class PointCommands(commands.Cog):
                                   description=f"{message}",
                                   color=0xFF0000)
             await ctx.send(embed=embed)
-
-    def compare_dicts_and_create_embed(self, dict1, dict2):
+    def compare_dicts_and_create_text(self, dict1, dict2)-> tuple:
         # Define the emojis
         cross_emoji = "❌"
         check_emoji = "✅"
 
-        # Create a Discord embed
-        embed = discord.Embed(title="Comparison Result", color=0x00ff00)
+        # Initialize the result string
+        result_text = "Comparison Result:\n\n"
+        
+        # Initialize a flag to track if all values match
+        all_values_match = True
 
         # Compare the dictionaries
         for key in dict1:
@@ -84,25 +88,31 @@ class PointCommands(commands.Cog):
                     # Both values are lists, compare items
                     matching_items = [f"{check_emoji} {item}" for item in dict1[key] if item in dict2[key]]
                     non_matching_items = [f"{cross_emoji} {item}" for item in dict1[key] if item not in dict2[key]]
-                    items_str = ', '.join(matching_items + non_matching_items)
-                    embed.add_field(name=key, value=items_str, inline=False)
+                    if non_matching_items:
+                        all_values_match = False  # Set flag to False if there are non-matching items
+                    items_str = ' '.join(matching_items + non_matching_items)
+                    result_text += f"{key}: {items_str}\n"
                 elif dict1[key] == dict2[key]:
                     # Values match
-                    embed.add_field(name=key, value=f"{check_emoji} {dict1[key]}", inline=False)
+                    result_text += f"{key}: {check_emoji} {dict1[key]}\n"
                 else:
                     # Values don't match
-                    embed.add_field(name=key, value=f"{cross_emoji} {dict1[key]} -> {dict2[key]}", inline=False)
+                    result_text += f"{key}: {cross_emoji} {dict1[key]}\n"
+                    all_values_match = False
             else:
                 # Key doesn't exist in the second dictionary
-                embed.add_field(name=key, value=f"{cross_emoji} {dict1[key]} -> Key not found", inline=False)
+                result_text += f"{key}: {cross_emoji} {dict1[key]} -> Key not found\n"
+                all_values_match = False
 
         # Check for any extra keys in the second dictionary
         for key in dict2:
             if key not in dict1:
                 # Key doesn't exist in the first dictionary
-                embed.add_field(name=key, value=f"{cross_emoji} Key not found -> {dict2[key]}", inline=False)
+                result_text += f"{key}: {cross_emoji} Key not found -> {dict2[key]}\n"
+                all_values_match = False
 
-        return embed
+        # Return both the match flag and the result text
+        return (all_values_match, result_text.strip())
 
     @commands.command()
     @role_check
@@ -121,28 +131,47 @@ class PointCommands(commands.Cog):
                 await ctx.send(last_claim.decode('utf-8'))
                 ##
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                    status = "Guess a champion and win 1000 points!"
-                    winning_guess_info = await get_loldle_data()  
+                    status = "Guess a champion and win 1000 points, for each guess wrong you lose 100 points"
+                    winning_guess_info = await get_loldle_data()
+                    ddragon_list = await get_champion_ddrag_format_list()
                     await ctx.send(winning_guess_info)
+
+                    correct_guess = False
+                    attempts = 0
+                    max_attempts = 10  # Set the maximum number of attempts here
+
                     await ctx.send(status)
                     # start LODLE api call and wait for response
                     def check(m):
                         return m.author == ctx.author and m.channel == ctx.channel
-                    try:
-                        msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-                        champion_guess = (msg.content.replace(" ", "")).capitalize()
-                        await ctx.send('Your guess: {}'.format(champion_guess))
+                    
+                    while not correct_guess and attempts < max_attempts:
+                        attempts += 1
                         try:
-                            champion_guess_info = await get_loldle_data(champion_guess)
-                            await ctx.send(champion_guess_info)
-                            embed = self.compare_dicts_and_create_embed(champion_guess_info, winning_guess_info)
-                            print(embed)
-                            await ctx.send(embed)
-                        except Exception as e:
-                            await ctx.send(e)
-                    except asyncio.TimeoutError:
-                        await ctx.send('Sorry, you took too long to respond.')
-                        return
+                            msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                            champion_guess = (msg.content.replace(" ", "")).capitalize()
+                            await ctx.send('Your guess: {}'.format(champion_guess))
+                            # for ddragon i want the ddragname
+                            # for 
+                            score_and_ddrag_name = find_closest_name(champion_guess, ddragon_list)
+                            ddrag_name = score_and_ddrag_name[0]
+                            await ctx.send(f"your guess has been converted to {ddrag_name}")
+                            try:
+                                champion_guess_info = await get_loldle_data(ddrag_name)
+                                await ctx.send(champion_guess_info)
+                                is_match_and_text = self.compare_dicts_and_create_text(champion_guess_info, winning_guess_info)
+                                await ctx.send(is_match_and_text[1])
+                                if is_match_and_text[0]:
+                                    correct_guess = True
+                            except Exception as e:
+                                await ctx.send(e)
+                        except asyncio.TimeoutError:
+                            await ctx.send('You took too long to respond... Your game ended.')
+                            self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
+                            return
+                    if correct_guess:
+                        points = 1000 - (attempts-1)*100
+                        await ctx.send(f"You gained {points}")
                     # self.main_db.increment_field(userid, "points", 500)
                 else:
                     status = "You already played a LOLDLE today"

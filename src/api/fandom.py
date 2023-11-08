@@ -1,6 +1,6 @@
 # https://lol.fandom.com/api.php?action=cargofields&format=json&table=Champions
 # https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=499&tables=Champions&fields=Name%2CTitle%2CAttributes%2CKeyDdragon%2CReleaseDate%2CRealName%2CPronoun
-from api.ddragon import get_name_resource_ranged_type_class, get_random_champ
+from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_champion_dict
 import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
@@ -50,23 +50,35 @@ async def get_region(champion):
             return regions,species 
             
 
-async def get_loldle_data(champ="random"):
-    if champ=="random":
-        champ = await get_random_champ()
-    name_resource_range_class = await get_name_resource_ranged_type_class(champ)
+async def get_loldle_data(ddrag="random"):
+    # RekSai
+    if ddrag=="random":
+        ddrag = await get_random_champ()
+    name_resource_range_class = await get_name_resource_ranged_type_class(ddrag)
+    print(f"Real Name returned from ddragquery:  {name_resource_range_class['Name']}")
     try:
-        gender_releasdate = await get_gender_releaseDate_per_champ(champ)
+        gender_releasdate = await get_gender_releaseDate_per_champ(ddrag)
+        if 'ReleaseDate__precision' in gender_releasdate:
+            del gender_releasdate['ReleaseDate__precision']
+            
+            # Convert the ReleaseDate to just the year
+        if 'ReleaseDate' in gender_releasdate:
+            # Assuming the date is in a standard format like 'YYYY-MM-DD'
+            release_date = gender_releasdate['ReleaseDate']
+            release_year = release_date.split('-')[0]  # Get the year part
+            gender_releasdate['ReleaseDate'] = release_year
     except IndexError as e:
         gender_releasdate = await get_gender_releaseDate_per_champ(name_resource_range_class['Name'])
     try:
-        region, species = await get_region(champ)
+        region, species = await get_region(ddrag)
     except Exception as e:
-        print('First attempt failed')
+        print(f'First attempt {ddrag} failed')
         try:
             region, species = await get_region(name_resource_range_class['Name'])
         except Exception as e:
-            print("second attemtp failed")
-            spaceless_champ = champ.replace(" ", "_").replace("'","%27")
+            print(f"second attemtp {name_resource_range_class['Name']} failed")
+            spaceless_champ = name_resource_range_class['Name'].replace(" ", "_").replace("'","%27")
+            print(f"Third: {spaceless_champ}")
             region, species = await get_region(spaceless_champ)
     merged_dict = {**name_resource_range_class, **gender_releasdate}
     merged_dict['Region'] = region
