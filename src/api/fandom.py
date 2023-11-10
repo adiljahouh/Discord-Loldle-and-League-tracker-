@@ -1,4 +1,4 @@
-from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_champion_dict
+from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_name_resource_ranged_type_class_and_random_spell
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -9,7 +9,6 @@ async def get_gender_releaseDate_per_champ(champion):
         async with session.get(f"https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=50&tables=Champions&fields=Name%2CPronoun%2CReleaseDate&where=Name%3D%22{champion}%22") as response:
             response.raise_for_status()
             content = await response.json()
-            print(content)
             return content['cargoquery'][0]['title']
 
 # async def get_year_class_role_per_champ(champion):
@@ -49,11 +48,16 @@ async def get_region(champion):
             return regions,species 
             
 
-async def get_loldle_data(ddrag="random"):
+async def get_loldle_champ_data(ddrag="random", mode="classic"):
     # RekSai
     if ddrag=="random":
         ddrag = await get_random_champ()
-    name_resource_range_class = await get_name_resource_ranged_type_class(ddrag)
+    else:
+        pass
+    if mode.lower()=="ability":
+        name_resource_range_class, ability_image = await get_name_resource_ranged_type_class_and_random_spell(ddrag)
+    else:
+        name_resource_range_class = await get_name_resource_ranged_type_class(ddrag)
     print(f"Real Name returned from ddragquery:  {name_resource_range_class['Name']}")
     try:
         gender_releasdate = await get_gender_releaseDate_per_champ(ddrag)
@@ -82,6 +86,8 @@ async def get_loldle_data(ddrag="random"):
     merged_dict = {**name_resource_range_class, **gender_releasdate}
     merged_dict['Region'] = region
     merged_dict['Species'] = species
-    return merged_dict
+    if mode == "ability":
+        return merged_dict, ability_image
+    else:
+        return merged_dict
 
-# asyncio.run(get_loldle_data())

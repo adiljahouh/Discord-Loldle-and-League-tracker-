@@ -1,17 +1,25 @@
 import random
-from PIL import Image
+from PIL import Image, ImageOps
+import io
 
-def process_image(image_path):
-    # Open the image file
-    img = Image.open(image_path)
+async def transform_image(image_content):
+    # Open the image from the binary content
+    image = Image.open(io.BytesIO(image_content))
+    
     # Convert the image to grayscale
-    img = img.convert('L')
-    # Generate a random angle between 0 and 360
-    angle = random.choice([90, 180, 270, 360])
-    # Rotate the image
-    img = img.rotate(angle)  # Rotate by a random angle
-    # Save the image
-    img.save('/assets/loldle.png')
+    grayscale_image = ImageOps.grayscale(image)
+    
+    # Rotate the grayscale image by 90 degrees
+    rotation_angle = random.choice([90, 180, 270])
+    
+    # Rotate the grayscale image by the chosen angle
+    rotated_image = grayscale_image.rotate(rotation_angle)
+    
+    # Save the transformed image to a bytes-like object
+    output_stream = io.BytesIO()
+    rotated_image.save(output_stream, format="PNG")
+    
+    return output_stream.getvalue()
 
 
 def compare_dicts_and_create_text(dict1, dict2)-> tuple:

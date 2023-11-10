@@ -11,7 +11,8 @@ from databases.betting import BettingDB
 from databases.main import MainDB
 import pytz
 import asyncio
-from api.fandom import get_loldle_data
+import io
+from api.fandom import get_loldle_champ_data
 
 class PointCommands(commands.Cog):
     def __init__(self, main_db, betting_db, g_role, bot, cashoutchannelid) -> None:
@@ -88,15 +89,21 @@ class PointCommands(commands.Cog):
             ##
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                 status = f"Guess a champion and win 2000 points, for each guess wrong you lose 200 points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
-                winning_guess_info = await get_loldle_data()
                 ddragon_list = await get_champion_ddrag_format_list()
+                if option.lower() == "ability":
+                    winning_guess_info, image = await get_loldle_champ_data(ddrag="random", mode="ability")
+                    transformed_image = await transform_image(image)
+                    await ctx.send(status)
+                    await ctx.send(file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
+                else:
+                    winning_guess_info = await get_loldle_champ_data(ddrag="random", mode="classic")
+                    await ctx.send(status)
                 # await ctx.send(winning_guess_info)
 
                 correct_guess = False
                 attempts = 0
                 max_attempts = 10  # Set the maximum number of attempts here
 
-                await ctx.send(status)
                 # start LODLE api call and wait for response
                 def check(m):
                     return m.author == ctx.author and m.channel == ctx.channel
@@ -110,7 +117,7 @@ class PointCommands(commands.Cog):
                         ddrag_name = score_and_ddrag_name[0]
                         # await ctx.send(f"Your guess has been converted to {ddrag_name}")
                         try:
-                            champion_guess_info = await get_loldle_data(ddrag_name)
+                            champion_guess_info = await get_loldle_champ_data(ddrag=ddrag_name)
                             # await ctx.send(champion_guess_info)
                             is_match_and_text = compare_dicts_and_create_text(champion_guess_info, winning_guess_info)
                             mention_and_text = is_match_and_text[1] + f"\n<@{userid}>"

@@ -33,7 +33,14 @@ async def get_individual_champ_info_raw(champion):
             response.raise_for_status()
             content = await response.json()
             return content
-        
+async def get_individual_spell_info_raw(spell):
+    async with aiohttp.ClientSession() as session:
+        latest = await get_latest_ddragon()
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/img/spell/{spell}") as response:
+            response.raise_for_status()
+            content = await response.read()
+            print(content)
+            return content        
 async def get_random_champ():
     champion_list = await get_champion_dict()
     return random.choice(list(champion_list.values()))    
@@ -49,6 +56,24 @@ async def get_name_resource_ranged_type_class(champion):
     'Class': champ_info.get('tags')
 }
     return champion_info
+
+async def get_name_resource_ranged_type_class_and_random_spell(champion):
+    # classic_lodle['name'] = champion
+    response = await get_individual_champ_info_raw(champion)
+    champ_info = response['data'][champion]
+    champion_info = {
+    'Name': champ_info.get('name'),
+    'Resource': champ_info.get('partype'),
+    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 325 else 'Melee',
+    'Class': champ_info.get('tags')
+}
+    spells = [key for key in champ_info['spells']]
+    random_spell = random.choice(spells)
+    print(" THE RANDOM SPELL IS ", random_spell['image']['full'])
+    # Get the PNG image for the random spell
+    spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
+    
+    return champion_info, spell_image_content
 
 
 async def champion_splash(champion):
