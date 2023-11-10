@@ -1,5 +1,5 @@
 import random
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFilter
 import io
 
 async def transform_image(image_content):
@@ -7,13 +7,13 @@ async def transform_image(image_content):
     image = Image.open(io.BytesIO(image_content))
     
     # Convert the image to grayscale
-    grayscale_image = ImageOps.grayscale(image)
-    
+    color_inverted_image = ImageOps.equalize(image, mask = None)
+    blurred_image = color_inverted_image.filter(ImageFilter.BLUR)
     # Rotate the grayscale image by 90 degrees
     rotation_angle = random.choice([90, 180, 270])
     
     # Rotate the grayscale image by the chosen angle
-    rotated_image = grayscale_image.rotate(rotation_angle)
+    rotated_image = blurred_image.rotate(rotation_angle)
     
     # Save the transformed image to a bytes-like object
     output_stream = io.BytesIO()

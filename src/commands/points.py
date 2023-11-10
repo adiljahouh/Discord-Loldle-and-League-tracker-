@@ -90,6 +90,8 @@ class PointCommands(commands.Cog):
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                 ddragon_list = await get_champion_ddrag_format_list()
                 if option.lower() == "ability":
+                    # await ctx.send("not available at the moment.")
+                    # return
                     winning_guess_info, image = await get_loldle_champ_data(ddrag="random", mode="ability")
                     transformed_image = await transform_image(image)
                     max_attempts = 5  # Set the maximum number of attempts here
@@ -135,9 +137,6 @@ class PointCommands(commands.Cog):
                         self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                         return
                 if correct_guess:
-                    print(attempts)
-                    print(max_points)
-                    print(((attempts)*(max_points/attempts)))
                     points =int(max_points - ((attempts-1)*(max_points/max_attempts)))
                     result = f"Correct guess! You earned {points} points <@{userid}>"
                 else:
@@ -149,6 +148,9 @@ class PointCommands(commands.Cog):
                 result = f"You already played a LOLDLE today <@{userid}>"
             total_points = self.main_db.get_user_field(userid, "points")
             await ctx.send(f"{result}, total points {total_points.decode()}")
+            if option.lower() == "ability":
+                await ctx.send("The correct image below:")
+                await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
         except Exception as e:
             await ctx.send(e)
             return

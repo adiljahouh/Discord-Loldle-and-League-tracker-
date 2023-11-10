@@ -39,7 +39,6 @@ async def get_individual_spell_info_raw(spell):
         async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/img/spell/{spell}") as response:
             response.raise_for_status()
             content = await response.read()
-            print(content)
             return content        
 async def get_random_champ():
     champion_list = await get_champion_dict()
