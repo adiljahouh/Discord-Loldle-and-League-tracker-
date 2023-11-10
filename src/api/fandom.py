@@ -3,10 +3,13 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 async def get_gender_releaseDate_per_champ(champion):
+    if champion == 'Nunu & Willump':
+        champion = 'Nunu%20%26amp%3B%20Willump' 
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=50&tables=Champions&fields=Name%2CPronoun%2CReleaseDate&where=Name%3D%22{champion}%22") as response:
             response.raise_for_status()
             content = await response.json()
+            print(content)
             return content['cargoquery'][0]['title']
 
 # async def get_year_class_role_per_champ(champion):
