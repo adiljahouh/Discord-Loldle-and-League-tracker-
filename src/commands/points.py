@@ -144,13 +144,13 @@ class PointCommands(commands.Cog):
                     result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{userid}>"
                 self.main_db.increment_field(userid, "points", points)
                 self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
+                if option.lower() == "ability":
+                    await ctx.send("The correct image below:")
+                    await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
             else:
                 result = f"You already played a LOLDLE today <@{userid}>"
             total_points = self.main_db.get_user_field(userid, "points")
             await ctx.send(f"{result}, total points {total_points.decode()}")
-            if option.lower() == "ability":
-                await ctx.send("The correct image below:")
-                await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
         except Exception as e:
             await ctx.send(e)
             return
