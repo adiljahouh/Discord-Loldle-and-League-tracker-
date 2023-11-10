@@ -88,21 +88,25 @@ class PointCommands(commands.Cog):
             last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
             ##
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                status = f"Guess a champion and win 2000 points, for each guess wrong you lose 200 points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
                 ddragon_list = await get_champion_ddrag_format_list()
                 if option.lower() == "ability":
                     winning_guess_info, image = await get_loldle_champ_data(ddrag="random", mode="ability")
                     transformed_image = await transform_image(image)
+                    max_attempts = 5  # Set the maximum number of attempts here
+                    max_points = 2000
+                    status = f"Guess a champion and win {max_points} points, for each guess wrong you lose {int(max_points/max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
                     await ctx.send(status)
                     await ctx.send(file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 else:
+                    max_attempts = 10  # Set the maximum number of attempts here
+                    max_points = 2000
+                    status = f"Guess a champion and win {max_points} points, for each guess wrong you lose {int(max_points/max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
                     winning_guess_info = await get_loldle_champ_data(ddrag="random", mode="classic")
                     await ctx.send(status)
                 # await ctx.send(winning_guess_info)
 
                 correct_guess = False
                 attempts = 0
-                max_attempts = 10  # Set the maximum number of attempts here
 
                 # start LODLE api call and wait for response
                 def check(m):
@@ -131,7 +135,10 @@ class PointCommands(commands.Cog):
                         self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
                         return
                 if correct_guess:
-                    points = 2000 - (attempts-1)*200
+                    print(attempts)
+                    print(max_points)
+                    print(((attempts)*(max_points/attempts)))
+                    points =int(max_points - ((attempts-1)*(max_points/max_attempts)))
                     result = f"Correct guess! You earned {points} points <@{userid}>"
                 else:
                     points = 0
