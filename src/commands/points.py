@@ -51,7 +51,7 @@ class PointCommands(commands.Cog):
     @commands.command()
     @role_check
     async def daily(self, ctx):
-        """ Get daily points (500)"""
+        """ Get daily points (1000)"""
         async with ctx.typing():
             try:
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
@@ -61,7 +61,7 @@ class PointCommands(commands.Cog):
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "You claim some points"
                     self.main_db.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
-                    self.main_db.increment_field(userid, "points", 500)
+                    self.main_db.increment_field(userid, "points", 1000)
                 else:
                     status = "You already claimed your points for today"
                 points_bytes = self.main_db.get_user_field(userid, "points")
@@ -135,6 +135,8 @@ class PointCommands(commands.Cog):
                     except asyncio.TimeoutError:
                         await ctx.send(f'You took too long to respond, the champion was {winning_guess_info["Name"]}... Your game ended <@{userid}>.')
                         self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
+                        await ctx.send("The correct image below:")
+                        await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
                         return
                 if correct_guess:
                     points =int(max_points - ((attempts-1)*(max_points/max_attempts)))
@@ -193,7 +195,8 @@ class PointCommands(commands.Cog):
                 else:
                     await ctx.send("not enough points to buy a loldle")
                     return
-                await ctx.send(f"You are able to play a lodle again <@{userid}>, total points {total_points.decode()}")
+                new_points = self.main_db.get_user_field(userid, "points")
+                await ctx.send(f"You are able to play a lodle again <@{userid}>, total points {new_points.decode()}")
                 pass
             else:
                 if option.isdigit():
