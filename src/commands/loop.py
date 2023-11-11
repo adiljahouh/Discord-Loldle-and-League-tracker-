@@ -165,6 +165,7 @@ class loops(commands.Cog):
                                             "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                       description="HE WILL SURELY WIN, RIGHT?",
                                       color=0xFF0000)
+                # embed.set_footer(text="Made by Matthijs (Aftershock)")
                 champions = [[player[1] for player in team] for team in data[1]]
                 players = [[player[0] for player in team] for team in data[1]]
                 try:
@@ -214,6 +215,7 @@ class loops(commands.Cog):
                     if decision == "believers":
                         embed.add_field(name='\u200b', value='\u200b')
                 try:
+                    # embed.set_footer(text="Made by Matthijs (Aftershock)")
                     await message.edit(embed=embed)
                     print("Starting message updated.")
                 except Exception as e:
@@ -264,6 +266,7 @@ class loops(commands.Cog):
                                   description=description,
                                   color=0xFF0000)
             embed.set_image(url="attachment://team.png")
+            # embed.set_footer(text="Made by Matthijs (Aftershock)")
             all_bets = self.betting_db.get_all_bets()
             for decision in all_bets.keys():
                 text = ""

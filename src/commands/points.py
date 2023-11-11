@@ -186,8 +186,6 @@ class PointCommands(commands.Cog):
                 return
             elif option=="1":
                 cost = [i for i in cashout_options.keys()][int(option)-1]
-                print(cost)
-                print(int(total_points.decode()))
                 if int(total_points.decode()) >= int(cost):
                     print("yes")
                     self.main_db.set_user_field(userid, "last_loldle", "2017-03-01")
@@ -342,6 +340,7 @@ class PointCommands(commands.Cog):
                 leaderboard_text += f'\n{index + 1 + ((page_number * 10) - 10)}. <@{user[0]}> | {user[1]} points'
             description = f"99 percent of gamblers quit right before they hit it big! \n This is page {page_number}, to look at the next page use '.leaderboard {page_number+1}'"
             embed = discord.Embed(title="Biggest gambling addicts 🃏\n\n", description=f"{description}", color=0xFF0000)
+            # embed.set_footer(text="Made by Stephen (Smikkelen)")
             embed.add_field(name="Top 10 point havers on the server", value=leaderboard_text)
             await ctx.send(embed=embed)
         except Exception as ex:
