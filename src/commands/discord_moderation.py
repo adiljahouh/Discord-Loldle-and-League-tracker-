@@ -1,24 +1,83 @@
-import aiohttp
+
+from typing import Optional
 from discord.ext import commands
 from config import Settings
 import discord
-import os
-import uuid
-from commands.utility.decorators import role_check, mod_check
+from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
-import asyncio
+from discord.ui import View, Button
+class haterFanboyView(discord.ui.View):
+    def __init__(self, *, timeout, hater, fanboy):
+        super().__init__(timeout=timeout)
+        self.fanboy_id = fanboy
+        self.hater_id = hater
+    
+    
+    @discord.ui.button(label="FANBOY", 
+                       style=discord.ButtonStyle.green)
+    async def add_fanboy(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user = interaction.user
+        has_target_role = any(role.id == self.fanboy_id for role in user.roles)
+        if has_target_role:
+            print("dong")
+            target_role = interaction.guild.get_role(self.fanboy_id)
+            await interaction.response.send_message(f"You already have the role {target_role.mention}", ephemeral=True)
+        else:
+            print("DING")
+            # Add the role if the user doesn't have it
+            target_role = interaction.guild.get_role(self.fanboy_id)
+            if target_role:
+                await user.add_roles(target_role)
+                await interaction.response.send_message(f"You have been assigned the role {target_role.mention}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"Role not found. {target_role.mention}", ephemeral=True)
+        
+    @discord.ui.button(label="HATER", 
+                       style=discord.ButtonStyle.red)
+    async def add_hater(self, interaction: discord.Interaction, button: discord.ui.Button):
+        user = interaction.user
+        has_target_role = any(role.id == self.hater_id for role in user.roles)
+        if has_target_role:
+            print("dong")
+            target_role = interaction.guild.get_role(self.hater_id)
+            await interaction.response.send_message(f"You already have the role {target_role.mention}", ephemeral=True)
+        else:
+            print("DING")
+            # Add the role if the user doesn't have it
+            target_role = interaction.guild.get_role(self.hater_id)
+            if target_role:
+                await user.add_roles(target_role)
+                await interaction.response.send_message(f"You have been assigned the role {target_role.mention}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"Role not found. {target_role.mention}", ephemeral=True)
+        
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id, confessional, bot) -> None:
+    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
         self.confessional = confessional
+        self.fanboyroleid = fanboyid
+        self.haterroleid = haterid
+        self.rolechannelid = rolechannelid
 
     @commands.Cog.listener()
     async def on_ready(self):
-        pass
+        channel = self.bot.get_channel(self.rolechannelid)
+
+        if channel:
+            await channel.purge()
+            view = haterFanboyView(timeout=None, hater=self.haterroleid, fanboy=self.fanboyroleid)
+            embed = discord.Embed(
+            title="Choose Your Role",
+            description="Click one of the buttons below to choose your role,\nbe sure to .register <league_name> to unlock all channels.",
+            color=discord.Color.blue()
+                )
+            channel = self.bot.get_channel(self.rolechannelid)
+            await channel.send(embed=embed, view=view)
+
 
     @commands.command()
     @role_check
@@ -68,9 +127,8 @@ class discMod(commands.Cog):
                     await ctx.send(
                         f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
 
-
 async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")
-    await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot))
+    await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID))

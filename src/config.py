@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     SUPERUSER: int
     CONFESSIONALCHANNELID: int
     CASHOUTCHANNELID: int
+    FANBOYROLEID: int
+    HATERROLEID: int
+    ROLECHANNELID: int
+
 
     class Config:
         env_file = ".env"

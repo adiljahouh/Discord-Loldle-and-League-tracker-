@@ -22,6 +22,7 @@ class PointCommands(commands.Cog):
         self.bot : commands.bot.Bot = bot
         self.cashoutCID = cashoutchannelid
 
+
     @commands.Cog.listener()
     async def on_ready(self):
         pass
@@ -150,7 +151,7 @@ class PointCommands(commands.Cog):
                     await ctx.send("The correct image below:")
                     await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
             else:
-                result = f"You already played a LOLDLE today <@{userid}>"
+                result = f"You already played a LOLDLE today <@{userid}> , use .cashout 1 to buy one"
             total_points = self.main_db.get_user_field(userid, "points")
             await ctx.send(f"{result}, total points {total_points.decode()}")
         except Exception as e:
@@ -340,7 +341,7 @@ class PointCommands(commands.Cog):
                 leaderboard_text += f'\n{index + 1 + ((page_number * 10) - 10)}. <@{user[0]}> | {user[1]} points'
             description = f"99 percent of gamblers quit right before they hit it big! \n This is page {page_number}, to look at the next page use '.leaderboard {page_number+1}'"
             embed = discord.Embed(title="Biggest gambling addicts 🃏\n\n", description=f"{description}", color=0xFF0000)
-            # embed.set_footer(text="Made by Stephen (Smikkelen)")
+            #embed.set_footer(text="Made by Stephen (Smikkelen)")
             embed.add_field(name="Top 10 point havers on the server", value=leaderboard_text)
             await ctx.send(embed=embed)
         except Exception as ex:

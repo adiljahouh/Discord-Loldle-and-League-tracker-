@@ -51,7 +51,7 @@ def super_user_check(func):
             else:
                 await ctx.send(f"You are not <@{settings.SUPERUSER}>")
         except Exception as e:
-            await ctx.send(f"Error occured during role check, Error: {e}")
+            await ctx.send(f"Error: {e}")
             return
     return inner
 
