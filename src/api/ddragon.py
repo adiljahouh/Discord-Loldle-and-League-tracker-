@@ -39,7 +39,18 @@ async def get_individual_spell_info_raw(spell):
         async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/img/spell/{spell}") as response:
             response.raise_for_status()
             content = await response.read()
-            return content        
+            return content 
+async def get_splash_art_champ(champion, num=0):
+    async with aiohttp.ClientSession() as session:
+        latest = await get_latest_ddragon()
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{champion}_{num}.jpg") as response:
+            response.raise_for_status()
+            content = await response.read()
+            return content  
+async def get_random_num_skin_champ(champion):
+    champ_content = await get_individual_champ_info_raw(champion=champion)
+    return random.choice([skin["num"] for skin in  champ_content['data'][champion]['skins']])
+
 async def get_random_champ():
     champion_list = await get_champion_dict()
     return random.choice(list(champion_list.values()))    
@@ -68,12 +79,23 @@ async def get_name_resource_ranged_type_class_and_random_spell(champion):
 }
     spells = [key for key in champ_info['spells']]
     random_spell = random.choice(spells)
-    print(" THE RANDOM SPELL IS ", random_spell['image']['full'])
     # Get the PNG image for the random spell
     spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
     
     return champion_info, spell_image_content
 
+async def get_name_resource_ranged_type_class_and_splash(champion):
+    response = await get_individual_champ_info_raw(champion)
+    champ_info = response['data'][champion]
+    champion_info = {
+    'Name': champ_info.get('name'),
+    'Resource': champ_info.get('partype'),
+    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 325 else 'Melee',
+    'Class': champ_info.get('tags')
+}
+    skin_num = await get_random_num_skin_champ(champion=champion)
+    splash = await get_splash_art_champ(champion=champion, num=skin_num)
+    return champion_info, splash
 
 async def champion_splash(champion):
     version = await get_latest_ddragon()

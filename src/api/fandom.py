@@ -1,4 +1,4 @@
-from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_name_resource_ranged_type_class_and_random_spell
+from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_name_resource_ranged_type_class_and_random_spell, get_name_resource_ranged_type_class_and_splash
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -56,6 +56,8 @@ async def get_loldle_champ_data(ddrag="random", mode="classic"):
         pass
     if mode.lower()=="ability":
         name_resource_range_class, ability_image = await get_name_resource_ranged_type_class_and_random_spell(ddrag)
+    elif mode.lower()=="splash":
+        name_resource_range_class, splash_image = await get_name_resource_ranged_type_class_and_splash(ddrag)
     else:
         name_resource_range_class = await get_name_resource_ranged_type_class(ddrag)
     print(f"Real Name returned from ddragquery:  {name_resource_range_class['Name']}")
@@ -86,8 +88,10 @@ async def get_loldle_champ_data(ddrag="random", mode="classic"):
     merged_dict = {**name_resource_range_class, **gender_releasdate}
     merged_dict['Region'] = region
     merged_dict['Species'] = species
-    if mode == "ability":
+    if mode.lower() == "ability":
         return merged_dict, ability_image
+    elif mode.lower()=="splash":
+        return merged_dict, splash_image
     else:
         return merged_dict
 

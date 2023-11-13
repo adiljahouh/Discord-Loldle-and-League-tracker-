@@ -79,8 +79,8 @@ class PointCommands(commands.Cog):
     @commands.command()
     @role_check
     async def loldle(self, ctx, option="classic"):
-        if option.lower() not in ["classic", "ability", "quote"]:
-            await ctx.send("Invalid option, use .loldle <classic/ability/quote>")
+        if option.lower() not in ["classic", "ability", "splash"]:
+            await ctx.send("Invalid option, use .loldle <classic/ability/splash>")
             return
         try:
             amsterdam_tz = pytz.timezone('Europe/Amsterdam')
@@ -90,11 +90,12 @@ class PointCommands(commands.Cog):
             ##
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                 ddragon_list = await get_champion_ddrag_format_list()
-                if option.lower() == "ability":
-                    # await ctx.send("not available at the moment.")
-                    # return
-                    winning_guess_info, image = await get_loldle_champ_data(ddrag="random", mode="ability")
-                    transformed_image = await transform_image(image)
+                if option.lower() == "ability" or option.lower() == "splash":
+                    winning_guess_info, image = await get_loldle_champ_data(ddrag="random", mode=option.lower())
+                    if option.lower() =="ability":
+                        transformed_image = await blur_invert_image(image)
+                    elif option.lower() =="splash":
+                        transformed_image = await crop_image(image, 20)
                     max_attempts = 5  # Set the maximum number of attempts here
                     max_points = 2000
                     status = f"Guess a champion and win {max_points} points, for each guess wrong you lose {int(max_points/max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
@@ -147,7 +148,7 @@ class PointCommands(commands.Cog):
                     result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{userid}>"
                 self.main_db.increment_field(userid, "points", points)
                 self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
-                if option.lower() == "ability":
+                if option.lower() == "ability" or option.lower() == "splash":
                     await ctx.send("The correct image below:")
                     await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
             else:

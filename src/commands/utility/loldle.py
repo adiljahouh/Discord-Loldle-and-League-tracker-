@@ -2,7 +2,7 @@ import random
 from PIL import Image, ImageOps, ImageFilter
 import io
 
-async def transform_image(image_content):
+async def blur_invert_image(image_content):
     # Open the image from the binary content
     image = Image.open(io.BytesIO(image_content))
     
@@ -18,6 +18,33 @@ async def transform_image(image_content):
     # Save the transformed image to a bytes-like object
     output_stream = io.BytesIO()
     rotated_image.save(output_stream, format="PNG")
+    
+    return output_stream.getvalue()
+
+async def crop_image(image_content, percentage = 10):
+    # Open the image from the binary content
+    image = Image.open(io.BytesIO(image_content))
+    
+    # # Convert the image to grayscale
+    # grayscale_image = ImageOps.grayscale(image)
+
+    # Get the dimensions of the image
+    width, height = image.size
+
+
+    # Calculate the crop dimensions for the middle 10%
+    crop_percentage = percentage / 100.0
+    crop_left = width * (0.5 - crop_percentage / 2)
+    crop_upper = height * (0.5 - crop_percentage / 2)
+    crop_right = width * (0.5 + crop_percentage / 2)
+    crop_lower = height * (0.5 + crop_percentage / 2)
+
+    # Crop the image to the calculated dimensions
+    cropped_image = image.crop((crop_left, crop_upper, crop_right, crop_lower))
+    
+    # Save the transformed image to a bytes-like object
+    output_stream = io.BytesIO()
+    cropped_image.save(output_stream, format="PNG")
     
     return output_stream.getvalue()
 
