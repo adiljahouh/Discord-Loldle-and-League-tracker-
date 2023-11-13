@@ -130,29 +130,22 @@ class loldleView(discord.ui.View):
         except Exception as e:
             await self.ctx.send(e)
 
-     
-        # if self.correct_guess:
-        #     points =int(self.max_points - ((self.attempts-1)*(self.max_points/self.max_attempts)))
-        #     result = f"Correct guess! You earned {points} points <@{str(self.ctx.author.id)}>"
-        # else:
-        #     points = 0
-        #     result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
-        # return points, result
-
+    
     
     @discord.ui.button(label="Classic", 
                        style=discord.ButtonStyle.green)
     async def start_classic_loldle(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user == self.ctx.author:
             try:
-                self.stop() 
+                await interaction.response.defer() 
+                self.stop()
                 self.attempts = 0
                 self.max_attempts = 10  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}>."
                 winning_guess_info = await get_loldle_champ_data(ddrag="random", mode="classic")
                 print(winning_guess_info)
-                await interaction.response.send_message(status)
+                await interaction.followup.send(status)
                 while not self.correct_guess and self.attempts < self.max_attempts:
                     self.attempts += 1
                     try:
@@ -185,6 +178,7 @@ class loldleView(discord.ui.View):
     async def start_ability_loldle(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user == self.ctx.author:
             try:
+                await interaction.response.defer()
                 self.stop() 
                 self.attempts = 0
                 self.max_attempts = 5  # Set the maximum number of attempts here
@@ -192,7 +186,7 @@ class loldleView(discord.ui.View):
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
                 winning_guess_info, ability_image = await get_loldle_champ_data(ddrag="random", mode="ability")
                 transformed_image =  await blur_invert_image(ability_image)
-                await interaction.response.send_message(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
+                await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:
                     self.attempts += 1
                     try:
@@ -211,7 +205,7 @@ class loldleView(discord.ui.View):
 
                 self.main_db.increment_field(str(self.ctx.author.id), "points", points)
                 self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
-                await self.ctx.send(result)
+                await self.ctx.send(result, file=discord.File(io.BytesIO(ability_image), f"real.png"))
             except Exception as e:
                 print(e)
         else:
@@ -223,17 +217,18 @@ class loldleView(discord.ui.View):
     async def start_splash_loldle(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user == self.ctx.author:
             try:
+                await interaction.response.defer()
                 self.stop() 
                 self.attempts = 0
                 self.max_attempts = 5  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. After each 2 wrong guesses you will get a hint.\n Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
-                winning_guess_info, ability_image = await get_loldle_champ_data(ddrag="random", mode="splash")
-                transformed_image =  await crop_image(ability_image)
-                await interaction.response.send_message(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
+                winning_guess_info, splash_image = await get_loldle_champ_data(ddrag="random", mode="splash")
+                transformed_image =  await crop_image(splash_image)
+                await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:
                     if self.attempts == 2:
-                        easier_image = await crop_image(ability_image, percentage=20)
+                        easier_image = await crop_image(splash_image, percentage=20)
                         await self.ctx.send("Hint\n", file=discord.File(io.BytesIO(easier_image), f"hint.png"))
                     self.attempts += 1
                     try:
@@ -251,7 +246,7 @@ class loldleView(discord.ui.View):
 
                 self.main_db.increment_field(str(self.ctx.author.id), "points", points)
                 self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
-                await self.ctx.send(result)
+                await self.ctx.send(result, file=discord.File(io.BytesIO(splash_image), f"real.png"))
             except Exception as e:
                 print(e)
         else:
