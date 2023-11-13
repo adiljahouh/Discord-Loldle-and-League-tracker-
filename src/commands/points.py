@@ -275,10 +275,10 @@ class PointCommands(commands.Cog):
         try:
             amount = int(args[1])
         except ValueError:
-            await ctx.send("Specify a whole number between 0-5000")
+            await ctx.send("Specify a whole number between 0-10000")
             return
-        if amount <= 0 or amount > 5000:
-            await ctx.send("Specify a whole number between 0-5000")
+        if amount <= 0 or amount > 10000:
+            await ctx.send("Specify a whole number between 0-10000")
             return
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.display_name), decision, amount)
