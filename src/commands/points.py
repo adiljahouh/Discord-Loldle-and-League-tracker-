@@ -312,12 +312,14 @@ class PointCommands(commands.Cog):
             return
         try:
             state = self.betting_db.store_bet(str(ctx.author.id), str(ctx.author.display_name), decision, amount)
-            if state:
+            if state == 1:
                 embed = discord.Embed(title=f"{str(ctx.author.display_name)} has bet {amount} points on {decision}",
                                       color=0xFF0000)
                 await ctx.send(embed=embed)
-            else:
+            elif state == 0:
                 await ctx.send(f"Bet amount > point")
+            elif state == 2:
+                await ctx.send("You already bet on this game")
         except Exception as e:
             print(e)
 

@@ -44,29 +44,30 @@ class BettingDB():
         points = self.DB_MAIN.get_user_field(discord_id, "points")
         if points is None:
             print("Not enough points")
-            return False
+            return 0
         points = int(points.decode('utf8'))
         if points < amount:
             print("Not enough points")
-            return False
-        self.DB_MAIN.decrement_field(discord_id, "points", amount)
+            return 0
         self.connect()
         bet = self.get_bet(discord_id, decision)
         key = discord_id + "_" + decision
         try:
             if bet == 0:
                 print("Bet does not exist")
+                self.DB_MAIN.decrement_field(discord_id, "points", amount)
                 self.client.hset(key, "amount", amount)
                 self.client.hset(key, "discord_display_name", author_discord_display_name)
             else:
-                print("Bet does exist")
-                self.client.hincrby(key, "amount", amount)
+                print("Bet does exist, not changing")
+                # self.client.hset(key, "amount", amount)
                 print(self.client.hget(key, "amount"))
+                return 2
         except ConnectionError as e:
             print(e)
-            return False
+            return 0
         print("Successful")
-        return True
+        return 1
 
     # Get current bet, 0 if fields/keys do not exist
     def get_bet(self, discord_id, decision):
