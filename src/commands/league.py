@@ -168,6 +168,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid")
                     user = await self.riot_api.get_name_by_summoner_puuid(puuid.decode('utf-8'))
+                    print(user)
                 soloq_info = await self.riot_api.get_soloq_info_by_name(user)
                 if soloq_info is None:
                     await ctx.send("User apparently doesnt play SOLOQ")
@@ -177,7 +178,9 @@ class LeagueCommands(riotAPI, commands.Cog):
                 if 400 <= e.status <= 500:
                     message = "Bad request error, make sure you pass a valid summoner name and game mode (solo, flex, normals, aram, clash, ranked)"
                 else:
-                    message = "Internal Server Error"
+                    message = "Server side error from RIOT, this could affect other commands regarding league"
+                await ctx.send(message)
+                return
             finally:
                 try:
                     picture = discord.File(fp=f"/assets/ranks/{soloq_info['tier'].upper()}.png", filename=f"{soloq_info['tier'].upper()}.png")
