@@ -62,14 +62,8 @@ class riotAPI():
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}",
                                     params=self.params) as response:
-                print("\n")
-                print(response.content)
-                print(response)
-                print(response.status)
-                print("\n")
                 response.raise_for_status()
                 content: dict = await response.json()
-                print("concent", content)
                 for queue in content:
                     if queue['queueType'] == "RANKED_SOLO_5x5":
                         return queue

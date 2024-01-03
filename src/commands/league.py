@@ -168,7 +168,6 @@ class LeagueCommands(riotAPI, commands.Cog):
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid")
                     user = await self.riot_api.get_name_by_summoner_puuid(puuid.decode('utf-8'))
-                    print(user)
                 soloq_info = await self.riot_api.get_soloq_info_by_name(user)
                 if soloq_info is None:
                     await ctx.send("User apparently doesnt play SOLOQ")
