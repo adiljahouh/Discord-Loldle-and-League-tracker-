@@ -135,12 +135,14 @@ class LeagueCommands(riotAPI, commands.Cog):
                 count = 5
                 if len(args) != 0:
                     if args[-1].lower() in game_mode_mapping.values():
-                        user = "".join(args[:-1])
+                        riot_name = "".join(args[:-1])
                         queue_id = [i for i in game_mode_mapping if game_mode_mapping[i] == args[-1]][0]
                     else:
-                        user = "".join(args)
+                        riot_name = "".join(args)
                         queue_id = None
-                    message = await self.riot_api.get_kda_by_user(user, count, queue_id)
+                    if '#' in riot_name:
+                        user, tag = riot_name.split('#')
+                        message = await self.riot_api.get_kda_by_user(user, tag, count, queue_id)
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid")
                     message = await self.riot_api.get_kda_by_puuid(puuid.decode('utf-8'), count)

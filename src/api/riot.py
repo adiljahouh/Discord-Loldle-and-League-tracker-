@@ -175,8 +175,8 @@ class riotAPI():
                 text += f'{result} **{time_diff}** day(s) ago  {details["kills"]}/{details["deaths"]}/{details["assists"]} on **{details["championName"]}** in __{game["game_mode"]}__ | {game_mode} \n'
         return text
 
-    async def get_kda_by_user(self, user, count=10, queue_id=None):
-        puuid = await self.get_puuid(user)
+    async def get_kda_by_user(self, user, tag, count=10, queue_id=None):
+        puuid = await self.get_puuid_by_tag(user, tag)
         matchIDs: list = await self.get_match_ids("puuid", puuid, count=count, queue_id=queue_id)
         game_details_user = await self.get_multiple_match_details_by_matchIDs_and_filter_for_puuid(puuid, matchIDs)
         flame = False
