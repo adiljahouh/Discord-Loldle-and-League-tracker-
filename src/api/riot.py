@@ -23,22 +23,26 @@ class riotAPI():
             "api_key": self.api_key
         }
 
-    async def get_summoner_values(self, user):
+
+    async def get_puuid_by_tag(self, user, tag):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/{user}",
+            async with session.get(f"https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{user}/{tag}",
+                        params=self.params) as response:
+                response.raise_for_status()
+                content: dict = await response.json()
+                return content['puuid']
+
+    async def get_summoner_values_by_puuid(self, puuid):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
                                    params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
                 return content
 
-    async def get_puuid(self, user):
-        return (await self.get_summoner_values(user))['puuid']
 
-    async def get_encrypted_summoner_id(self, user):
-        return (await self.get_summoner_values(user))['id']
-    
-    async def get_account_id(self, user):
-        return (await self.get_summoner_values(user))['id']
+    async def get_encrypted_summoner_id_by_puuid(self, puuid):
+        return (await self.get_summoner_values_by_puuid(puuid))['id']
 
     async def get_name_by_summoner_id(self, summoner_id):
         async with aiohttp.ClientSession() as session:
@@ -57,8 +61,7 @@ class riotAPI():
                 content: dict = await response.json()
                 return content['name']
             
-    async def get_soloq_info_by_name(self, user):
-        id = await self.get_encrypted_summoner_id(user)
+    async def get_soloq_info_by_encrypted_id(self, id):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}",
                                     params=self.params) as response:

@@ -163,12 +163,20 @@ class LeagueCommands(riotAPI, commands.Cog):
         """ Temporary command to get the rank of a user"""
         async with ctx.typing():
             try:
+                # if we pass a name
                 if len(args) != 0:
-                    user = "".join(args)
+                    riot_name: str = "".join(args)
+                    if '#' in user:
+                        # get puuid from test#100
+                        user, tag = riot_name.split('#')
+                        puuid = self.riot_api.get_puuid_by_tag(user, tag)
+                    else:
+                        await ctx.send("You didnt include a tag seperate by #, such as Mocro#zpr")
+                # if we dont pass a name
                 else:
-                    puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid")
-                    user = await self.riot_api.get_name_by_summoner_puuid(puuid.decode('utf-8'))
-                soloq_info = await self.riot_api.get_soloq_info_by_name(user)
+                    puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid").decode('utf-8')
+                id = await self.riot_api.get_encrypted_summoner_id_by_puuid(puuid)
+                soloq_info = await self.riot_api.get_soloq_info_by_encrypted_id(id)
                 if soloq_info is None:
                     await ctx.send("User apparently doesnt play SOLOQ")
                     return
