@@ -139,8 +139,9 @@ class loops(commands.Cog):
                 try:
                     # Small 1 second delay to not spam the requests
                     print(pos_victim)
+                    user, tag = pos_victim.split('#')
                     await asyncio.sleep(1)
-                    active, data, game_length, game_type = await self.riot_api.get_active_game_status(pos_victim)
+                    active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag)
                 except aiohttp.ClientResponseError as e:
                     print(e)
                     # print(victim, " Failed to get active game status with error: ", e)

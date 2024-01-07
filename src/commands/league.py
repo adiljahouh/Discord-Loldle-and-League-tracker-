@@ -7,7 +7,7 @@ from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
 from databases.stalker import StalkingDB
 
-
+#TODO on join tell them to register
 class LeagueCommands(riotAPI, commands.Cog):
     def __init__(self, main_db, stalking_db, riot_api, player_role_id, g_role, jail_role) -> None:
         self.main_db = main_db
@@ -26,20 +26,20 @@ class LeagueCommands(riotAPI, commands.Cog):
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""
         async with ctx.typing():
-
             has_jail_role = any(role.id == self.jail_role for role in ctx.author.roles)
             if has_jail_role:
                 await ctx.send("HAHAHAHAHAHAH LOL!!! CONFESS YOUR SINS TO THE JUDGES")
                 return
             print("register")
             riot_name = "".join(args)
-            if len(riot_name) == 0:
-                await ctx.send("Specify a riot username")
+            if len(riot_name) == 0 or '#' not in riot_name:
+                await ctx.send("Specify a riot user and tag (e.g. .register mocro#zpr)")
                 return
+            user, tag = riot_name.split('#')
             author_discord_tag = str(ctx.author)
             discord_userid = str(ctx.author.id)
             try:
-                puuid = await self.riot_api.get_puuid(riot_name)
+                puuid = await self.riot_api.get_puuid_by_tag(user, tag)
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
                     message = "Bad request error, make sure you pass a valid summoner name"
@@ -143,14 +143,19 @@ class LeagueCommands(riotAPI, commands.Cog):
                     if '#' in riot_name:
                         user, tag = riot_name.split('#')
                         message = await self.riot_api.get_kda_by_user(user, tag, count, queue_id)
+                    else:
+                        await ctx.send("add a tag (e.g. Mocro#zpr)")
+                        return
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid")
                     message = await self.riot_api.get_kda_by_puuid(puuid.decode('utf-8'), count)
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
-                    message = "Bad request error, make sure you pass a valid summoner name and game mode (solo, flex, normals, aram, clash, ranked)"
+                    message = "Bad request, make sure you pass a valid summoner name and game mode (solo, flex, normals, aram, clash, ranked)"
                 else:
                     message = "Internal Server Error"
+                await ctx.send(message)
+                return
             finally:
                 embed = discord.Embed(title=f"📓Summary of last {count} games📓\n\n",
                                       description=f"{message}",
@@ -168,12 +173,13 @@ class LeagueCommands(riotAPI, commands.Cog):
                 # if we pass a name
                 if len(args) != 0:
                     riot_name: str = "".join(args)
-                    if '#' in user:
+                    if '#' in riot_name:
                         # get puuid from test#100
                         user, tag = riot_name.split('#')
-                        puuid = self.riot_api.get_puuid_by_tag(user, tag)
+                        print(user, tag)
+                        puuid = await self.riot_api.get_puuid_by_tag(user, tag)
                     else:
-                        await ctx.send("You didnt include a tag seperate by #, such as Mocro#zpr")
+                        await ctx.send("You didnt include a tag seperated by #, such as Mocro#zpr")
                 # if we dont pass a name
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid").decode('utf-8')
@@ -192,6 +198,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                 return
             finally:
                 try:
+                    print(soloq_info)
                     picture = discord.File(fp=f"/assets/ranks/{soloq_info['tier'].upper()}.png", filename=f"{soloq_info['tier'].upper()}.png")
                     embed = discord.Embed(title=f"SOLODUO {soloq_info['tier']} {soloq_info['rank']} {soloq_info['leaguePoints']} LP\n",
                                         description=f"{message}",
@@ -208,6 +215,9 @@ class LeagueCommands(riotAPI, commands.Cog):
         """
         async with ctx.typing():
             summoner = "".join(args)
+            if '#' not in summoner:
+                await ctx.send("Add a summoner with a user and tag (e.g. mocro#zpr)")
+                return
             message = ""
             embed = False
             try:
@@ -240,12 +250,15 @@ class LeagueCommands(riotAPI, commands.Cog):
         """
         async with ctx.typing():
             if len(args) < 2:
-                await ctx.send("Use .stalk <add/remove> <ign>")
+                await ctx.send("Use .stalk <add/remove> <ign#tag>")
                 return
             elif args[0] != "add" and args[0] != "remove":
-                await ctx.send("Use .stalk <add/remove> <ign>")
+                await ctx.send("Use .stalk <add/remove> <ign#tag>")
                 return
             summoner = " ".join(args[1:]).lower()
+            if '#' not in summoner:
+                await ctx.send("Use .stalk <add/remove> <ign#tag>")
+                return
             if args[0] == "add":
                 self.stalking_db.store_user(summoner)
                 embed = discord.Embed(title=f"Victim added: {summoner}",

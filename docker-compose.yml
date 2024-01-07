@@ -10,6 +10,8 @@ services:
       - /opt/discbot/.env
   redis:
     container_name: redis
+    volumes:
+      - /opt/redis:/data
     ports: 
       - 6379:6379
     image: redis

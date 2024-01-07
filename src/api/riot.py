@@ -44,6 +44,9 @@ class riotAPI():
     async def get_encrypted_summoner_id_by_puuid(self, puuid):
         return (await self.get_summoner_values_by_puuid(puuid))['id']
 
+    async def get_account_id(self, puuid):
+            return (await self.get_summoner_values_by_puuid(puuid))['id']
+    
     async def get_name_by_summoner_id(self, summoner_id):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}",
@@ -211,8 +214,9 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user):
-        account_id = await self.get_account_id(user)
+    async def get_active_game_status(self, user, tag):
+        puuid = await self.get_puuid_by_tag(user, tag)
+        account_id = await self.get_account_id(puuid)
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",
@@ -278,8 +282,9 @@ class riotAPI():
                 content = await response.json()
                 return content['players']
 
-    async def get_clash_opgg(self, user):
-        account_id = await self.get_account_id(user)
+    async def get_clash_opgg(self, user, tag):
+        puuid = await self.get_puuid_by_tag(user, tag)
+        account_id = await self.get_account_id(puuid)
         team_id = await self.get_clash_team_id(account_id)
         players = await self.get_clash_players(team_id)
         text = "https://www.op.gg/multisearch/euw?summoners="
