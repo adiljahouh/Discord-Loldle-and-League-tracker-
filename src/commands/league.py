@@ -19,9 +19,8 @@ class LeagueCommands(riotAPI, commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        pass
-        
-        
+        pass   
+    
     @commands.command()
     async def register(self, ctx, *args):
         """ Register a user by calling .register <your_league_name>"""

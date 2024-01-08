@@ -54,7 +54,7 @@ class haterFanboyView(discord.ui.View):
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid) -> None:
+    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid, main_channelid) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
@@ -62,6 +62,7 @@ class discMod(commands.Cog):
         self.fanboyroleid = fanboyid
         self.haterroleid = haterid
         self.rolechannelid = rolechannelid
+        self.main_channelid = main_channelid
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -78,6 +79,16 @@ class discMod(commands.Cog):
             channel = self.bot.get_channel(self.rolechannelid)
             await channel.send(embed=embed, view=view)
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        # Your on_member_join logic here...
+        
+        await member.send(f"Hi, {member.mention}!\n\n" \
+                     f"To view the rest of the Discord, you need to register in <#{self.main_channelid}> using the following command:\n" \
+                     f"```.register <riotname#tag>```\n" \
+                     f"For example, a very sexy jungler would use: ```.register Mocro#zpr```\n\n" \
+                     f"If you have already registered before this update, try re-registering to get access to all channels using the same command. If you encounter an error, it's possible that the League of Legends name is incorrect (you can try with a smurf account).\n\n" \
+                     f"Please check out the <#{self.rolechannelid}> channel to pick a role after registering.")
 
     @commands.command()
     @role_check
@@ -131,4 +142,5 @@ async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")
-    await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID))
+    await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, 
+                              settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, settings.CHANNELID))

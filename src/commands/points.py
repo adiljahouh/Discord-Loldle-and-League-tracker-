@@ -199,11 +199,16 @@ class PointCommands(commands.Cog):
             cashout_options = {
                     "1000": "Buy a loldle",
                     "100000": "Change someones discord name for a day",
-                    "150000": "Custom soundboard for a day",
-                    "300000": "Pick anyone with the Player role's next champ",
-                    "400000": "Backseat game 1 game of anyone with the Player Role",
+                    "150000": "Custom soundboard",
+                    "250000": "Custom role",
+                    "300000": "Pick anyone with the Player role's next champ (scrim)",
+                    "400000": "Backseat a scrim",
                     "500000": "Time someone out for a day",
-                    "1000000": "DUO GAME WITH MENNO "
+                    "600000": "Custom event",
+                    "700000": "Join a scrim",
+                    "800000": "Custom bot command",
+                    "900000": "Change discord picture",
+                    "1000000": "Join a turbo cool loch ness event/party"
                 }
             if option=="":
                 try:
