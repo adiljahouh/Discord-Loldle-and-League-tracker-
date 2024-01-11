@@ -291,6 +291,7 @@ class riotAPI():
         for player in players:
             summoner = await self.get_name_by_summoner_id(player['summonerId'])
             summoner_cleaned = summoner.replace(" ", "").lower()
+            summoner_cleaned = summoner_cleaned.replace("#", "%23")
             text += f"{summoner_cleaned},"
         return text[:-1]
 

@@ -229,6 +229,7 @@ class loops(commands.Cog):
             except Exception as e:
                 print(f"Activate stalking error: {e}")
 
+
     @tasks.loop(minutes=1.0)
     async def end_stalking(self):
         print("End stalking")
@@ -251,7 +252,7 @@ class loops(commands.Cog):
                 end_result = endIm.get_game_result()
                 picture = discord.File(fp=end_image, filename="team.png")
             except Exception as e:
-                print(e)
+                print(f"error in image: {e}")
                 return
             self.stalking_db.change_status(victim, False)
             self.betting_db.disable_betting()

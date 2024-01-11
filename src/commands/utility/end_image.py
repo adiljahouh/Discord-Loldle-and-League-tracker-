@@ -34,7 +34,9 @@ class EndImage:
     def prepare_data(self):
         # Get puuid to place main player in team
         for player in self.data["info"]["participants"]:
-            if player["summonerName"].lower() == self.name.lower():
+            if f"{player['riotIdGameName'].lower()}#{player['riotIdTagline'].lower()}" == self.name.lower():
+                print("found main player")
+                print(f"{player['riotIdGameName'].lower()}#{player['riotIdTagline'].lower()}")
                 self.puuid = player["puuid"]
         player_indx = self.data["metadata"]['participants'].index(self.puuid)
         if player_indx >= 5:
@@ -76,7 +78,7 @@ class EndImage:
         hero = False
         if self.puuid == player["puuid"]:
             hero = True
-        team["players"].append({"name": player["summonerName"],
+        team["players"].append({"name": player["riotIdGameName"],
                                 "champ_id": player["championId"],
                                 "champ_name": player["championName"],
                                 "damage_dealt": player["totalDamageDealtToChampions"],

@@ -225,7 +225,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     message = opgg
                     embed = True
                 else:
-                    message = "Pls provide a valid summoner name: .clash <summoner name>"
+                    message = "Please provide a valid summoner name: .clash <summoner name>"
             except aiohttp.ClientResponseError as e:
                 if 400 <= e.status <= 500:
                     message = "Bad request error, invalid summoner"
@@ -255,7 +255,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                 await ctx.send("Use .stalk <add/remove> <ign#tag>")
                 return
             summoner = " ".join(args[1:]).lower()
-            if '#' not in summoner:
+            if '#' not in summoner and args[0] == "add": # bit silly but this is to enable removing junk
                 await ctx.send("Use .stalk <add/remove> <ign#tag>")
                 return
             if args[0] == "add":
