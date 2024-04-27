@@ -216,10 +216,10 @@ class riotAPI():
     # Method must be caught with an aiohttp.ClientResponseError
     async def get_active_game_status(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
-        account_id = await self.get_account_id(puuid)
+        #account_id = await self.get_account_id(puuid)
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                    f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",
+                    f"https://euw1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}",
                     params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
@@ -247,9 +247,11 @@ class riotAPI():
                 team_two = []
                 team = 0
                 for participant in content['participants']:
-                    if user.lower() == participant['summonerName'].lower():
+                    riotid = participant['riotId'].lower()
+                    part_name, par_tag = riotid.split('#')
+                    if user.lower() == part_name:
                         team = participant['teamId']
-                    summonerName = participant['summonerName']
+                    summonerName = part_name
                     if participant['teamId'] == 100:
                         team_one.append([summonerName, int(participant['championId'])])
                     else:
