@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     HATERROLEID: int
     ROLECHANNELID: int
     LUNCHERS: int
+    LEAGUERSID: int
 
 
     class Config:

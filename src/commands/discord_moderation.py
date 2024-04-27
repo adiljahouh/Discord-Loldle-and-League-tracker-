@@ -6,12 +6,13 @@ import discord
 from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
 class haterFanboyView(discord.ui.View):
-    def __init__(self, *, timeout, hater, fanboy, botenthusiast, lunchers):
+    def __init__(self, *, timeout, hater, fanboy, botenthusiast, lunchers, leaguersid):
         super().__init__(timeout=timeout)
         self.fanboy_id = fanboy
         self.hater_id = hater
-        self.botenthusiast = botenthusiast
-        self.lunchers = lunchers
+        self.botenthusiast_id = botenthusiast
+        self.lunchers_id = lunchers
+        self.leaguers_id = leaguersid
     
     async def add_role(self, interaction: discord.Interaction, button: discord.ui.Button, role_id: int, label: str, color: discord.ButtonStyle):
         user = interaction.user
@@ -31,21 +32,25 @@ class haterFanboyView(discord.ui.View):
     async def add_fanboy(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.add_role(interaction, button, self.fanboy_id, "FANBOY", discord.ButtonStyle.green)
 
-    @discord.ui.button(label="BOT ENTHUSIAST", style=discord.ButtonStyle.blurple)
-    async def add_enthusiast(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.add_role(interaction, button, self.botenthusiast, "BOT ENTHUSIAST", discord.ButtonStyle.blurple)    
-
     @discord.ui.button(label="HATER", style=discord.ButtonStyle.red)
     async def add_hater(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.add_role(interaction, button, self.hater_id, "HATER", discord.ButtonStyle.red)
 
-    @discord.ui.button(label="LUNCHERS", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label="BOT ENTHUSIAST", style=discord.ButtonStyle.blurple, emoji="🤓")
+    async def add_enthusiast(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_role(interaction, button, self.botenthusiast_id, "BOT ENTHUSIAST", discord.ButtonStyle.blurple)    
+
+    @discord.ui.button(label="LUNCHERS", style=discord.ButtonStyle.primary, emoji="😋")
     async def add_lunchers(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.add_role(interaction, button, self.lunchers, "LUNCHERS", discord.ButtonStyle.gray)
+        await self.add_role(interaction, button, self.lunchers_id, "LUNCHERS", discord.ButtonStyle.primary)
+
+    @discord.ui.button(label="LEAGUERS", style=discord.ButtonStyle.primary, emoji="🎮")
+    async def add_leaguers(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_role(interaction, button, self.leaguers_id, "LEAGUERS", discord.ButtonStyle.primary)
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid, main_channelid, botenthusiast, lunchers) -> None:
+    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid, main_channelid, botenthusiast, lunchers, leaguersid) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
@@ -54,8 +59,9 @@ class discMod(commands.Cog):
         self.haterroleid = haterid
         self.rolechannelid = rolechannelid
         self.main_channelid = main_channelid
-        self.botenthusiast = botenthusiast
-        self.lunchers = lunchers
+        self.botenthusiast_id = botenthusiast
+        self.lunchers_id = lunchers
+        self.leaguers_id = leaguersid
         self.jailed_users = {} #doing this with in-memory because not a lot will be jailed anyways
 
     @commands.Cog.listener()
@@ -64,7 +70,9 @@ class discMod(commands.Cog):
 
         if channel:
             await channel.purge()
-            view = haterFanboyView(timeout=None, hater=self.haterroleid, fanboy=self.fanboyroleid, botenthusiast=self.botenthusiast, lunchers=self.lunchers)
+            view = haterFanboyView(timeout=None, hater=self.haterroleid, fanboy=self.fanboyroleid, 
+                                   botenthusiast=self.botenthusiast_id, lunchers=self.lunchers_id,
+                                   leaguersid = self.leaguers_id)
             embed = discord.Embed(
             title="Choose Your Role",
             description="Click one of the buttons below to choose your role,\nbe sure to .register <league_name> to unlock all channels.",
@@ -165,4 +173,6 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")
     await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, 
-                              settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, settings.CHANNELID, settings.PINGROLE, settings.LUNCHERS))
+                              settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, 
+                              settings.CHANNELID, settings.PINGROLE, settings.LUNCHERS,
+                              settings.LEAGUERSID))
