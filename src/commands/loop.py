@@ -113,8 +113,7 @@ class loops(commands.Cog):
             result = await asyncio.gather(*tasks)
         except aiohttp.ClientResponseError as e:
             print(e)
-            await channel.send(f"Leaderboard DMG taken errored with client response: {e}")
-            return
+            # await channel.send(f"")
         top_5 = sorted(result, key=lambda x: x['taken'], reverse=True)[:5]
         for index, top_g in enumerate(top_5):
             leaderboard_text += f'\n{index + 1}. <@{top_g["disc_id"]}> | {top_g["taken"]} on **{top_g["champion"]}**'
@@ -133,7 +132,7 @@ class loops(commands.Cog):
             if self.stalking_db.get_active_user() is not None:
                 return
             victims = self.stalking_db.get_all_users()
-            print(victims)
+            print(f"Stalking victims of length: {len(victims)}")
             found = False
             active = False
             data = None
@@ -141,12 +140,10 @@ class loops(commands.Cog):
             for pos_victim in victims:
                 try:
                     # Small 1 second delay to not spam the requests
-                    print(pos_victim)
                     user, tag = pos_victim.split('#')
                     await asyncio.sleep(1)
                     active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag)
                 except aiohttp.ClientResponseError as e:
-                    print(f"{pos_victim} is not in game.")
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game

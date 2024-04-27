@@ -21,7 +21,7 @@ class LeagueCommands(riotAPI, commands.Cog):
         pass   
     
     @commands.command()
-    async def register(self, ctx, *args):
+    async def register(self, ctx: commands.Context, *args):
         """ Register a user by calling .register <your_league_name>"""
         async with ctx.typing():
             has_jail_role = any(role.id == self.jail_role for role in ctx.author.roles)
@@ -75,7 +75,7 @@ class LeagueCommands(riotAPI, commands.Cog):
     @commands.command()
     @role_check
     @mod_check
-    async def count(self, ctx):
+    async def count(self, ctx: commands.Context):
         """
             Returns amount of users registered
         """
@@ -112,7 +112,7 @@ class LeagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @role_check
-    async def summary(self, ctx, *args):
+    async def summary(self, ctx: commands.Context, *args):
 
         """ Summary of a user (or your registered user if nothing is passed)
           by calling .summary <league_name> or just .summary"""
