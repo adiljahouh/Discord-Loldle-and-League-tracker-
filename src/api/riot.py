@@ -214,9 +214,9 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user, tag): #iHjbDwrgQsFDUTccncS-I_INxlq0aAl5ErRlXZAFrU1nAFm6nPsuuEKgizifUl72gvrByBES0i16pg
+    async def get_active_game_status(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
-        account_id = await self.get_account_id(puuid) #eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE
+        account_id = await self.get_account_id(puuid)
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",

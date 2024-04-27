@@ -143,8 +143,11 @@ class loops(commands.Cog):
                     user, tag = pos_victim.split('#')
                     await asyncio.sleep(1)
                     active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag)
+                    if active:
+                        print(pos_victim)
+                        print(active, data, game_length, game_type)
                 except aiohttp.ClientResponseError as e:
-                    # print(victim, " Failed to get active game status with error: ", e)
+                    print(pos_victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
                 # or if game is too far gone or isnt ranked dont track
