@@ -5,56 +5,47 @@ from config import Settings
 import discord
 from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
-from discord.ui import View, Button
 class haterFanboyView(discord.ui.View):
-    def __init__(self, *, timeout, hater, fanboy):
+    def __init__(self, *, timeout, hater, fanboy, botenthusiast, lunchers):
         super().__init__(timeout=timeout)
         self.fanboy_id = fanboy
         self.hater_id = hater
+        self.botenthusiast = botenthusiast
+        self.lunchers = lunchers
     
-    
-    @discord.ui.button(label="FANBOY", 
-                       style=discord.ButtonStyle.green)
+    async def add_role(self, interaction: discord.Interaction, button: discord.ui.Button, role_id: int, label: str, color: discord.ButtonStyle):
+        user = interaction.user
+        has_target_role = any(role.id == role_id for role in user.roles)
+        if has_target_role:
+            target_role = interaction.guild.get_role(role_id)
+            await interaction.response.send_message(f"You already have the role {target_role.mention}", ephemeral=True)
+        else:
+            target_role = interaction.guild.get_role(role_id)
+            if target_role:
+                await user.add_roles(target_role)
+                await interaction.response.send_message(f"You have been assigned the role {target_role.mention}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"Role not found. {target_role.mention}", ephemeral=True)
+
+    @discord.ui.button(label="FANBOY", style=discord.ButtonStyle.green)
     async def add_fanboy(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user = interaction.user
-        has_target_role = any(role.id == self.fanboy_id for role in user.roles)
-        if has_target_role:
-            print("dong")
-            target_role = interaction.guild.get_role(self.fanboy_id)
-            await interaction.response.send_message(f"You already have the role {target_role.mention}", ephemeral=True)
-        else:
-            print("DING")
-            # Add the role if the user doesn't have it
-            target_role = interaction.guild.get_role(self.fanboy_id)
-            if target_role:
-                await user.add_roles(target_role)
-                await interaction.response.send_message(f"You have been assigned the role {target_role.mention}", ephemeral=True)
-            else:
-                await interaction.response.send_message(f"Role not found. {target_role.mention}", ephemeral=True)
-        
-    @discord.ui.button(label="HATER", 
-                       style=discord.ButtonStyle.red)
+        await self.add_role(interaction, button, self.fanboy_id, "FANBOY", discord.ButtonStyle.green)
+
+    @discord.ui.button(label="BOT ENTHUSIAST", style=discord.ButtonStyle.blurple)
+    async def add_enthusiast(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_role(interaction, button, self.botenthusiast, "BOT ENTHUSIAST", discord.ButtonStyle.blurple)    
+
+    @discord.ui.button(label="HATER", style=discord.ButtonStyle.red)
     async def add_hater(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user = interaction.user
-        has_target_role = any(role.id == self.hater_id for role in user.roles)
-        if has_target_role:
-            print("dong")
-            target_role = interaction.guild.get_role(self.hater_id)
-            await interaction.response.send_message(f"You already have the role {target_role.mention}", ephemeral=True)
-        else:
-            print("DING")
-            # Add the role if the user doesn't have it
-            target_role = interaction.guild.get_role(self.hater_id)
-            if target_role:
-                await user.add_roles(target_role)
-                await interaction.response.send_message(f"You have been assigned the role {target_role.mention}", ephemeral=True)
-            else:
-                await interaction.response.send_message(f"Role not found. {target_role.mention}", ephemeral=True)
-        
+        await self.add_role(interaction, button, self.hater_id, "HATER", discord.ButtonStyle.red)
+
+    @discord.ui.button(label="LUNCHERS", style=discord.ButtonStyle.gray)
+    async def add_lunchers(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_role(interaction, button, self.lunchers, "LUNCHERS", discord.ButtonStyle.gray)
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid, main_channelid) -> None:
+    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid, main_channelid, botenthusiast, lunchers) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
@@ -63,6 +54,9 @@ class discMod(commands.Cog):
         self.haterroleid = haterid
         self.rolechannelid = rolechannelid
         self.main_channelid = main_channelid
+        self.botenthusiast = botenthusiast
+        self.lunchers = lunchers
+        self.jailed_users = {} #doing this with in-memory because not a lot will be jailed anyways
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -70,7 +64,7 @@ class discMod(commands.Cog):
 
         if channel:
             await channel.purge()
-            view = haterFanboyView(timeout=None, hater=self.haterroleid, fanboy=self.fanboyroleid)
+            view = haterFanboyView(timeout=None, hater=self.haterroleid, fanboy=self.fanboyroleid, botenthusiast=self.botenthusiast, lunchers=self.lunchers)
             embed = discord.Embed(
             title="Choose Your Role",
             description="Click one of the buttons below to choose your role,\nbe sure to .register <league_name> to unlock all channels.",
@@ -93,6 +87,30 @@ class discMod(commands.Cog):
     @commands.command()
     @role_check
     @mod_check
+    async def release(self, ctx, member: discord.Member):
+        """Release a user from jail."""
+        jail_role = ctx.guild.get_role(self.jail_role)
+        # Check if the member has the jail role
+        if jail_role in member.roles:
+            # Remove jail role
+            await member.remove_roles(jail_role)
+
+            # Add back the roles that were removed when the member was jailed
+            if self.jailed_users[member.name]:
+                for role in self.jailed_users[member.name]:
+                    try:
+                        await member.add_roles(role)
+                    except Exception as e:
+                        print(e)
+                # Clear the removed roles from the database
+
+            await ctx.send(f"{member.display_name} has been released from jail.")
+        else:
+            await ctx.send(f"{member.display_name} is not in jail.")
+
+    @commands.command()
+    @role_check
+    @mod_check
     async def strike(self, ctx, *args):
         """Strike someone by using .strike @<user> <reason>"""
         mentions = ctx.message.mentions
@@ -111,10 +129,14 @@ class discMod(commands.Cog):
                         success = self.main_db.set_user_field(mention.id, "strikes", 0)
                         if success == 0:
                             user = ctx.guild.get_member(mention.id)
+                            self.jailed_users[user.name] = user.roles
                             for current_role in user.roles:
                                 if current_role.name == "@everyone":
                                     continue
-                                await user.remove_roles(current_role)
+                                try:
+                                    await user.remove_roles(current_role)
+                                except discord.Forbidden:
+                                    print(f"Skipped a role I could not remove: {current_role.name}")
                             jail_role = ctx.guild.get_role(self.jail_role)
                             await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
                             strike_reasons = ""
@@ -143,4 +165,4 @@ async def setup(bot):
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")
     await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, 
-                              settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, settings.CHANNELID))
+                              settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, settings.CHANNELID, settings.PINGROLE, settings.LUNCHERS))

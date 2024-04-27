@@ -171,7 +171,7 @@ class riotAPI():
         }
         for game in game_details_user:
             details = game["match_details"]
-            if details['deaths'] > (details['kills'] + details['assists']):
+            if details['deaths'] > (2.5*(details['kills'] + details['assists'])):
                 time_diff = datetime.timedelta(seconds=game['time_diff']).days
                 game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
                 result = "\u2705" if details["win"] else "\u274C"
@@ -214,9 +214,9 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user, tag):
+    async def get_active_game_status(self, user, tag): #iHjbDwrgQsFDUTccncS-I_INxlq0aAl5ErRlXZAFrU1nAFm6nPsuuEKgizifUl72gvrByBES0i16pg
         puuid = await self.get_puuid_by_tag(user, tag)
-        account_id = await self.get_account_id(puuid)
+        account_id = await self.get_account_id(puuid) #eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     f"https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{account_id}",
@@ -284,7 +284,9 @@ class riotAPI():
 
     async def get_clash_opgg(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
+        print(puuid)
         account_id = await self.get_account_id(puuid)
+        print(account_id)
         team_id = await self.get_clash_team_id(account_id)
         players = await self.get_clash_players(team_id)
         text = "https://www.op.gg/multisearch/euw?summoners="

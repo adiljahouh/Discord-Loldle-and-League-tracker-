@@ -7,7 +7,6 @@ from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
 from databases.stalker import StalkingDB
 
-#TODO on join tell them to register
 class LeagueCommands(riotAPI, commands.Cog):
     def __init__(self, main_db, stalking_db, riot_api, player_role_id, g_role, jail_role) -> None:
         self.main_db = main_db
@@ -217,11 +216,12 @@ class LeagueCommands(riotAPI, commands.Cog):
             if '#' not in summoner:
                 await ctx.send("Add a summoner with a user and tag (e.g. mocro#zpr)")
                 return
+            user, tag = summoner.split('#')
             message = ""
             embed = False
             try:
                 if len(args) != 0:
-                    opgg = await self.riot_api.get_clash_opgg(summoner)
+                    opgg = await self.riot_api.get_clash_opgg(user=user, tag=tag)
                     message = opgg
                     embed = True
                 else:

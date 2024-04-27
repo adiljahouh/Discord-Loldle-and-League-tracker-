@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     FANBOYROLEID: int
     HATERROLEID: int
     ROLECHANNELID: int
+    LUNCHERS: int
 
 
     class Config:

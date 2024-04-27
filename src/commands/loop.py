@@ -31,7 +31,7 @@ class loops(commands.Cog):
         self.activate_stalking.start()
         self.end_stalking.start()
         self.leaderboard.start()
-        await asyncio.sleep(36000)  # 1800
+        await asyncio.sleep(1)  # 1800
         self.send_message.start()
 
     @tasks.loop(hours=24)
@@ -60,12 +60,15 @@ class loops(commands.Cog):
                 flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=10)
             except aiohttp.ClientResponseError as e:
                 print(e.message)
-                await channel.send(e.message)
+                await channel.send(f"Exposing command errored with: {e}")
                 return
 
             if flame_text:
                 inters += 1
                 embed.add_field(name=f"SUSPECT #{inters}", value=f"<@{discord_id}>\n {flame_text}\n")
+            else:
+                print("no inters found for our exposing session")
+                return
 
         if channel is not None:
             """
@@ -110,7 +113,7 @@ class loops(commands.Cog):
             result = await asyncio.gather(*tasks)
         except aiohttp.ClientResponseError as e:
             print(e)
-            await channel.send(e.message + ', please wait a minute.')
+            await channel.send(f"Leaderboard DMG taken errored with client response: {e}")
             return
         top_5 = sorted(result, key=lambda x: x['taken'], reverse=True)[:5]
         for index, top_g in enumerate(top_5):
@@ -143,14 +146,13 @@ class loops(commands.Cog):
                     await asyncio.sleep(1)
                     active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag)
                 except aiohttp.ClientResponseError as e:
-                    print(e)
+                    print(f"{pos_victim} is not in game.")
                     # print(victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
                 # or if game is too far gone or isnt ranked dont track
                 if game_length > 600 or game_type != 420:
-                    print("Continuing, gametype/gamelength incorrect")
-                    print(game_type, game_length)
+                    print(f"Continuing, gametype {game_type} or gamelength {game_length} incorrect")
                     continue
                 if active and self.stalking_db.current_game != data[0]:
                     victim = pos_victim
