@@ -156,8 +156,8 @@ class discMod(commands.Cog):
                                     pass
                             await user.add_roles(jail_role)
                             channel= self.bot.get_channel(self.confessional)
-                            embed = discord.Embed(title=f"You <@{mention.id}> have been jailed for the following violations\n\n",
-                                  description=f"{strike_reasons}",
+                            embed = discord.Embed(title=f"You have been jailed for the following violations\n\n",
+                                  description=f"<@{mention.id}>\n\n{strike_reasons}",
                                   color=0xFF0000)
                             await channel.send(embed=embed)
                         else:

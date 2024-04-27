@@ -147,7 +147,7 @@ class loops(commands.Cog):
                     #     print(pos_victim)
                     #     print(active, data, game_length, game_type)
                 except aiohttp.ClientResponseError as e:
-                    print(pos_victim, " Failed to get active game status with error: ", e)
+                    # print(pos_victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
                 # or if game is too far gone or isnt ranked dont track
