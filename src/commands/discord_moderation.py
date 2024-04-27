@@ -112,9 +112,9 @@ class discMod(commands.Cog):
                         print(e)
                 # Clear the removed roles from the database
 
-            await ctx.send(f"{member.display_name} has been released from jail.")
+            await ctx.send(f"<@{member.id}> has been released from jail.")
         else:
-            await ctx.send(f"{member.display_name} is not in jail.")
+            await ctx.send(f"<@{member.id}> is not in jail.")
 
     @commands.command()
     @role_check
