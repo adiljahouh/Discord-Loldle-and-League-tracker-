@@ -95,7 +95,7 @@ class discMod(commands.Cog):
     @commands.command()
     @role_check
     @mod_check
-    async def release(self, ctx, member: discord.Member):
+    async def release(self, ctx: commands.Context, member: discord.Member):
         """Release a user from jail."""
         jail_role = ctx.guild.get_role(self.jail_role)
         # Check if the member has the jail role
@@ -119,7 +119,7 @@ class discMod(commands.Cog):
     @commands.command()
     @role_check
     @mod_check
-    async def strike(self, ctx, *args):
+    async def strike(self, ctx: commands.Context, *args):
         """Strike someone by using .strike @<user> <reason>"""
         mentions = ctx.message.mentions
         if len(mentions) == 0:
@@ -136,7 +136,7 @@ class discMod(commands.Cog):
                     if total >= 3:
                         success = self.main_db.set_user_field(mention.id, "strikes", 0)
                         if success == 0:
-                            user = ctx.guild.get_member(mention.id)
+                            user: discord.Member = ctx.guild.get_member(mention.id)
                             self.jailed_users[user.name] = user.roles
                             for current_role in user.roles:
                                 if current_role.name == "@everyone":
