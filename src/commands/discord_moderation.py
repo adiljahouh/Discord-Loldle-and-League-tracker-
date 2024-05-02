@@ -6,13 +6,15 @@ import discord
 from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
 class haterFanboyView(discord.ui.View):
-    def __init__(self, *, timeout, hater, fanboy, botenthusiast, lunchers, leaguersid):
+    def __init__(self, *, timeout, hater_id, fanboy_id, botenthusiast_id, lunchers_id, leaguers_id, variety_id):
         super().__init__(timeout=timeout)
-        self.fanboy_id = fanboy
-        self.hater_id = hater
-        self.botenthusiast_id = botenthusiast
-        self.lunchers_id = lunchers
-        self.leaguers_id = leaguersid
+        print("initializing")
+        self.fanboy_id = fanboy_id
+        self.hater_id = hater_id
+        self.botenthusiast_id = botenthusiast_id
+        self.lunchers_id = lunchers_id
+        self.leaguers_id = leaguers_id
+        self.variety_id = variety_id
     
     async def add_role(self, interaction: discord.Interaction, button: discord.ui.Button, role_id: int, label: str, color: discord.ButtonStyle):
         user = interaction.user
@@ -49,20 +51,26 @@ class haterFanboyView(discord.ui.View):
     async def add_leaguers(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.add_role(interaction, button, self.leaguers_id, "LEAGUERS", discord.ButtonStyle.primary)
 
+    @discord.ui.button(label="VARIETY", style=discord.ButtonStyle.primary, emoji="🎲")
+    async def add_variety(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_role(interaction, button, self.variety_id, "VARIETY", discord.ButtonStyle.primary)
+
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id, confessional, bot, fanboyid, haterid, rolechannelid, main_channelid, botenthusiast, lunchers, leaguersid) -> None:
+    def __init__(self, main_db, jail_role_id, confessional_channel_id, bot, fanboyid, haterid, rolechannelid, main_channelid,
+                  botenthusiastid, lunchersid, leaguersid, varietyid) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
-        self.confessional = confessional
+        self.confessional = confessional_channel_id
         self.fanboyroleid = fanboyid
         self.haterroleid = haterid
         self.rolechannelid = rolechannelid
         self.main_channelid = main_channelid
-        self.botenthusiast_id = botenthusiast
-        self.lunchers_id = lunchers
+        self.botenthusiast_id = botenthusiastid
+        self.lunchers_id = lunchersid
         self.leaguers_id = leaguersid
+        self.variety_id = varietyid
         self.jailed_users = {} #doing this with in-memory because not a lot will be jailed anyways
 
     @commands.Cog.listener()
@@ -71,15 +79,16 @@ class discMod(commands.Cog):
 
         if channel:
             await channel.purge()
-            view = haterFanboyView(timeout=None, hater=self.haterroleid, fanboy=self.fanboyroleid, 
-                                   botenthusiast=self.botenthusiast_id, lunchers=self.lunchers_id,
-                                   leaguersid = self.leaguers_id)
+            view = haterFanboyView(timeout=None, hater_id=self.haterroleid, fanboy_id=self.fanboyroleid, 
+                                    botenthusiast_id=self.botenthusiast_id, lunchers_id=self.lunchers_id,
+                                    leaguers_id = self.leaguers_id, variety_id=self.variety_id)
             embed = discord.Embed(
             title="Choose Your Role",
             description="Click one of the buttons below to choose your role,\nbe sure to .register <league_name> to unlock all channels.",
             color=discord.Color.blue()
                 )
             channel = self.bot.get_channel(self.rolechannelid)
+            print("sending roles to roole channel")
             await channel.send(embed=embed, view=view)
 
     @commands.Cog.listener()
@@ -176,4 +185,4 @@ async def setup(bot):
     await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, 
                               settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, 
                               settings.CHANNELID, settings.PINGROLE, settings.LUNCHERS,
-                              settings.LEAGUERSID))
+                              settings.LEAGUERSID, settings.VARIETYID))

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     ROLECHANNELID: int
     LUNCHERS: int
     LEAGUERSID: int
+    VARIETYID: int
 
 
     class Config:
