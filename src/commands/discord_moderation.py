@@ -19,7 +19,8 @@ class haterFanboyView(discord.ui.View):
         has_target_role = any(role.id == role_id for role in user.roles)
         if has_target_role:
             target_role = interaction.guild.get_role(role_id)
-            await interaction.response.send_message(f"You already have the role {target_role.mention}", ephemeral=True)
+            await user.remove_roles(target_role)
+            await interaction.response.send_message(f"Removing the role {target_role.mention}", ephemeral=True)
         else:
             target_role = interaction.guild.get_role(role_id)
             if target_role:
