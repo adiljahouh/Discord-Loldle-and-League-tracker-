@@ -30,8 +30,8 @@ class loops(commands.Cog):
     async def on_ready(self):
         self.activate_stalking.start()
         self.end_stalking.start()
-        self.leaderboard.start()
-        await asyncio.sleep(1)  # 1800
+        # self.leaderboard.start()
+        await asyncio.sleep(1800)  # 1800
         self.send_message.start()
 
     @tasks.loop(hours=24)
@@ -57,7 +57,7 @@ class loops(commands.Cog):
         for index, discord_id in enumerate(discord_ids):
             riot_id = self.main_db.get_user_field(discord_id, "puuid")
             try:
-                flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=10)
+                flame_text = await self.riot_api.get_bad_kda_by_puuid(riot_id.decode('utf-8'), 5, sleep_time=30)
             except aiohttp.ClientResponseError as e:
                 print(e.message)
                 await channel.send(f"Exposing command errored with: {e}")
@@ -108,7 +108,7 @@ class loops(commands.Cog):
             puuid = self.main_db.get_user_field(discord_id, "puuid")
             tasks.append(self.riot_api.get_highest_damage_taken_by_puuid(puuid=puuid.decode('utf-8'), count=5,
                                                                             sleep_time=delay, discord_id=discord_id))
-            delay += 10
+            delay += 20
         try:
             result = await asyncio.gather(*tasks)
         except aiohttp.ClientResponseError as e:

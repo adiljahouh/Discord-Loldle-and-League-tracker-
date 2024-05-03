@@ -133,9 +133,12 @@ class riotAPI():
         """
         matchesinfo: list = []
         for matchID in matchIDs:
-            matchinfo: dict = await self.get_match_detail_by_matchID_and_filter_for_puuid(matchID, puuid)
-            matchinfo['time_diff'] = datetime.datetime.now().timestamp() - matchinfo['game_end'] / 1000
-            matchesinfo.append(matchinfo)
+            try:
+                matchinfo: dict = await self.get_match_detail_by_matchID_and_filter_for_puuid(matchID, puuid)
+                matchinfo['time_diff'] = datetime.datetime.now().timestamp() - matchinfo['game_end'] / 1000
+                matchesinfo.append(matchinfo)
+            except aiohttp.ClientResponseError:
+                pass
         return matchesinfo
 
     async def get_kda_by_puuid(self, puuid, count=10):
@@ -171,7 +174,7 @@ class riotAPI():
         }
         for game in game_details_user:
             details = game["match_details"]
-            if details['deaths'] > (2.5*(details['kills'] + details['assists'])):
+            if details['deaths'] > (3*(details['kills'] + details['assists'])):
                 time_diff = datetime.timedelta(seconds=game['time_diff']).days
                 game_mode = game_mode_mapping.get(game["game_type"], "Unranked")
                 result = "\u2705" if details["win"] else "\u274C"
