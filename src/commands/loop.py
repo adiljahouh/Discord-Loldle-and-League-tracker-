@@ -30,7 +30,7 @@ class loops(commands.Cog):
     async def on_ready(self):
         self.activate_stalking.start()
         self.end_stalking.start()
-        # self.leaderboard.start()
+        self.leaderboard.start()
         await asyncio.sleep(1800)  # 1800
         self.send_message.start()
 
@@ -84,7 +84,7 @@ class loops(commands.Cog):
                 print("Failed to send the message.")
 
     @tasks.loop(hours=24)
-    # FIXME: Remove the concurrency here, its redundant
+    # # FIXME: Remove the concurrency here, its redundant
     async def leaderboard(self):
         """
             Keeps track of top 5 in each role of the leaderboard
@@ -122,7 +122,7 @@ class loops(commands.Cog):
         embed.add_field(name="Top Damage Taken Past 5 Games", value=leaderboard_text)
         await channel.send(embed=embed)
 
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(minutes=2.0)
     async def activate_stalking(self):
         print("Activate_stalking")
         channel_id: int = self.channel_id
@@ -232,7 +232,7 @@ class loops(commands.Cog):
                 print(f"Activate stalking error: {e}")
 
 
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(minutes=2.0)
     async def end_stalking(self):
         print("End stalking")
         channel_id: int = self.channel_id
