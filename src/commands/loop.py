@@ -11,10 +11,8 @@ from databases.main import MainDB
 from databases.stalker import StalkingDB
 from commands.utility.end_image import EndImage
 from commands.utility.decorators import fix_highlighted_player
-import tracemalloc
 
 # Start tracing memory allocations
-tracemalloc.start()
 
 class loops(commands.Cog):
     def __init__(self, bot, main_db, betting_db, stalking_db, riot_api, channel_id, ping_role) -> None:
@@ -33,10 +31,10 @@ class loops(commands.Cog):
     async def on_ready(self):
         self.activate_stalking.start()
         self.end_stalking.start()
-        await asyncio.sleep(900)
-        self.leaderboard.start()
-        await asyncio.sleep(1800)  # 1800
-        self.send_message.start()
+        # await asyncio.sleep(900)
+        # self.leaderboard.start()
+        # await asyncio.sleep(1800)  # 1800
+        # self.send_message.start()
 
     @tasks.loop(hours=24)
     async def send_message(self):
@@ -129,19 +127,11 @@ class loops(commands.Cog):
     @tasks.loop(minutes=2.0)
     async def activate_stalking(self):
         print("Activate_stalking")
-        snapshot_before = tracemalloc.take_snapshot()
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
         try:
             # Check if a user is currently getting stalked
-            if self.stalking_db.get_active_user() is not None:
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
+            if self.stalking_db.get_active_user() is not None:      
                 return
             victims = self.stalking_db.get_all_users()
             print(f"Stalking victims of length: {len(victims)}")
@@ -172,13 +162,6 @@ class loops(commands.Cog):
                     break
             if not found:
                 print("No active user was found")
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
                 return
             message = None
             embed = None
@@ -211,13 +194,6 @@ class loops(commands.Cog):
                         print("Message sent successfully.")
                     except Exception as e:
                         print(e)
-                        snapshot_after = tracemalloc.take_snapshot()
-                    top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                    # Print top 10 lines with the largest memory consumption increase
-                    print("[Top 10 lines with memory increase]")
-                    for stat in top_stats[:5]:
-                        print(stat)
                         return
             self.stalking_db.current_game = data[0]
             if data[2] == "Custom":
@@ -253,42 +229,25 @@ class loops(commands.Cog):
         except Exception as e:
             try:
                 await channel.send(f"Activate stalking error: {e}")
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
                 print(f"Activate stalking error: {e}")
             except Exception as e:
                 print(f"Activate stalking error: {e}")
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
+                
+                
+                
+                    
 
 
     @tasks.loop(minutes=2.0)
     async def end_stalking(self):
         print("End stalking")
-        snapshot_before = tracemalloc.take_snapshot()
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
         try:
             victim = self.stalking_db.get_active_user()
             print(f"Active victim: {victim}")
             if victim is None:
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
+  
                 return
             
             match_id = f'EUW1_{self.stalking_db.current_game}'
@@ -296,13 +255,7 @@ class loops(commands.Cog):
                 match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
             except aiohttp.ClientResponseError:
                 print("Game is still in progress")
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
+      
                 return
             try:
                 endIm = EndImage(match_data, victim)
@@ -310,14 +263,7 @@ class loops(commands.Cog):
                 end_result = endIm.get_game_result()
                 picture = discord.File(fp=end_image, filename="team.png")
             except Exception as e:
-                print(f"error in image: {e}")
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
+                print(f"error in image: {e}")  
                 return
             self.stalking_db.change_status(victim, False)
             self.betting_db.disable_betting()
@@ -351,14 +297,7 @@ class loops(commands.Cog):
             if channel is not None:
                 try:
                     self.betting_db.remove_all_bets()
-                    await channel.send(embed=embed, reference=message, file=picture)
-                    snapshot_after = tracemalloc.take_snapshot()
-                    top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                    # Print top 10 lines with the largest memory consumption increase
-                    print("[Top 10 lines with memory increase]")
-                    for stat in top_stats[:5]:
-                        print(stat)
+                    await channel.send(embed=embed, reference=message, file=picture) 
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
@@ -369,13 +308,6 @@ class loops(commands.Cog):
             try:
                 await channel.send(f"End stalking error: {e}")
                 print(f"End stalking error: {e}")
-                snapshot_after = tracemalloc.take_snapshot()
-                top_stats = snapshot_after.compare_to(snapshot_before, 'lineno')
-
-                # Print top 10 lines with the largest memory consumption increase
-                print("[Top 10 lines with memory increase]")
-                for stat in top_stats[:5]:
-                    print(stat)
             except Exception as e:
                 print(f"End stalking error: {e}")
 
