@@ -5,6 +5,8 @@ from config import Settings
 import discord
 from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
+from datetime import datetime, timezone
+import asyncio
 class haterFanboyView(discord.ui.View):
     def __init__(self, *, timeout, hater_id, fanboy_id, botenthusiast_id, lunchers_id, leaguers_id, variety_id):
         super().__init__(timeout=timeout)
@@ -72,6 +74,7 @@ class discMod(commands.Cog):
         self.leaguers_id = leaguersid
         self.variety_id = varietyid
         self.jailed_users = {} #doing this with in-memory because not a lot will be jailed anyways
+        self.active_destruction_target = None
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -177,6 +180,71 @@ class discMod(commands.Cog):
                 else:
                     await ctx.send(
                         f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
+    @commands.command()
+    @super_user_check
+    async def destroy(self, ctx: commands.Context, *args):
+        mentions = ctx.message.mentions
+        if len(mentions) != 1:
+            await ctx.send("Mention ONE person to activate destruction mode.")
+            return
+
+        target_user = mentions[0]
+
+        # Check if there's already an active target
+        if self.active_destruction_target:
+            if self.active_destruction_target == target_user.id:
+                await ctx.send(f"Destruction mode is already active for {target_user.display_name}.")
+                return
+            else:
+                # Stop the destruction for the previous target
+                await ctx.send(f"Stopping destruction mode for the previous target.")
+                self.active_destruction_target = None
+
+        self.active_destruction_target = target_user.id
+        await ctx.send(f"Destruction mode activated for {target_user.display_name}!")
+        start_time = datetime.now(timezone.utc)  # Use timezone-aware datetime
+
+
+        try:
+            # Enter continuous destruction mode
+            while self.active_destruction_target == target_user.id:
+                # Check for and delete any messages sent by the target user in the current channel
+                async for message in ctx.channel.history(limit=100):
+                    if (message.author == target_user and 
+                        message.created_at > start_time and 
+                        message.channel.id != self.confessional):
+                        confessional_channel = ctx.guild.get_channel(self.confessional)
+                        await ctx.send(f"Don't type outside of {confessional_channel.mention}!")
+                        await message.delete()
+
+                # Attempt to disconnect the user if they're in a voice channel
+                if target_user.voice and target_user.voice.channel:
+                    await target_user.move_to(None)  # Disconnect from voice
+
+                # Delay to prevent high resource usage and avoid rate limits
+                await asyncio.sleep(5)
+
+                # Check if the user is still in the server
+                if not ctx.guild.get_member(target_user.id):
+                    await ctx.send(f"{target_user.display_name} is no longer in the server. Stopping destruction mode.")
+                    break
+
+            # Clear the active target when the loop exits
+            self.active_destruction_target = None
+
+        except Exception as e:
+            await ctx.send(f"An error occurred during destruction mode: {e}")
+            self.active_destruction_target = None
+
+    @commands.command()
+    @super_user_check
+    async def spare(self, ctx: commands.Context):
+        """spare the current destruction mode target."""
+        if not self.active_destruction_target:
+            await ctx.send("There is no active destruction mode to stop.")
+        else:
+            self.active_destruction_target = None
+            await ctx.send("Destruction mode stopped.")
 
 async def setup(bot):
     settings = Settings()

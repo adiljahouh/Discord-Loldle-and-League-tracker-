@@ -29,8 +29,9 @@ class loops(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.activate_stalking.start()
-        self.end_stalking.start()
+        pass
+        #self.activate_stalking.start()
+        #self.end_stalking.start()
         # await asyncio.sleep(900)
         # self.leaderboard.start()
         # await asyncio.sleep(1800)  # 1800
@@ -234,10 +235,6 @@ class loops(commands.Cog):
                 print(f"Activate stalking error: {e}")
                 
                 
-                
-                    
-
-
     @tasks.loop(minutes=2.0)
     async def end_stalking(self):
         print("End stalking")

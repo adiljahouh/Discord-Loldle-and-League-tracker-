@@ -6,6 +6,7 @@ import sys
 
 async def main():
     settings = Settings()
+    print(settings)
     my_bot = discBot(token=settings.DISCORDTOKEN, channel_id=settings.CHANNELID)
     #my_cogs = ["commands.league", "commands.animals", "commands.points", "commands.discord_moderation"]
     my_cogs = ["commands.league", "commands.animals", "commands.points", "commands.discord_moderation", "commands.loop"]
