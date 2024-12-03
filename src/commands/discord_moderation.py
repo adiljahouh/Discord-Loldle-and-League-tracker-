@@ -135,17 +135,28 @@ class discMod(commands.Cog):
     async def strike(self, ctx: commands.Context, *args):
         """Strike someone by using .strike @<user> <reason>"""
         mentions = ctx.message.mentions
+        attachments = ctx.message.attachments  # Get attachments
+        attachment_urls = [attachment.url for attachment in attachments]
+
         if len(mentions) == 0:
             await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
         else:
             for mention in mentions:
                 filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
                 if len(filtered_args) == 0:
-                    # if we didnt pass a reason
-                    filtered_args.append("No reason")
+                    # if no reason is provided
+                    filtered_args.append("No reason mentioned")
+
                 if self.main_db.check_user_existence(mention.id) == 1:
                     total = self.main_db.increment_field(mention.id, "strikes", 1)
-                    success = self.main_db.set_user_field(mention.id, f"strike_{total}", f"{' '.join(filtered_args)}")
+                    
+                    # Prepare reason and attachments string
+                    reason = ' '.join(filtered_args)
+                    attachments_str = ', '.join(attachment_urls) if attachment_urls else "No attachments"
+                    strike_details = f"{reason} | Attachments: {attachments_str}"
+
+                    success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
+                    
                     if total >= 3:
                         success = self.main_db.set_user_field(mention.id, "strikes", 0)
                         if success == 0:
@@ -158,25 +169,39 @@ class discMod(commands.Cog):
                                     await user.remove_roles(current_role)
                                 except discord.Forbidden:
                                     print(f"Skipped a role I could not remove: {current_role.name}")
+                            
                             jail_role = ctx.guild.get_role(self.jail_role)
                             await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
+                            
                             strike_reasons = ""
-                            for strike in range(1,4):
+                            for strike in range(1, 4):
                                 try:
                                     reason = self.main_db.get_user_field(mention.id, f"strike_{strike}")
                                     strike_reasons += f"Strike {strike}: {reason.decode('utf8')}\n"
                                 except Exception as e:
                                     pass
+                            
                             await user.add_roles(jail_role)
-                            channel= self.bot.get_channel(self.confessional)
-                            embed = discord.Embed(title=f"You have been jailed for the following violations\n\n",
-                                  description=f"<@{mention.id}>\n\n{strike_reasons}",
-                                  color=0xFF0000)
+                            channel = self.bot.get_channel(self.confessional)
+                            embed = discord.Embed(
+                                title=f"You have been jailed for the following violations\n\n",
+                                description=f"<@{mention.id}>\n\n{strike_reasons}",
+                                color=0xFF0000
+                            )
+                            
+                            # Add attachment URLs to the embed
+                            if attachment_urls:
+                                embed.add_field(
+                                    name="Attachments",
+                                    value='\n'.join(attachment_urls),
+                                    inline=False
+                                )
+
                             await channel.send(embed=embed)
                         else:
-                            await ctx.send(f"Couldnt reset your strikes, contact an admin")
+                            await ctx.send(f"Couldn't reset your strikes, contact an admin")
                     else:
-                        await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {' '.join(filtered_args)}\n TOTAL COUNT: {total}")
+                        await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {reason}\n TOTAL COUNT: {total}")
                 else:
                     await ctx.send(
                         f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")

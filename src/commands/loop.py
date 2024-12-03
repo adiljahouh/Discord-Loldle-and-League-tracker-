@@ -11,6 +11,7 @@ from databases.main import MainDB
 from databases.stalker import StalkingDB
 from commands.utility.end_image import EndImage
 from commands.utility.decorators import fix_highlighted_player
+import tracemalloc
 
 # Start tracing memory allocations
 
@@ -29,9 +30,14 @@ class loops(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        pass
-        #self.activate_stalking.start()
-        #self.end_stalking.start()
+        self.tracemalloc_started = False
+        
+        # Start tracing memory usage
+        tracemalloc.start()
+        self.tracemalloc_started = True
+        print("Tracemalloc started in cog initialization.")
+        self.activate_stalking.start()
+        self.end_stalking.start()
         # await asyncio.sleep(900)
         # self.leaderboard.start()
         # await asyncio.sleep(1800)  # 1800
@@ -146,11 +152,7 @@ class loops(commands.Cog):
                     user, tag = pos_victim.split('#')
                     await asyncio.sleep(1)
                     active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag)
-                    # if active:
-                    #     print(pos_victim)
-                    #     print(active, data, game_length, game_type)
                 except aiohttp.ClientResponseError as e:
-                    # print(pos_victim, " Failed to get active game status with error: ", e)
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
                 # or if game is too far gone or isnt ranked dont track
@@ -233,6 +235,13 @@ class loops(commands.Cog):
                 print(f"Activate stalking error: {e}")
             except Exception as e:
                 print(f"Activate stalking error: {e}")
+        finally:
+            # Take a memory snapshot
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics("lineno")
+            print("[Top 10 Memory Stats]")
+            for stat in top_stats[:10]:
+                print(stat)
                 
                 
     @tasks.loop(minutes=2.0)
@@ -255,9 +264,14 @@ class loops(commands.Cog):
       
                 return
             try:
+                print("match data ", match_data)
+                print(victim)
                 endIm = EndImage(match_data, victim)
+                print("created class")
                 end_image = await endIm.get_team_image()
+                print("end image", end_image)
                 end_result = endIm.get_game_result()
+                print("end result, ", end_result)
                 picture = discord.File(fp=end_image, filename="team.png")
             except Exception as e:
                 print(f"error in image: {e}")  
@@ -307,6 +321,13 @@ class loops(commands.Cog):
                 print(f"End stalking error: {e}")
             except Exception as e:
                 print(f"End stalking error: {e}")
+        finally:
+            # Take a memory snapshot
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics("lineno")
+            print("[Top 10 Memory Stats]")
+            for stat in top_stats[:10]:
+                print(stat)
 
 async def setup(bot):
     settings = Settings()

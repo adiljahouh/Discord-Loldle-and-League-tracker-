@@ -1,8 +1,11 @@
 from discord_handler import discBot, add_cog
 import asyncio
 from config import Settings
+import resource
 
-import sys
+def set_memory_limit(max_memory_mb):
+    max_memory = max_memory_mb * 1024 * 1024
+    resource.setrlimit(resource.RLIMIT_AS, (max_memory, max_memory))
 
 async def main():
     settings = Settings()
@@ -17,4 +20,5 @@ async def main():
 
 if __name__ == "__main__":
     """Run the bot"""
+    set_memory_limit(512)  # Limit to 512 MB
     asyncio.run(main())
