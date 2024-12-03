@@ -152,8 +152,8 @@ class discMod(commands.Cog):
                     
                     # Prepare reason and attachments string
                     reason = ' '.join(filtered_args)
-                    attachments_str = ', '.join(attachment_urls) if attachment_urls else "No attachments"
-                    strike_details = f"{reason} | Attachments: {attachments_str}"
+                    attachments_str = ', '.join(attachment_urls) if attachment_urls else ""
+                    strike_details = f"{reason} {attachments_str}"
 
                     success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
                     
@@ -201,7 +201,7 @@ class discMod(commands.Cog):
                         else:
                             await ctx.send(f"Couldn't reset your strikes, contact an admin")
                     else:
-                        await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {reason}\n TOTAL COUNT: {total}")
+                        await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {strike_details}\n TOTAL COUNT: {total}")
                 else:
                     await ctx.send(
                         f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
