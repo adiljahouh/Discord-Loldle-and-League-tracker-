@@ -137,21 +137,23 @@ class discMod(commands.Cog):
         mentions = ctx.message.mentions
         attachments = ctx.message.attachments  # Get attachments
         attachment_urls = [attachment.url for attachment in attachments]
+        # from the command text remove all @'s to filter out the reason
+        strike_reasoning = [arg for arg in args if not any(str(mention.id) in arg for mention in mentions)]
+        if len(strike_reasoning) == 0:
+            # if no reason is provided
+            strike_reasoning.append("No reason mentioned")
+
 
         if len(mentions) == 0:
             await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
         else:
             for mention in mentions:
-                filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
-                if len(filtered_args) == 0:
-                    # if no reason is provided
-                    filtered_args.append("No reason mentioned")
-
+                # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
                 if self.main_db.check_user_existence(mention.id) == 1:
                     total = self.main_db.increment_field(mention.id, "strikes", 1)
                     
                     # Prepare reason and attachments string
-                    reason = ' '.join(filtered_args)
+                    reason = ' '.join(strike_reasoning)
                     attachments_str = ', '.join(attachment_urls) if attachment_urls else ""
                     strike_details = f"{reason} {attachments_str}"
 
