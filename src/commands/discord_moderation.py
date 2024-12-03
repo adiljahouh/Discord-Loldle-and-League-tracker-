@@ -5,6 +5,7 @@ from config import Settings
 import discord
 from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
+from commands.utility.dead_or_alive import draw_dead_or_alive, get_profile_pic
 from datetime import datetime, timezone
 import asyncio
 class haterFanboyView(discord.ui.View):
@@ -158,11 +159,13 @@ class discMod(commands.Cog):
                     strike_details = f"{reason} {attachments_str}"
 
                     success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
-                    
                     if total >= 3:
                         success = self.main_db.set_user_field(mention.id, "strikes", 0)
                         if success == 0:
                             user: discord.Member = ctx.guild.get_member(mention.id)
+                            profile_pic = await get_profile_pic(user)
+                            dead_or_alive_bytes = await draw_dead_or_alive('/assets/image_generator/wanted.png', profile_pic)
+                            wanted_messageable = discord.File(fp=dead_or_alive_bytes, filename="wanted.png")
                             self.jailed_users[user.name] = user.roles
                             for current_role in user.roles:
                                 if current_role.name == "@everyone":
@@ -171,7 +174,6 @@ class discMod(commands.Cog):
                                     await user.remove_roles(current_role)
                                 except discord.Forbidden:
                                     print(f"Skipped a role I could not remove: {current_role.name}")
-                            
                             jail_role = ctx.guild.get_role(self.jail_role)
                             await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
                             
@@ -190,7 +192,8 @@ class discMod(commands.Cog):
                                 description=f"<@{mention.id}>\n\n{strike_reasons}",
                                 color=0xFF0000
                             )
-                            
+                            #embed.set_thumbnail(url=f"attachment://wanted.png")  # Set as thumbnail from file
+                            embed.set_image(url="attachment://wanted.png")
                             # Add attachment URLs to the embed
                             if attachment_urls:
                                 embed.add_field(
@@ -199,7 +202,7 @@ class discMod(commands.Cog):
                                     inline=False
                                 )
 
-                            await channel.send(embed=embed)
+                            await channel.send(embed=embed, file=wanted_messageable)
                         else:
                             await ctx.send(f"Couldn't reset your strikes, contact an admin")
                     else:
@@ -207,6 +210,7 @@ class discMod(commands.Cog):
                 else:
                     await ctx.send(
                         f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
+    
     @commands.command()
     @super_user_check
     async def destroy(self, ctx: commands.Context, *args):
