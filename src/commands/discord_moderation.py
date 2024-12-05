@@ -3,6 +3,7 @@ from typing import Optional
 from discord.ext import commands
 from config import Settings
 import discord
+from databases.main import MainDB
 from commands.utility.decorators import role_check, mod_check, super_user_check, jailed_check
 from databases.main import MainDB
 from commands.utility.dead_or_alive import draw_dead_or_alive, get_profile_pic
@@ -60,7 +61,7 @@ class haterFanboyView(discord.ui.View):
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db, jail_role_id, confessional_channel_id, bot, fanboyid, haterid, rolechannelid, main_channelid,
+    def __init__(self, main_db: MainDB, jail_role_id, confessional_channel_id, bot, fanboyid, haterid, rolechannelid, main_channelid,
                   botenthusiastid, lunchersid, leaguersid, varietyid) -> None:
         self.bot: commands.bot.Bot = bot
         self.main_db = main_db
@@ -214,6 +215,19 @@ class discMod(commands.Cog):
                     await ctx.send(
                         f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
     
+
+    @commands.command()
+    @jailed_check
+    async def bailout(self, ctx: commands.Context, *args):
+        user_id = ctx.author.id
+        points_bytes = self.main_db.get_user_field(user_id, "points")
+        total_strikes_bytes = self.main_db.get_user_field(user_id, "lifetime_strikes")
+        points = int(points_bytes.decode('utf-8'))
+        bounty = 1000*int(total_strikes_bytes)
+        if points >= bounty:
+            self.main_db.decrem
+        pass
+
     @commands.command()
     @super_user_check
     async def destroy(self, ctx: commands.Context, *args):
