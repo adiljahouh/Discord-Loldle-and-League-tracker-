@@ -39,6 +39,21 @@ def mod_check(func):
             return
     return inner
 
+def jailed_check(func):
+    @functools.wraps(func)
+    async def inner(self, ctx, *args, **kwargs):
+        print("In mod_check")
+        settings = Settings()
+        try:
+            for role in ctx.author.roles:
+                if role.id == settings.JAILROLE:
+                    print("Jailee validated")
+                    return await func(self, ctx, *args, **kwargs)
+            await ctx.send(f"You need to be in JAIL to use this command")
+        except Exception as e:
+            await ctx.send(f"Error occured during role check, Error: {e}")
+            return
+    return inner
 
 def super_user_check(func):
     @functools.wraps(func)

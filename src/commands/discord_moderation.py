@@ -3,7 +3,7 @@ from typing import Optional
 from discord.ext import commands
 from config import Settings
 import discord
-from commands.utility.decorators import role_check, mod_check, super_user_check
+from commands.utility.decorators import role_check, mod_check, super_user_check, jailed_check
 from databases.main import MainDB
 from commands.utility.dead_or_alive import draw_dead_or_alive, get_profile_pic
 from datetime import datetime, timezone
@@ -152,6 +152,7 @@ class discMod(commands.Cog):
                 # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
                 if self.main_db.check_user_existence(mention.id) == 1:
                     total = self.main_db.increment_field(mention.id, "strikes", 1)
+                    lifetime_total = self.main_db.increment_field(mention.id, "lifetime_strikes", 1)
                     
                     # Prepare reason and attachments string
                     reason = ' '.join(strike_reasoning)
@@ -164,7 +165,7 @@ class discMod(commands.Cog):
                         if success == 0:
                             user: discord.Member = ctx.guild.get_member(mention.id)
                             profile_pic = await get_profile_pic(user)
-                            dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.png', profile_pic, './assets/image_generator/times_new_roman.ttf')
+                            dead_or_alive_bytes = await draw_dead_or_alive('/assets/image_generator/wanted.png', profile_pic, '/assets/image_generator/times_new_roman.ttf', lifetimestrikes=lifetime_total)
                             wanted_messageable = discord.File(fp=dead_or_alive_bytes, filename="wanted.png")
                             self.jailed_users[user.name] = user.roles
                             prep_jail_card_tasks = []

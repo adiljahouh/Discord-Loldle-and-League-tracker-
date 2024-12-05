@@ -17,7 +17,7 @@ async def get_profile_pic(member: Member):
             else:
                 return None
 
-async def draw_dead_or_alive(base_image_path: str, profile_pic: Image, font_path: str):
+async def draw_dead_or_alive(base_image_path: str, profile_pic: Image, font_path: str, lifetimestrikes: int):
     # Open the base image (ensure it's RGBA for transparency)
     base_image = Image.open(base_image_path).convert("RGBA")
     if profile_pic is None:
@@ -50,7 +50,7 @@ async def draw_dead_or_alive(base_image_path: str, profile_pic: Image, font_path
     font = ImageFont.truetype(font_path, size=140)  # Replace with the desired font
 
     sample_color = base_image.getpixel((80, 150))
-    text = "BOUNTY $1000"
+    text = f"BOUNTY ${1000*lifetimestrikes}"
     draw = ImageDraw.Draw(base_image)
 
     text_bbox = draw.textbbox((0, 0), text, font=font)  # Top-left corner doesn't matter here
