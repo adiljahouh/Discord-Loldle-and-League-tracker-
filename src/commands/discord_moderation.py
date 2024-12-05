@@ -164,16 +164,18 @@ class discMod(commands.Cog):
                         if success == 0:
                             user: discord.Member = ctx.guild.get_member(mention.id)
                             profile_pic = await get_profile_pic(user)
-                            dead_or_alive_bytes = await draw_dead_or_alive('/assets/image_generator/wanted.png', profile_pic)
+                            dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.png', profile_pic, './assets/image_generator/times_new_roman.ttf')
                             wanted_messageable = discord.File(fp=dead_or_alive_bytes, filename="wanted.png")
                             self.jailed_users[user.name] = user.roles
+                            prep_jail_card_tasks = []
                             for current_role in user.roles:
                                 if current_role.name == "@everyone":
                                     continue
                                 try:
-                                    await user.remove_roles(current_role)
+                                    prep_jail_card_tasks.append(user.remove_roles(current_role))
                                 except discord.Forbidden:
                                     print(f"Skipped a role I could not remove: {current_role.name}")
+                            await asyncio.gather(*prep_jail_card_tasks)
                             jail_role = ctx.guild.get_role(self.jail_role)
                             await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
                             
