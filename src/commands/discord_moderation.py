@@ -219,15 +219,38 @@ class discMod(commands.Cog):
     @commands.command()
     @jailed_check
     async def bailout(self, ctx: commands.Context, *args):
+        if ctx.message.channel.id != self.confessional:
+            confessional_channel = ctx.guild.get_channel(self.confessional)
+            await ctx.send(f"You can only use this command in {confessional_channel.mention}!")
+            return
+        jail_role = ctx.guild.get_role(self.jail_role)
         user_id = ctx.author.id
         points_bytes = self.main_db.get_user_field(user_id, "points")
         total_strikes_bytes = self.main_db.get_user_field(user_id, "lifetime_strikes")
-        points = int(points_bytes.decode('utf-8'))
+        starting_points = int(points_bytes.decode('utf-8'))
         bounty = 1000*int(total_strikes_bytes)
-        if points >= bounty:
-            self.main_db.decrem
-        pass
+        if starting_points < bounty:
+            await ctx.send(f"You do not have enough points to bail yourself out for {bounty} points, total points {starting_points}")
+            return
+        new_points = self.main_db.decrement_field(user_id, "points", bounty)
+        # Check if the member has the jail role
+        if jail_role not in ctx.author.roles:
+            await ctx.send(f"<@{user_id}> is not in jail.")
+            return
+        # Remove jail role
+        await ctx.author.remove_roles(jail_role)
 
+        # Add back the roles that were removed when the member was jailed
+        if self.jailed_users[ctx.author.name]:
+            for role in self.jailed_users[ctx.author.name]:
+                try:
+                    await ctx.author.add_roles(role)
+                except Exception as e:
+                    print(e)
+            # Clear the removed roles from the database
+
+        await ctx.send(f"<@{user_id}> has been released from jail.")
+        await ctx.send(f"You bailed yourself out for {bounty} points, bring your total from {starting_points} to {new_points}")
     @commands.command()
     @super_user_check
     async def destroy(self, ctx: commands.Context, *args):

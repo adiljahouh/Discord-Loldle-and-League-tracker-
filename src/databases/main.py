@@ -87,5 +87,4 @@ class MainDB():
     def decrement_field(self, discord_id, field, amount=1):
         self.connect()
         neg_amount = -int(amount)
-        print(neg_amount)
         return self.client.hincrby(discord_id, field, str(neg_amount))
