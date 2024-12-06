@@ -25,7 +25,6 @@ def role_check(func):
 def mod_check(func):
     @functools.wraps(func)
     async def inner(self, ctx, *args, **kwargs):
-        print("In mod_check")
         settings = Settings()
         try:
             for role in ctx.author.roles:
@@ -42,7 +41,6 @@ def mod_check(func):
 def jailed_check(func):
     @functools.wraps(func)
     async def inner(self, ctx, *args, **kwargs):
-        print("In mod_check")
         settings = Settings()
         try:
             for role in ctx.author.roles:

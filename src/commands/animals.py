@@ -28,8 +28,8 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'./assets/menno_dogs/{img}'))
             else:
                 message = await duck_api()
                 await ctx.send(message)
@@ -43,8 +43,8 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'./assets/menno_dogs/{img}'))
             else:
                 message = await dog_api()
                 await ctx.send(message)
@@ -58,8 +58,8 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'./assets/menno_dogs/{img}'))
             else:
                 message = await cat_api()
                 await ctx.send(message)
@@ -73,8 +73,8 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             if random.randint(0, 100) == 1:
-                img = random.choice(os.listdir('/assets/menno_dogs'))
-                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'/assets/menno_dogs/{img}'))
+                img = random.choice(os.listdir('./assets/menno_dogs'))
+                await ctx.send("@here A VERY GOOD BOY APPEARS", file=discord.File(f'./assets/menno_dogs/{img}'))
             else:
                 message = await frog_api()
                 await ctx.send(message)
@@ -88,8 +88,8 @@ class AnimalCommands(commands.Cog):
         # TODO: add retry logic
         async with ctx.typing():
             try:
-                img = random.choice(os.listdir('/assets/drog'))
-                await ctx.send(file=discord.File(f'/assets/drog/{img}'))
+                img = random.choice(os.listdir('./assets/drog'))
+                await ctx.send(file=discord.File(f'./assets/drog/{img}'))
             except Exception as e:
                 print(e)
                 await ctx.send("Something wrong with getting the image")
@@ -97,9 +97,9 @@ class AnimalCommands(commands.Cog):
     @commands.command()
     @role_check
     @mod_check
-    async def image(self, ctx, *args):
+    async def image(self, ctx: commands.Context, *args):
         """Adds an image to the 1/100 roll, use with the discord file system by using .image or by using .image <url>"""
-        filepath = f"/assets/menno_dogs/{str(uuid.uuid4())}.jpg"
+        filepath = f"./assets/menno_dogs/{str(uuid.uuid4())}.jpg"
         if ctx.message.attachments and ctx.message.attachments[0].url.lower().split("?", 1)[0].endswith(
                 ('.png', '.jpg', '.jpeg', '.gif', '.webp')):
             attachment_filename = ctx.message.attachments[0].filename

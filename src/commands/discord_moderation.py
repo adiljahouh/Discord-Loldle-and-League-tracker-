@@ -166,7 +166,7 @@ class discMod(commands.Cog):
                         if success == 0:
                             user: discord.Member = ctx.guild.get_member(mention.id)
                             profile_pic = await get_profile_pic(user)
-                            dead_or_alive_bytes = await draw_dead_or_alive('/assets/image_generator/wanted.png', profile_pic, '/assets/image_generator/times_new_roman.ttf', lifetimestrikes=lifetime_total)
+                            dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.png', profile_pic, './assets/image_generator/times_new_roman.ttf', lifetimestrikes=lifetime_total)
                             wanted_messageable = discord.File(fp=dead_or_alive_bytes, filename="wanted.png")
                             self.jailed_users[user.name] = user.roles
                             prep_jail_card_tasks = []

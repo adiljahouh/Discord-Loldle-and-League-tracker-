@@ -197,7 +197,7 @@ class LeagueCommands(riotAPI, commands.Cog):
             finally:
                 try:
                     print(soloq_info)
-                    picture = discord.File(fp=f"/assets/ranks/{soloq_info['tier'].upper()}.png", filename=f"{soloq_info['tier'].upper()}.png")
+                    picture = discord.File(fp=f"./assets/ranks/{soloq_info['tier'].upper()}.png", filename=f"{soloq_info['tier'].upper()}.png")
                     embed = discord.Embed(title=f"SOLODUO {soloq_info['tier']} {soloq_info['rank']} {soloq_info['leaguePoints']} LP\n",
                                         description=f"{message}",
                                         color=0xFF0000)

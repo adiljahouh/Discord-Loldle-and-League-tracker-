@@ -4,14 +4,16 @@ services:
     container_name: top_g
     build: .
     volumes:
-      - /opt/discbot/.env:/app/.env
+      - /opt/discbot/.env:/src/.env
       - /opt/discbot/assets:/assets
     env_file:
       - /opt/discbot/.env
-  redis:
-    container_name: redis
-    volumes:
-      - /opt/redis:/data
-    ports: 
-      - 6379:6379
-    image: redis
+    # Set CPU limit for the container
+    cpus: '0.5'  # Set CPU limit to use 50% of one CPU
+    mem_limit: 256m
+    #FIXME
+ # redis:
+    #container_name: redis
+    #ports:
+      #- 6379:6379
+    #image: redis
