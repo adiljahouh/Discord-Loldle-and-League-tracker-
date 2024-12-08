@@ -62,20 +62,6 @@ async def get_name_resource_ranged_type_class(ddrag_champ_info, champion):
 }
     return champion_info
 
-async def get_name_resource_ranged_type_class_and_random_spell(ddrag_champ_info, champion):
-    champ_info = ddrag_champ_info['data'][champion]
-    champion_info = {
-    'Name': champ_info.get('name'),
-    'Resource': champ_info.get('partype'),
-    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 325 else 'Melee',
-    'Class': champ_info.get('tags')
-}
-    spells = [key for key in champ_info['spells']]
-    random_spell = random.choice(spells)
-    # Get the PNG image for the random spell
-    spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
-    
-    return champion_info, spell_image_content
 async def get_random_spell(ddrag_version, champion):
     ddrag_champ_info = await get_individual_champ_info_raw(ddrag_version, champion)
     champ_info = ddrag_champ_info['data'][champion]
@@ -84,16 +70,6 @@ async def get_random_spell(ddrag_version, champion):
     # Get the PNG image for the random spell
     spell_image_content = await get_individual_spell_info_raw(ddrag_version, random_spell['image']['full'])
     return spell_image_content
-async def get_name_resource_ranged_type_class_and_splash(ddrag_champ_info, champion):
-    champ_info = ddrag_champ_info['data'][champion]
-    champion_info = {
-    'Name': champ_info.get('name'),
-    'Resource': champ_info.get('partype'),
-    'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 325 else 'Melee',
-    'Class': champ_info.get('tags')
-}
-    splash = get_random_skin_splash(champion)
-    return champion_info, splash
 
 async def get_random_skin_splash(ddrag_version, champion):
     ddrag_champ_info = await get_individual_champ_info_raw(ddrag_version, champion)

@@ -1,6 +1,4 @@
-from api.ddragon import get_name_resource_ranged_type_class, get_random_champ,\
-      get_name_resource_ranged_type_class_and_random_spell, get_name_resource_ranged_type_class_and_splash, get_latest_ddragon,\
-      get_individual_champ_info_raw
+from api.ddragon import get_name_resource_ranged_type_class, get_individual_champ_info_raw
 import aiohttp
 from bs4 import BeautifulSoup
 
