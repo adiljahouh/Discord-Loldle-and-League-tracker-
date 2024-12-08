@@ -172,11 +172,11 @@ class discMod(commands.Cog):
                             for current_role in user.roles:
                                 if current_role.name == "@everyone":
                                     continue
-                                try:
-                                    prep_jail_card_tasks.append(user.remove_roles(current_role))
-                                except discord.Forbidden:
-                                    print(f"Skipped a role I could not remove: {current_role.name}")
-                            await asyncio.gather(*prep_jail_card_tasks)
+                                prep_jail_card_tasks.append(user.remove_roles(current_role))
+                            try:
+                                await asyncio.gather(*prep_jail_card_tasks)
+                            except discord.Forbidden:
+                                print(f"Skipped a role I could not remove: {current_role.name}")
                             jail_role = ctx.guild.get_role(self.jail_role)
                             await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
                             

@@ -70,7 +70,7 @@ class loldleDB():
     def get_all_champ_keys(self):
         self.connect()
         return self.client.keys('*')
-    def is_stale(self, champion_name, ttl=86400):
+    def is_stale(self, champion_name, ttl=86400*30):
         """
         Checks if a champion's data is stale based on the `timestamp` field.
         
