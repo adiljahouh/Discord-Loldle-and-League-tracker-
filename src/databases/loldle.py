@@ -21,7 +21,7 @@ class loldleDB():
         """
         Stores a champion's attributes in a Redis hash, including a timestamp.
         
-        :param champion_name: Name of the champion (used as the Redis key).
+        :param champion_name: Name of the champion (used as the Redis key) FROM DDRAG (USEABLE IN LINKS)
         :param attributes: A dictionary of attribute key-value pairs.
         """
         # Add a timestamp field to the attributes
@@ -60,7 +60,7 @@ class loldleDB():
         """
         Retrieves a champion's data, including attributes and timestamp.
         
-        :param champion_name: The name of the champion (Redis key).
+        :param champion_name: The name of the champion (Redis key) FROM DDRAG.
         :return: A dictionary of champion attributes, including the timestamp.
         """
         self.connect()
@@ -71,7 +71,7 @@ class loldleDB():
     def get_all_champ_keys(self):
         self.connect()
         return self.client.keys('*')
-    def is_stale(self, champion_name, ttl=10):
+    def is_stale(self, champion_name, ttl=86400*14):
         """
         Checks if a champion's data is stale based on the `timestamp` field.
         
