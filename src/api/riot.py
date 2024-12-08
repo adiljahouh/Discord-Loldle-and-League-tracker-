@@ -25,14 +25,40 @@ class riotAPI():
 
 
     async def get_puuid_by_tag(self, user, tag):
+        """
+        puuid	string	
+        gameName	string	This field may be excluded from the response if the account doesn't have a gameName.
+        tagLine	string	This field may be excluded from the response if the account doesn't have a tagLine.
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{user}/{tag}",
                         params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
                 return content['puuid']
+            
+    async def get_name_tag_by_puuid(self, puuid):
+        """
+        puuid	string	
+        gameName	string	This field may be excluded from the response if the account doesn't have a gameName.
+        tagLine	string	This field may be excluded from the response if the account doesn't have a tagLine.
+        """
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://europe.api.riotgames.com/riot/account/v1/accounts/by-puuid/{puuid}",
+                        params=self.params) as response:
+                response.raise_for_status()
+                content: dict = await response.json()
+                return content['gameName'], content['tagLine']
 
     async def get_summoner_values_by_puuid(self, puuid):
+        """
+        accountId	string	Encrypted account ID. Max length 56 characters.
+        profileIconId	int	ID of the summoner icon associated with the summoner.
+        revisionDate	long	Date summoner was last modified specified as epoch milliseconds. The following events will update this timestamp: profile icon change, playing the tutorial or advanced tutorial, finishing a game, summoner name change
+        id	string	Encrypted summoner ID. Max length 63 characters.
+        puuid	string	Encrypted PUUID. Exact length of 78 characters.
+        summonerLevel	long	Summoner level associated with the summon
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
                                    params=self.params) as response:
@@ -43,30 +69,18 @@ class riotAPI():
 
     async def get_encrypted_summoner_id_by_puuid(self, puuid):
         return (await self.get_summoner_values_by_puuid(puuid))['id']
-
-    async def get_account_id(self, puuid):
-            return (await self.get_summoner_values_by_puuid(puuid))['id']
     
-    async def get_name_by_summoner_id(self, summoner_id):
+    async def get_puuid_by_summoner_id(self, enc_summoner_id):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{summoner_id}",
+            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{enc_summoner_id}",
                                    params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
-                return content['name']
-    
-
-    async def get_name_by_summoner_puuid(self, puuid):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content: dict = await response.json()
-                return content['name']
+                return content['puuid']
             
-    async def get_soloq_info_by_encrypted_id(self, id):
+    async def get_soloq_info_by_encrypted_id(self, encr_summoner_id):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{id}",
+            async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{encr_summoner_id}",
                                     params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()
@@ -220,7 +234,6 @@ class riotAPI():
     async def get_active_game_status(self, user, tag):
         ddrag_version = await get_latest_ddragon()
         puuid = await self.get_puuid_by_tag(user, tag)
-        #account_id = await self.get_account_id(puuid)
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     f"https://euw1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}",
@@ -272,32 +285,41 @@ class riotAPI():
                 text_arr.append(game_mode)
                 return True, text_arr, game_length, game_type
 
-    async def get_clash_team_id(self, account_id):
+    async def get_clash_players(self, encr_summoner_id):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{account_id}",
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{encr_summoner_id}",
                                    params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
-                return content[0]['teamId']
-
-    async def get_clash_players(self, team_id):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content = await response.json()
-                return content['players']
+                return content
 
     async def get_clash_opgg(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
-        print(puuid)
-        account_id = await self.get_account_id(puuid)
-        print(account_id)
-        team_id = await self.get_clash_team_id(account_id)
-        players = await self.get_clash_players(team_id)
+        encrypt_summoner_id = await self.get_encrypted_summoner_id_by_puuid(puuid)
+        players = await self.get_clash_players(encrypt_summoner_id)
+#         players = [{
+#        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
+#        "teamId": "00000000-0000-0000-0000-000000000000",
+#        "position": "JUNGLE",
+#        "role": "CAPTAIN"
+#    },
+# {
+#        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
+#        "teamId": "00000000-0000-0000-0000-000000000000",
+#        "position": "TOP",
+#        "role": "CAPTAIN"
+#    },{
+#        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
+#        "teamId": "00000000-0000-0000-0000-000000000000",
+#        "position": "FILL",
+#        "role": "CAPTAIN"
+#    },
+# ]
         text = "https://www.op.gg/multisearch/euw?summoners="
         for player in players:
-            summoner = await self.get_name_by_summoner_id(player['summonerId'])
+            puuid = await self.get_puuid_by_summoner_id(player['summonerId'])
+            name, tag = await self.get_name_tag_by_puuid(puuid=puuid)
+            summoner = name + '#' + tag
             summoner_cleaned = summoner.replace(" ", "").lower()
             summoner_cleaned = summoner_cleaned.replace("#", "%23")
             text += f"{summoner_cleaned},"
