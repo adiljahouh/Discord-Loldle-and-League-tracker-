@@ -257,9 +257,7 @@ class discMod(commands.Cog):
                 except Exception as e:
                     print(e)
             # Clear the removed roles from the database
-
-        await ctx.send(f"<@{user_id}> has been released from jail.")
-        await ctx.send(f"You bailed yourself out for {bounty} points, bring your total from {starting_points} to {new_points}")
+        await ctx.send(f"<@{user_id}> bailed himself out for {bounty} points, bringing his total from {starting_points} to {new_points}")
     @commands.command()
     @super_user_check
     async def destroy(self, ctx: commands.Context, *args):
