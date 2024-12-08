@@ -11,14 +11,6 @@ async def get_gender_releaseDate_per_champ(champion):
             content = await response.json()
             return content['cargoquery'][0]['title']
 
-# async def get_year_class_role_per_champ(champion):
-#     async with aiohttp.ClientSession() as session:
-#         async with session.get(f"https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=50&tables=ChampionFlashcards&fields=Champion%2C%20Year%2C%20Classes%2C%20Roles&where=Champion%3D%22{champion}%22") as response:
-#             response.raise_for_status()
-#             print(f"https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=50&tables=ChampionFlashcards&fields=Champion%2C%20Year%2C%20Classes%2C%20Roles&where=Champion%3D%22{champion}%22")
-#             content = await response.json()
-#             return content
-
 async def get_region(champion):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://leagueoflegends.fandom.com/wiki/{champion}") as response:

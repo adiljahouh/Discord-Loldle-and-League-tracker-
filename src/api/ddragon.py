@@ -52,7 +52,7 @@ async def get_random_champ(ddrag_version):
     return random.choice(list(champion_list.values()))    
 
 async def get_name_resource_ranged_type_class(ddrag_champ_info, champion):
-    # classic_lodle['name'] = champion
+    # parses data from ddrag full info
     champ_info = ddrag_champ_info['data'][champion]
     champion_info = {
     'Name': champ_info.get('name'),
