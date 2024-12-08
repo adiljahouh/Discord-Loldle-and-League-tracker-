@@ -152,7 +152,6 @@ class loldleView(discord.ui.View):
                 self.max_attempts = 10  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}>."
-                print(self.winning_guess_info)
                 await interaction.followup.send(status)
                 while not self.correct_guess and self.attempts < self.max_attempts:
                     self.attempts += 1

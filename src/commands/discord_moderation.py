@@ -12,7 +12,6 @@ import asyncio
 class haterFanboyView(discord.ui.View):
     def __init__(self, *, timeout, hater_id, fanboy_id, botenthusiast_id, lunchers_id, leaguers_id, variety_id):
         super().__init__(timeout=timeout)
-        print("initializing")
         self.fanboy_id = fanboy_id
         self.hater_id = hater_id
         self.botenthusiast_id = botenthusiast_id

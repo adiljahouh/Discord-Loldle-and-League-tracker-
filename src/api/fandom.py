@@ -14,8 +14,6 @@ async def get_gender_releaseDate_per_champ(champion):
 async def get_region(champion):
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://leagueoflegends.fandom.com/wiki/{champion}") as response:
-            # print(champion)
-            
             response.raise_for_status()
             html = await response.text()
             soup = BeautifulSoup(html, 'html.parser')
@@ -41,7 +39,7 @@ async def get_region(champion):
             
 async def get_base_lodle_champ_data(ddrag_version, champ) -> dict:
     print(f"Processing {champ}")
-    champ_info_base = await get_individual_champ_info_raw(ddrag_version)
+    champ_info_base = await get_individual_champ_info_raw(ddrag_version, champ)
     champ_resource_name_class = await get_name_resource_ranged_type_class(champ_info_base, champ)
     try:
         gender_releasdate = await get_gender_releaseDate_per_champ(champ)
@@ -70,5 +68,4 @@ async def get_base_lodle_champ_data(ddrag_version, champ) -> dict:
     merged_dict = {**champ_resource_name_class, **gender_releasdate}
     merged_dict['Region'] = region
     merged_dict['Species'] = species
-    ## TODO: use this as a base, load it on startup, get splash and ability on the fly
     return merged_dict

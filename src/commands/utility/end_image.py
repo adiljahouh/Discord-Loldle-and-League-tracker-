@@ -127,6 +127,7 @@ class EndImage:
             draw_text.text((105 + (776-w)/2, 290+(indx*100)+(100-h)/2), attr, font=font_text_middle, fill=col_white)
 
         # Show team stats
+        print("doing image teamstats")
         for team_indx, team in enumerate(self.teams):
             _, _, w, h = draw_text.textbbox((0, 0), f"{team['kills']}/{team['deaths']}/{team['assists']}", font=font_big)
             draw_text.text((105 + team_indx*(775-w), 290+(100-h)/2), f"{team['kills']}/{team['deaths']}/{team['assists']}", font=font_big, fill=col_white)
@@ -135,13 +136,14 @@ class EndImage:
                 draw_text.text((105 + team_indx*(775-w), 390+(100*indx)+(100-h)/2), str(team[attr]), font=font_big, fill=col_white)
 
         # Bans
+        print("going into bans!")
         champ_list = await get_champion_dict(ddrag_version)
         for team_indx, team in enumerate(self.teams):
             for indx, ban in enumerate(team["bans"]):
                 # No-bans should be skipped
                 if str(ban) == "-1":
                     continue
-                champ_image: Image = await get_champion_splash(champ_list[str(ban)])
+                champ_image: Image = await get_champion_splash(ddrag_version, champ_list[str(ban)])
                 champ_image: Image = champ_image.convert('RGBA')
                 if team_indx == 0:
                     pos = (110 + (65*indx), 913)
@@ -151,6 +153,7 @@ class EndImage:
                 base_image.paste(champ_image, pos, champ_image)
 
         # Min/Max stats
+        print("min max")
         min_stat = 99999999999999999999
         max_stat = -1
         for team in self.teams:
@@ -174,6 +177,7 @@ class EndImage:
                     base_image.paste(col_gray, (1665 - int(250*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 140 + (205*indx), 1855, 210 + (205*indx)))
 
         # Player names, damage numbers, player champ images, kda
+        print("damage numbers and such")
         for team_indx, team in enumerate(self.teams):
             for indx, player in enumerate(team["players"]):
                 kda = f"{player['kills']}/{player['deaths']}/{player['assists']}"
