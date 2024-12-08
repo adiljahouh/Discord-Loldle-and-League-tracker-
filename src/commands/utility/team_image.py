@@ -1,6 +1,6 @@
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
-from api.ddragon import get_champion_splash
+from api.ddragon import get_champion_splash, get_latest_ddragon
 
 
 class imageCreator():
@@ -21,11 +21,12 @@ class imageCreator():
         img = Image.open('./assets/image_generator/team_background.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
+        ddrag_version = await get_latest_ddragon()
         myFont = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
         draw_text = ImageDraw.Draw(base_image)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):
-                champ_image: Image = await get_champion_splash(champ)
+                champ_image: Image = await get_champion_splash(ddrag_version, champ)
                 champ_image = champ_image.convert('RGBA')
                 position = (70 + (520 * team_num), 110 + (170 * champ_num))
                 base_image.paste(champ_image, position, champ_image)

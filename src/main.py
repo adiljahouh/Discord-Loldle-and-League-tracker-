@@ -10,6 +10,7 @@ def set_memory_limit(max_memory_mb):
 async def main():
     settings = Settings()
     loldle_db = loldleDB(settings.REDISURL)
+    await loldle_db.populate_if_needed()
     my_bot = discBot(token=settings.DISCORDTOKEN, channel_id=settings.CHANNELID, loldle_db=loldle_db)
     my_cogs = ["commands.league", "commands.animals", "commands.points", "commands.discord_moderation", "commands.loop"]
     for cog in my_cogs:

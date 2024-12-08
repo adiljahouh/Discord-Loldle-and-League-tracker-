@@ -4,7 +4,7 @@ services:
     container_name: top_g
     build: .
     volumes:
-      - /opt/discbot/.env:/src/.env
+      - /opt/discbot/.env:.env
       - /opt/discbot/assets:/assets
     env_file:
       - /opt/discbot/.env
