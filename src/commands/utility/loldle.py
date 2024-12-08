@@ -107,14 +107,14 @@ class loldleView(discord.ui.View):
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self.bot = bot
-        self.champ_list = champ_list
+        self.champ_list = champ_list # Keys
         self.correct_guess = False
         self.attempts = 0
         self.max_attempts = 10  # Set the maximum number of attempts here
         self.max_points = 2000
         self.main_db = main_db
         self.day = day
-        self.winning_guess_info = winning_guess_info
+        self.winning_guess_info = winning_guess_info # key
         self.loldle_db = loldle_db
         self.ddrag_version = ddrag_version
 
@@ -193,7 +193,7 @@ class loldleView(discord.ui.View):
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
 
-                ability_image = await get_random_spell(self.ddrag_version, self.winning_guess_info['Name'])
+                ability_image = await get_random_spell(self.ddrag_version, self.winning_guess_info['ddrag_name'])
                 transformed_image =  await blur_invert_image(ability_image)
                 await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:
@@ -232,7 +232,7 @@ class loldleView(discord.ui.View):
                 self.max_attempts = 5  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. After each 2 wrong guesses you will get a hint.\n Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
-                splash_image = await get_random_skin_splash(self.ddrag_version, self.winning_guess_info['Name'])
+                splash_image = await get_random_skin_splash(self.ddrag_version, self.winning_guess_info['ddrag_name'])
                 transformed_image =  await crop_image(splash_image)
                 await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:

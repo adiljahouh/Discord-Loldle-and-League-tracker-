@@ -85,10 +85,10 @@ class PointCommands(commands.Cog):
             last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
             ddrag_version = await get_latest_ddragon()
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-                random_champ_name = self.loldle_db.get_random_champion_name()
+                random_champ_name = self.loldle_db.get_random_champion_name() # by ddrag format
                 champ_info = self.loldle_db.get_champion_info(random_champ_name)
                 champ_info.pop("timestamp")
-                all_champs = self.loldle_db.get_all_champ_keys()
+                all_champs = self.loldle_db.get_all_champ_keys() # concatenated keys e.g.  AurelionSol
                 embed = discord.Embed(
                 title="Pick a Loldle type",
                 description="Points earned and attempts vary per game type below",

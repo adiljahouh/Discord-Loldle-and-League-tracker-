@@ -47,6 +47,7 @@ class loldleDB():
                 champ_attributes = await get_base_lodle_champ_data(ddrag_version, champ)
                 # champion_name = champ_attributes['Name']
                 ## add the ddrag name
+                champ_attributes['ddrag_name'] = champ
                 if champ:
                     self.store_champion(champ, champ_attributes)
 
