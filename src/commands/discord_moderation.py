@@ -130,6 +130,14 @@ class discMod(commands.Cog):
         else:
             await ctx.send(f"<@{member.id}> is not in jail.")
 
+
+    async def get_profile_pic_and_write_dead_or_alive(self, user: discord.Member, lifetime_total):
+        profile_pic = await get_profile_pic(user)
+        dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.png', 
+                                                       profile_pic, './assets/image_generator/times_new_roman.ttf', 
+                                                       lifetimestrikes=lifetime_total)
+        return dead_or_alive_bytes
+
     @commands.command()
     @role_check
     @mod_check
@@ -164,22 +172,22 @@ class discMod(commands.Cog):
                         success = self.main_db.set_user_field(mention.id, "strikes", 0)
                         if success == 0:
                             user: discord.Member = ctx.guild.get_member(mention.id)
-                            profile_pic = await get_profile_pic(user)
+                            jail_role = ctx.guild.get_role(self.jail_role)
                             self.jailed_users[user.name] = user.roles
                             prep_jail_card_tasks = []
-                            prep_jail_card_tasks.append(draw_dead_or_alive('./assets/image_generator/wanted.png', profile_pic, './assets/image_generator/times_new_roman.ttf', lifetimestrikes=lifetime_total))
+                            prep_jail_card_tasks.append(self.get_profile_pic_and_write_dead_or_alive(user, lifetime_total))
+                            prep_jail_card_tasks.append(user.add_roles(jail_role))
+                            prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}"))
                             for current_role in user.roles:
-                                if current_role.name == "@everyone":
+                                if current_role.name == "@everyone" or current_role.name.lower() == "admin" or current_role.name == jail_role.name:
                                     continue
                                 prep_jail_card_tasks.append(user.remove_roles(current_role))
                             try:
                                 results = await asyncio.gather(*prep_jail_card_tasks)
-                                print(results)
                                 wanted_messageable = discord.File(fp=results[0], filename="wanted.png")
                             except discord.Forbidden:
                                 print(f"Skipped a role I could not remove: {current_role.name}")
-                            jail_role = ctx.guild.get_role(self.jail_role)
-                            await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
+                            # await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
                             
                             strike_reasons = ""
                             for strike in range(1, 4):
@@ -189,7 +197,7 @@ class discMod(commands.Cog):
                                 except Exception as e:
                                     pass
                             
-                            await user.add_roles(jail_role)
+                            # await user.add_roles(jail_role)
                             channel = self.bot.get_channel(self.confessional)
                             embed = discord.Embed(
                                 title=f"You have been jailed for the following violations\n\n",
