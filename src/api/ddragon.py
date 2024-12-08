@@ -82,7 +82,7 @@ async def get_random_spell(ddrag_version, champion):
     spells = [key for key in champ_info['spells']]
     random_spell = random.choice(spells)
     # Get the PNG image for the random spell
-    spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
+    spell_image_content = await get_individual_spell_info_raw(ddrag_version, random_spell['image']['full'])
     return spell_image_content
 async def get_name_resource_ranged_type_class_and_splash(ddrag_champ_info, champion):
     champ_info = ddrag_champ_info['data'][champion]
@@ -95,8 +95,9 @@ async def get_name_resource_ranged_type_class_and_splash(ddrag_champ_info, champ
     splash = get_random_skin_splash(champion)
     return champion_info, splash
 
-async def get_random_skin_splash(champion):
-    skin_num = await get_random_num_skin_champ(champion=champion)
+async def get_random_skin_splash(ddrag_version, champion):
+    ddrag_champ_info = await get_individual_champ_info_raw(ddrag_version, champion)
+    skin_num = await get_random_num_skin_champ(ddrag_champ_info, champion=champion)
     splash = await get_splash_art_champ(champion=champion, num=skin_num)
     return splash
 

@@ -88,12 +88,13 @@ class PointCommands(commands.Cog):
                 random_champ_name = self.loldle_db.get_random_champion_name()
                 champ_info = self.loldle_db.get_champion_info(random_champ_name)
                 champ_info.pop("timestamp")
-                ddragon_list = await get_champion_ddrag_format_list()
+                ddragon_list = await get_champion_ddrag_format_list(ddrag_version)
                 embed = discord.Embed(
                 title="Pick a Loldle type",
                 description="Points earned and attempts vary per game type below",
                 color=discord.Color.blue()
                 )
+                print("Loldle started with winning guess, ", champ_info)
                 view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, main_db=self.main_db, day=today,
                                   winning_guess_info=champ_info, loldle_db = self.loldle_db, ddrag_version=ddrag_version)
                 await ctx.send(embed=embed, view=view)
@@ -226,7 +227,6 @@ class PointCommands(commands.Cog):
             elif option=="1":
                 cost = [i for i in cashout_options.keys()][int(option)-1]
                 if int(total_points.decode()) >= int(cost):
-                    print("yes")
                     self.main_db.set_user_field(userid, "last_loldle", "2017-03-01")
                     self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
                 else:

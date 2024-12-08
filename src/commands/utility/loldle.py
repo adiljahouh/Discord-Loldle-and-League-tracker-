@@ -3,7 +3,6 @@ from PIL import Image, ImageOps, ImageFilter
 import io
 import discord
 import discord.ext.commands
-from api.fandom import get_single_loldle_champ_data
 from api.ddragon import get_random_skin_splash, get_random_spell
 from commands.utility.get_closest_word import find_closest_name
 import asyncio
@@ -130,8 +129,8 @@ class loldleView(discord.ui.View):
         # await ctx.send(f"Your guess has been converted to {ddrag_name}")
         try:
             champion_guess_info = self.loldle_db.get_champion_info(champion_name=ddrag_name)
+            champion_guess_info.pop("timestamp")
             is_match_and_text = compare_dicts_and_create_text(champion_guess_info, self.winning_guess_info)
-            print(self.winning_guess_info.values(), champion_guess_info.values())
             mention_and_text = is_match_and_text[1] + f"\n<@{str(self.ctx.author.id)}>"
             # await self.ctx.send(mention_and_text)
             await msg.reply(is_match_and_text[1])
@@ -233,7 +232,7 @@ class loldleView(discord.ui.View):
                 self.max_attempts = 5  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. After each 2 wrong guesses you will get a hint.\n Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
-                splash_image = await get_random_skin_splash(self.winning_guess_info['Name'])
+                splash_image = await get_random_skin_splash(self.ddrag_version, self.winning_guess_info['Name'])
                 transformed_image =  await crop_image(splash_image)
                 await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:
