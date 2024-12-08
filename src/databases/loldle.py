@@ -42,12 +42,12 @@ class loldleDB():
             champs = list((await get_champion_dict()).values())
             for champ in champs:
                 champ_attributes = await get_base_lodle_champ_data(champ)
-                champion_name = champ_attributes.pop('Name', None)
+                champion_name = champ_attributes['Name']
                 if champion_name:
                     self.store_champion(champion_name, champ_attributes)
         print("Population loldle data checked.")
     
-    def get_champion(self, champion_name):
+    def get_champion_info(self, champion_name):
         """
         Retrieves a champion's data, including attributes and timestamp.
         
@@ -56,7 +56,9 @@ class loldleDB():
         """
         self.connect()
         return self.client.hgetall(champion_name)
-    
+    def get_random_champion_name(self):
+        self.connect()
+        return self.client.randomkey()
     def is_stale(self, champion_name, ttl=86400):
         """
         Checks if a champion's data is stale based on the `timestamp` field.

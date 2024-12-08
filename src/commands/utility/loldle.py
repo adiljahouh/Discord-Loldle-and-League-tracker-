@@ -4,6 +4,7 @@ import io
 import discord
 import discord.ext.commands
 from api.fandom import get_single_loldle_champ_data
+from api.ddragon import get_random_skin_splash, get_random_spell
 from commands.utility.get_closest_word import find_closest_name
 import asyncio
 
@@ -101,7 +102,7 @@ def compare_dicts_and_create_text(dict1, dict2)-> tuple:
 
 
 class loldleView(discord.ui.View):
-    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, ddragon_list, bot, main_db, day):
+    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, ddragon_list, bot, main_db, day, winning_guess_info):
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self.bot = bot
@@ -112,11 +113,12 @@ class loldleView(discord.ui.View):
         self.max_points = 2000
         self.main_db = main_db
         self.day = day
+        self.winning_guess_info = winning_guess_info
 
     def check(self, m: discord.Message):
         return m.author == self.ctx.author and m.channel == self.ctx.channel
     
-    async def compare_result(self, winning_guess_info):
+    async def compare_result(self):
         msg = await self.bot.wait_for('message', check=self.check, timeout=90.0)
         champion_guess = (msg.content.replace(" ", "")).capitalize()
         score_and_ddrag_name = find_closest_name(champion_guess, self.champ_list)
@@ -125,7 +127,9 @@ class loldleView(discord.ui.View):
         try:
             champion_guess_info = await get_single_loldle_champ_data(ddrag=ddrag_name)
             # await ctx.send(champion_guess_info)
-            is_match_and_text = compare_dicts_and_create_text(champion_guess_info, winning_guess_info)
+            champion_guess_info['Name'] = ddrag_name
+            is_match_and_text = compare_dicts_and_create_text(champion_guess_info, self.winning_guess_info)
+            print(self.winning_guess_info.values(), champion_guess_info.values())
             mention_and_text = is_match_and_text[1] + f"\n<@{str(self.ctx.author.id)}>"
             # await self.ctx.send(mention_and_text)
             await msg.reply(is_match_and_text[1])
@@ -147,19 +151,14 @@ class loldleView(discord.ui.View):
                 self.max_attempts = 10  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}>."
-                print("goonking")
-                test = await get_all_loldle_champ_data()
-                print("test")
-                print(test)
-                winning_guess_info = await get_single_loldle_champ_data(ddrag="random", mode="classic")
-                print(winning_guess_info)
+                print(self.winning_guess_info)
                 await interaction.followup.send(status)
                 while not self.correct_guess and self.attempts < self.max_attempts:
                     self.attempts += 1
                     try:
-                        await self.compare_result(winning_guess_info)
+                        await self.compare_result()
                     except asyncio.TimeoutError:
-                        result = f'You took too long to respond, the champion was {winning_guess_info["Name"]}... Your game ended <@{str(self.ctx.author.id)}>.'
+                        result = f'You took too long to respond, the champion was {self.winning_guess_info["Name"]}... Your game ended <@{str(self.ctx.author.id)}>.'
                         self.ctx.send(result)
                         self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
                         break
@@ -169,7 +168,7 @@ class loldleView(discord.ui.View):
                     result = f"Correct guess! You earned {points} points <@{str(self.ctx.author.id)}>"
                 else:
                     points = 0
-                    result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
+                    result = f"Incorrect, the champion was {self.winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
 
                 self.main_db.increment_field(str(self.ctx.author.id), "points", points)
                 self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
@@ -192,15 +191,16 @@ class loldleView(discord.ui.View):
                 self.max_attempts = 5  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
-                winning_guess_info, ability_image = await get_single_loldle_champ_data(ddrag="random", mode="ability")
+
+                ability_image = await get_random_spell(self.winning_guess_info['Name'])
                 transformed_image =  await blur_invert_image(ability_image)
                 await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:
                     self.attempts += 1
                     try:
-                        await self.compare_result(winning_guess_info)
+                        await self.compare_result()
                     except asyncio.TimeoutError:
-                        result = f'You took too long to respond, the champion was {winning_guess_info["Name"]}... Your game ended <@{str(self.ctx.author.id)}>.'
+                        result = f'You took too long to respond, the champion was {self.winning_guess_info["Name"]}... Your game ended <@{str(self.ctx.author.id)}>.'
                         self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
                         break
                 
@@ -209,7 +209,7 @@ class loldleView(discord.ui.View):
                     result = f"Correct guess! You earned {points} points <@{str(self.ctx.author.id)}>"
                 else:
                     points = 0
-                    result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
+                    result = f"Incorrect, the champion was {self.winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
 
                 self.main_db.increment_field(str(self.ctx.author.id), "points", points)
                 self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
@@ -231,7 +231,7 @@ class loldleView(discord.ui.View):
                 self.max_attempts = 5  # Set the maximum number of attempts here
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. After each 2 wrong guesses you will get a hint.\n Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
-                winning_guess_info, splash_image = await get_single_loldle_champ_data(ddrag="random", mode="splash")
+                splash_image = await get_random_skin_splash(self.winning_guess_info['Name'])
                 transformed_image =  await crop_image(splash_image)
                 await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:
@@ -240,9 +240,9 @@ class loldleView(discord.ui.View):
                         await self.ctx.send("Hint\n", file=discord.File(io.BytesIO(easier_image), f"hint.png"))
                     self.attempts += 1
                     try:
-                        await self.compare_result(winning_guess_info)
+                        await self.compare_result()
                     except asyncio.TimeoutError:
-                        result = f'You took too long to respond, the champion was {winning_guess_info["Name"]}... Your game ended <@{str(self.ctx.author.id)}>.'
+                        result = f'You took too long to respond, the champion was {self.winning_guess_info["Name"]}... Your game ended <@{str(self.ctx.author.id)}>.'
                         self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))
                         break
                 if self.correct_guess:
@@ -250,7 +250,7 @@ class loldleView(discord.ui.View):
                     result = f"Correct guess! You earned {points} points <@{str(self.ctx.author.id)}>"
                 else:
                     points = 0
-                    result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
+                    result = f"Incorrect, the champion was {self.winning_guess_info['Name']}. You earned {points} points <@{str(self.ctx.author.id)}>"
 
                 self.main_db.increment_field(str(self.ctx.author.id), "points", points)
                 self.main_db.set_user_field(str(self.ctx.author.id), "last_loldle", self.day.strftime('%Y-%m-%d'))

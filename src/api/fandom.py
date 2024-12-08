@@ -50,9 +50,6 @@ async def get_region(champion):
             return regions,species 
             
 async def get_base_lodle_champ_data(champ) -> dict:
-    # champs = list((await get_champion_dict()).values())
-    # full_champs_data =[]
-    # for champ in champs:
     print(f"Processing {champ}")
     champ_resource_name_class = await get_name_resource_ranged_type_class(champ)
     try:

@@ -1,6 +1,6 @@
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
-from api.ddragon import champion_splash
+from api.ddragon import get_champion_splash
 
 
 class imageCreator():
@@ -25,7 +25,7 @@ class imageCreator():
         draw_text = ImageDraw.Draw(base_image)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):
-                champ_image: Image = await champion_splash(champ)
+                champ_image: Image = await get_champion_splash(champ)
                 champ_image = champ_image.convert('RGBA')
                 position = (70 + (520 * team_num), 110 + (170 * champ_num))
                 base_image.paste(champ_image, position, champ_image)

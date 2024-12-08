@@ -84,13 +84,17 @@ class PointCommands(commands.Cog):
             userid = str(ctx.author.id)
             last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
+                random_champ_name = self.loldle_db.get_random_champion_name()
+                print(random_champ_name)
+                champ_info = self.loldle_db.get_champion_info(random_champ_name)
                 ddragon_list = await get_champion_ddrag_format_list()
                 embed = discord.Embed(
                 title="Pick a Loldle type",
                 description="Points earned and attempts vary per game type below",
                 color=discord.Color.blue()
                 )
-                view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, main_db=self.main_db, day=today)
+                view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, main_db=self.main_db, day=today,
+                                  winning_guess_info=champ_info)
                 await ctx.send(embed=embed, view=view)
             else:
                 result = f"You already played a LOLDLE today <@{userid}> , use .cashout 1 to buy one"
@@ -187,7 +191,7 @@ class PointCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def cashout(self, ctx, option=""):
+    async def cashout(self, ctx: commands.Context, option=""):
         """
             Buy rewards by using .cashout <number> or to view rewars use .cashout
         """
@@ -250,7 +254,7 @@ class PointCommands(commands.Cog):
     
     @commands.command()
     @role_check
-    async def roll(self, ctx, *args):
+    async def roll(self, ctx: commands.Context, *args):
         """Roll your points by using .roll <points>"""
         async with ctx.typing():
             userid = str(ctx.author.id)
@@ -293,7 +297,7 @@ class PointCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def bet(self, ctx, *args):
+    async def bet(self, ctx: commands.Context, *args):
         """
             Bet points with .bet <win/lose> <amount>
         """
@@ -328,7 +332,7 @@ class PointCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def points(self, ctx):
+    async def points(self, ctx: commands.Context):
         """
             Returns amount of points of the current user
         """

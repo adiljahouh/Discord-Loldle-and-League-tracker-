@@ -83,7 +83,14 @@ async def get_name_resource_ranged_type_class_and_random_spell(champion):
     spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
     
     return champion_info, spell_image_content
-
+async def get_random_spell(champion):
+    response = await get_individual_champ_info_raw(champion)
+    champ_info = response['data'][champion]
+    spells = [key for key in champ_info['spells']]
+    random_spell = random.choice(spells)
+    # Get the PNG image for the random spell
+    spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
+    return spell_image_content
 async def get_name_resource_ranged_type_class_and_splash(champion):
     response = await get_individual_champ_info_raw(champion)
     champ_info = response['data'][champion]
@@ -93,12 +100,15 @@ async def get_name_resource_ranged_type_class_and_splash(champion):
     'Range_type': 'Ranged' if champ_info.get('stats', {}).get('attackrange', 0) > 325 else 'Melee',
     'Class': champ_info.get('tags')
 }
-    skin_num = await get_random_num_skin_champ(champion=champion)
-    splash = await get_splash_art_champ(champion=champion, num=skin_num)
+    splash = get_random_skin_splash(champion)
     return champion_info, splash
 
+async def get_random_skin_splash(champion):
+    skin_num = await get_random_num_skin_champ(champion=champion)
+    splash = await get_splash_art_champ(champion=champion, num=skin_num)
+    return splash
 
-async def champion_splash(champion):
+async def get_champion_splash(champion):
     version = await get_latest_ddragon()
     async with aiohttp.ClientSession() as session:
         url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"

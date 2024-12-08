@@ -1,5 +1,5 @@
 from io import BytesIO
-from api.ddragon import get_champion_dict, champion_splash
+from api.ddragon import get_champion_dict, get_champion_splash
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -140,7 +140,7 @@ class EndImage:
                 # No-bans should be skipped
                 if str(ban) == "-1":
                     continue
-                champ_image: Image = await champion_splash(champ_list[str(ban)])
+                champ_image: Image = await get_champion_splash(champ_list[str(ban)])
                 champ_image: Image = champ_image.convert('RGBA')
                 if team_indx == 0:
                     pos = (110 + (65*indx), 913)
@@ -186,7 +186,7 @@ class EndImage:
                 _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
                 draw_text.text((1090 + (635*team_indx) - (w*team_indx), 115 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
                 # Player image
-                champ_image: Image = await champion_splash(champ_list[str(player['champ_id'])])
+                champ_image: Image = await get_champion_splash(champ_list[str(player['champ_id'])])
                 champ_image: Image = champ_image.convert('RGBA')
                 pos = (960 + (775*team_indx), 55 + (205*indx))
                 base_image.paste(champ_image, pos, champ_image)
