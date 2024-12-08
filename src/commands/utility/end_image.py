@@ -178,38 +178,56 @@ class EndImage:
 
         # Player names, damage numbers, player champ images, kda
         print("damage numbers and such")
-        for team_indx, team in enumerate(self.teams):
-            for indx, player in enumerate(team["players"]):
-                kda = f"{player['kills']}/{player['deaths']}/{player['assists']}"
-                # Player name
-                _, _, w, h = draw_text.textbbox((0, 0), str(player['name']), font=font_small)
-                draw_text.text((1090 + (635*team_indx) - (w*team_indx), 60 + (205*indx) + (120-h)/2), str(player['name']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
-                # Player damage dealt
-                _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_dealt']), font=font_small)
-                draw_text.text((1090 + (635*team_indx) - (w*team_indx), 5 + (205*indx) + (120-h)/2), str(player['damage_dealt']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
-                # Player damage taken
-                _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
-                draw_text.text((1090 + (635*team_indx) - (w*team_indx), 115 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
-                # Player image
-                champ_image: Image = await get_champion_splash(ddrag_version, champ_list[str(player['champ_id'])])
-                champ_image: Image = champ_image.convert('RGBA')
-                pos = (960 + (775*team_indx), 55 + (205*indx))
-                base_image.paste(champ_image, pos, champ_image)
-                if player["hero"]:
-                    if self.won_team_id == self.player_team_id:
-                        img = Image.open('./assets/image_generator/crown.png')
-                        img = img.rotate(25)
-                        img = img.resize((75, 75))
-                        base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                    else:
-                        img = Image.open('./assets/image_generator/dunce.png')
-                        img = img.rotate(35)
-                        img = img.resize((75, 75))
-                        base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-
-                # Player kda
-                _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
-                draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+        try:
+            for team_indx, team in enumerate(self.teams):
+                for indx, player in enumerate(team["players"]):
+                    print("claculating kda for player")
+                    kda = f"{player['kills']}/{player['deaths']}/{player['assists']}"
+                    # Player name
+                    _, _, w, h = draw_text.textbbox((0, 0), str(player['name']), font=font_small)
+                    draw_text.text((1090 + (635*team_indx) - (w*team_indx), 60 + (205*indx) + (120-h)/2), str(player['name']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+                    # Player damage dealt
+                    _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_dealt']), font=font_small)
+                    draw_text.text((1090 + (635*team_indx) - (w*team_indx), 5 + (205*indx) + (120-h)/2), str(player['damage_dealt']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+                    # Player damage taken
+                    _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
+                    draw_text.text((1090 + (635*team_indx) - (w*team_indx), 115 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+                    # Player image
+                    print("getting champ splash for player")
+                    champ_image: Image = await get_champion_splash(ddrag_version, champ_list[str(player['champ_id'])])
+                    champ_image: Image = champ_image.convert('RGBA')
+                    pos = (960 + (775*team_indx), 55 + (205*indx))
+                    print("pasting champ image on base image")
+                    print(f"base img format: {base_image.format}")
+                    base_image.paste(champ_image, pos, champ_image)
+                    if player["hero"]:
+                        print("found our hero")
+                        if self.won_team_id == self.player_team_id:
+                            print("putting on crown")
+                            img = Image.open('./assets/image_generator/crown.png')
+                            img = img.rotate(25)
+                            img = img.resize((75, 75))
+                            print("rotating crown")
+                            print(f"base format: {base_image.format}")
+                            print(f"crown format: {img.format}")
+                            base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                            print("pasted and converted")
+                        else:
+                            print("loading donce")
+                            img = Image.open('./assets/image_generator/dunce.png')
+                            img = img.rotate(35)
+                            img = img.resize((75, 75))
+                            print("Donce done rotated")
+                            print(f"base format: {base_image.format}")
+                            print(f"donce format: {img.format}")
+                            base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                            print("pasting done")
+                    # Player kda
+                    print("drawing kda")
+                    _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
+                    draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
+        except Exception as e:
+            print(e)
         return img_to_bytes(base_image)
 
     def get_game_result(self):

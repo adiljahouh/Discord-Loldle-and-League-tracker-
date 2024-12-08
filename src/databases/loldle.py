@@ -45,9 +45,10 @@ class loldleDB():
             batch_size = 3  # Adjust based on your system's capabilities
             async def process_champ(champ):
                 champ_attributes = await get_base_lodle_champ_data(ddrag_version, champ)
-                champion_name = champ_attributes['Name']
-                if champion_name:
-                    self.store_champion(champion_name, champ_attributes)
+                # champion_name = champ_attributes['Name']
+                ## add the ddrag name
+                if champ:
+                    self.store_champion(champ, champ_attributes)
 
             # Create tasks in batches
             for i in range(0, len(champs), batch_size):
@@ -70,7 +71,7 @@ class loldleDB():
     def get_all_champ_keys(self):
         self.connect()
         return self.client.keys('*')
-    def is_stale(self, champion_name, ttl=86400*30):
+    def is_stale(self, champion_name, ttl=10):
         """
         Checks if a champion's data is stale based on the `timestamp` field.
         
