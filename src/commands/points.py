@@ -4,7 +4,7 @@ import discord
 import random
 import datetime
 from commands.utility.decorators import role_check, super_user_check
-from api.ddragon import get_champion_ddrag_format_list
+from api.ddragon import get_champion_ddrag_format_list, get_latest_ddragon
 from commands.utility.get_closest_word import find_closest_name
 from commands.utility.loldle import *
 from databases.betting import BettingDB
@@ -83,10 +83,11 @@ class PointCommands(commands.Cog):
             today = datetime.datetime.now(amsterdam_tz).date()
             userid = str(ctx.author.id)
             last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
+            ddrag_version = await get_latest_ddragon()
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                 random_champ_name = self.loldle_db.get_random_champion_name()
-                print(random_champ_name)
                 champ_info = self.loldle_db.get_champion_info(random_champ_name)
+                champ_info.pop("timestamp")
                 ddragon_list = await get_champion_ddrag_format_list()
                 embed = discord.Embed(
                 title="Pick a Loldle type",
@@ -94,7 +95,7 @@ class PointCommands(commands.Cog):
                 color=discord.Color.blue()
                 )
                 view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, main_db=self.main_db, day=today,
-                                  winning_guess_info=champ_info)
+                                  winning_guess_info=champ_info, loldle_db = self.loldle_db, ddrag_version=ddrag_version)
                 await ctx.send(embed=embed, view=view)
             else:
                 result = f"You already played a LOLDLE today <@{userid}> , use .cashout 1 to buy one"

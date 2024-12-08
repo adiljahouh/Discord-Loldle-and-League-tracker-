@@ -7,6 +7,7 @@ from api.fandom import get_single_loldle_champ_data
 from api.ddragon import get_random_skin_splash, get_random_spell
 from commands.utility.get_closest_word import find_closest_name
 import asyncio
+from databases.loldle import loldleDB
 
 import discord.ext
 champ_base_data = {}
@@ -102,7 +103,8 @@ def compare_dicts_and_create_text(dict1, dict2)-> tuple:
 
 
 class loldleView(discord.ui.View):
-    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, ddragon_list, bot, main_db, day, winning_guess_info):
+    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, ddragon_list, bot, main_db, day,
+                  winning_guess_info, loldle_db: loldleDB, ddrag_version):
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self.bot = bot
@@ -114,6 +116,8 @@ class loldleView(discord.ui.View):
         self.main_db = main_db
         self.day = day
         self.winning_guess_info = winning_guess_info
+        self.loldle_db = loldle_db
+        self.ddrag_version = ddrag_version
 
     def check(self, m: discord.Message):
         return m.author == self.ctx.author and m.channel == self.ctx.channel
@@ -125,9 +129,7 @@ class loldleView(discord.ui.View):
         ddrag_name = score_and_ddrag_name[0]
         # await ctx.send(f"Your guess has been converted to {ddrag_name}")
         try:
-            champion_guess_info = await get_single_loldle_champ_data(ddrag=ddrag_name)
-            # await ctx.send(champion_guess_info)
-            champion_guess_info['Name'] = ddrag_name
+            champion_guess_info = self.loldle_db.get_champion_info(champion_name=ddrag_name)
             is_match_and_text = compare_dicts_and_create_text(champion_guess_info, self.winning_guess_info)
             print(self.winning_guess_info.values(), champion_guess_info.values())
             mention_and_text = is_match_and_text[1] + f"\n<@{str(self.ctx.author.id)}>"
@@ -192,7 +194,7 @@ class loldleView(discord.ui.View):
                 self.max_points = 2000
                 status = f"Guess a champion and win {self.max_points} points, for each guess wrong you lose {int(self.max_points/self.max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{str(self.ctx.author.id)}> based on the image below: \n"
 
-                ability_image = await get_random_spell(self.winning_guess_info['Name'])
+                ability_image = await get_random_spell(self.ddrag_version, self.winning_guess_info['Name'])
                 transformed_image =  await blur_invert_image(ability_image)
                 await interaction.followup.send(status, file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
                 while not self.correct_guess and self.attempts < self.max_attempts:

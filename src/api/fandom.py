@@ -1,6 +1,6 @@
 from api.ddragon import get_name_resource_ranged_type_class, get_random_champ,\
-      get_name_resource_ranged_type_class_and_random_spell, get_name_resource_ranged_type_class_and_splash,\
-      get_champion_dict
+      get_name_resource_ranged_type_class_and_random_spell, get_name_resource_ranged_type_class_and_splash, get_latest_ddragon,\
+      get_individual_champ_info_raw
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -49,9 +49,10 @@ async def get_region(champion):
                         species.append(text)
             return regions,species 
             
-async def get_base_lodle_champ_data(champ) -> dict:
+async def get_base_lodle_champ_data(ddrag_version, champ) -> dict:
     print(f"Processing {champ}")
-    champ_resource_name_class = await get_name_resource_ranged_type_class(champ)
+    champ_info_base = await get_individual_champ_info_raw(ddrag_version)
+    champ_resource_name_class = await get_name_resource_ranged_type_class(champ_info_base, champ)
     try:
         gender_releasdate = await get_gender_releaseDate_per_champ(champ)
     except IndexError as e:

@@ -2,7 +2,8 @@ import redis
 from redis.exceptions import ConnectionError
 import time
 from api.fandom import get_base_lodle_champ_data
-from api.ddragon import get_champion_dict
+from api.ddragon import get_champion_dict, get_latest_ddragon
+import json
 class loldleDB():
     def __init__(self, url):
         self.url = url
@@ -25,14 +26,13 @@ class loldleDB():
         # Add a timestamp field to the attributes
         self.connect()
         attributes['timestamp'] = int(time.time())
-        for key, value in attributes.items():
-            if not isinstance(value, str):
-                attributes[key] = str(value)
-        # Store the data in Redis as a hash
+        attributes_json = json.dumps(attributes)
+    
+    # Store the data in Redis
         try:
-            success = self.client.hset(champion_name, mapping=attributes)
+            success = self.client.set(champion_name, attributes_json)
         except Exception as e:
-            succes = 0
+            success = 0
             print(f"Error storing champion {champion_name}: {e}")
         return success
 
@@ -40,8 +40,9 @@ class loldleDB():
         if self.is_stale("Graves"):
             print("Loldle data outdated....")
             champs = list((await get_champion_dict()).values())
+            ddrag_version = await get_latest_ddragon()
             for champ in champs:
-                champ_attributes = await get_base_lodle_champ_data(champ)
+                champ_attributes = await get_base_lodle_champ_data(ddrag_version, champ)
                 champion_name = champ_attributes['Name']
                 if champion_name:
                     self.store_champion(champion_name, champ_attributes)
@@ -55,7 +56,7 @@ class loldleDB():
         :return: A dictionary of champion attributes, including the timestamp.
         """
         self.connect()
-        return self.client.hgetall(champion_name)
+        return json.loads(self.client.get(champion_name))
     def get_random_champion_name(self):
         self.connect()
         return self.client.randomkey()

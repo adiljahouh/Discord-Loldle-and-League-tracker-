@@ -11,10 +11,9 @@ async def get_latest_ddragon():
             return content[0]
 
 
-async def get_champion_dict() -> dict:
+async def get_champion_dict(ddrag_version) -> dict:
     async with aiohttp.ClientSession() as session:
-        latest = await get_latest_ddragon()
-        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion.json") as response:
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{ddrag_version}/data/en_US/champion.json") as response:
             response.raise_for_status()
             content = await response.json()
             champ_dict = {}
@@ -26,39 +25,35 @@ async def get_champion_ddrag_format_list()->list:
     champdict = await get_champion_dict()
     return list(champdict.values())
 
-async def get_individual_champ_info_raw(champion):
+async def get_individual_champ_info_raw(ddrag_version, champion):
+    """Return latest champ info stats e.g. https://ddragon.leagueoflegends.com/cdn/14.23.1/data/en_US/champion/Aatrox.json"""
     async with aiohttp.ClientSession() as session:
-        latest = await get_latest_ddragon()
-        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{champion}.json") as response:
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{ddrag_version}/data/en_US/champion/{champion}.json") as response:
             response.raise_for_status()
             content = await response.json()
             return content
-async def get_individual_spell_info_raw(spell):
+async def get_individual_spell_info_raw(ddrag_version, spell):
     async with aiohttp.ClientSession() as session:
-        latest = await get_latest_ddragon()
-        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/img/spell/{spell}") as response:
+        async with session.get(f"https://ddragon.leagueoflegends.com/cdn/{ddrag_version}/img/spell/{spell}") as response:
             response.raise_for_status()
             content = await response.read()
             return content 
 async def get_splash_art_champ(champion, num=0):
     async with aiohttp.ClientSession() as session:
-        latest = await get_latest_ddragon()
         async with session.get(f"https://ddragon.leagueoflegends.com/cdn/img/champion/splash/{champion}_{num}.jpg") as response:
             response.raise_for_status()
             content = await response.read()
             return content  
-async def get_random_num_skin_champ(champion):
-    champ_content = await get_individual_champ_info_raw(champion=champion)
-    return random.choice([skin["num"] for skin in  champ_content['data'][champion]['skins']])
+async def get_random_num_skin_champ(ddrag_champ_info, champion):
+    return random.choice([skin["num"] for skin in  ddrag_champ_info['data'][champion]['skins']])
 
 async def get_random_champ():
     champion_list = await get_champion_dict()
     return random.choice(list(champion_list.values()))    
 
-async def get_name_resource_ranged_type_class(champion):
+async def get_name_resource_ranged_type_class(ddrag_champ_info, champion):
     # classic_lodle['name'] = champion
-    response = await get_individual_champ_info_raw(champion)
-    champ_info = response['data'][champion]
+    champ_info = ddrag_champ_info['data'][champion]
     champion_info = {
     'Name': champ_info.get('name'),
     'Resource': champ_info.get('partype'),
@@ -67,10 +62,8 @@ async def get_name_resource_ranged_type_class(champion):
 }
     return champion_info
 
-async def get_name_resource_ranged_type_class_and_random_spell(champion):
-    # classic_lodle['name'] = champion
-    response = await get_individual_champ_info_raw(champion)
-    champ_info = response['data'][champion]
+async def get_name_resource_ranged_type_class_and_random_spell(ddrag_champ_info, champion):
+    champ_info = ddrag_champ_info['data'][champion]
     champion_info = {
     'Name': champ_info.get('name'),
     'Resource': champ_info.get('partype'),
@@ -83,17 +76,16 @@ async def get_name_resource_ranged_type_class_and_random_spell(champion):
     spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
     
     return champion_info, spell_image_content
-async def get_random_spell(champion):
-    response = await get_individual_champ_info_raw(champion)
-    champ_info = response['data'][champion]
+async def get_random_spell(ddrag_version, champion):
+    ddrag_champ_info = await get_individual_champ_info_raw(ddrag_version, champion)
+    champ_info = ddrag_champ_info['data'][champion]
     spells = [key for key in champ_info['spells']]
     random_spell = random.choice(spells)
     # Get the PNG image for the random spell
     spell_image_content = await get_individual_spell_info_raw(random_spell['image']['full'])
     return spell_image_content
-async def get_name_resource_ranged_type_class_and_splash(champion):
-    response = await get_individual_champ_info_raw(champion)
-    champ_info = response['data'][champion]
+async def get_name_resource_ranged_type_class_and_splash(ddrag_champ_info, champion):
+    champ_info = ddrag_champ_info['data'][champion]
     champion_info = {
     'Name': champ_info.get('name'),
     'Resource': champ_info.get('partype'),
@@ -108,10 +100,9 @@ async def get_random_skin_splash(champion):
     splash = await get_splash_art_champ(champion=champion, num=skin_num)
     return splash
 
-async def get_champion_splash(champion):
-    version = await get_latest_ddragon()
+async def get_champion_splash(ddrag_version, champion):
     async with aiohttp.ClientSession() as session:
-        url = f"http://ddragon.leagueoflegends.com/cdn/{version}/img/champion/{champion}.png"
+        url = f"http://ddragon.leagueoflegends.com/cdn/{ddrag_version}/img/champion/{champion}.png"
         async with session.get(url) as response:
             response.raise_for_status()
             if response.status == 200:
