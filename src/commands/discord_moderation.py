@@ -133,7 +133,7 @@ class discMod(commands.Cog):
 
     async def get_profile_pic_and_write_dead_or_alive(self, user: discord.Member, lifetime_total):
         profile_pic = await get_profile_pic(user)
-        dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.png', 
+        dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.jpg', 
                                                        profile_pic, './assets/image_generator/times_new_roman.ttf', 
                                                        lifetimestrikes=lifetime_total)
         return dead_or_alive_bytes
