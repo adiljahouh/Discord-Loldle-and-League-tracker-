@@ -7,12 +7,18 @@ from io import BytesIO
 
 # Fetch the profile picture
 async def get_profile_pic(member: Member):
+    if member.avatar == None:
+        return None
     avatar_url = member.avatar.url  # .avatar is a shortcut for .avatar_url in discord.py v2.x+
+    avatar_url= avatar_url.replace(".png", ".jpeg").replace('?size=1024', '?size=512')
+    print(avatar_url)
     async with aiohttp.ClientSession() as session:
         async with session.get(avatar_url) as resp:
             if resp.status == 200:
                 img_data = await resp.read()
                 img = Image.open(BytesIO(img_data))
+                print(f"Image mode: {img.mode}")
+                print(f"Profile picture format: {img.format}")
                 return img
             else:
                 return None
@@ -26,14 +32,15 @@ async def draw_dead_or_alive(base_image_path: str, profile_pic: Image, font_path
         base_image.save(buffer, format="JPEG")
         buffer.seek(0)
         return buffer
-    print(profile_pic.size)
-    target_width, target_height = 1428, 1033
+    target_width, target_height = 714, 516
     profile_pic = profile_pic.resize(
         (target_width, target_height), Image.Resampling.BOX
     )
-
+    if profile_pic.mode in ("RGBA", "LA"):
+        print("Converting profile pic..")
+        profile_pic = profile_pic.convert('RGB')
         # Paste the profile picture inside the transparent block
-    base_image.paste(profile_pic, (163, 532), profile_pic)
+    base_image.paste(profile_pic, (82, 266))
     # Load a font
     font = ImageFont.truetype(font_path, size=140)  # Replace with the desired font
 

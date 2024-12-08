@@ -133,7 +133,7 @@ class discMod(commands.Cog):
 
     async def get_profile_pic_and_write_dead_or_alive(self, user: discord.Member, lifetime_total):
         profile_pic = await get_profile_pic(user)
-        dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted.jpg', 
+        dead_or_alive_bytes = await draw_dead_or_alive('./assets/image_generator/wanted_small.jpg', 
                                                        profile_pic, './assets/image_generator/times_new_roman.ttf', 
                                                        lifetimestrikes=lifetime_total)
         return dead_or_alive_bytes
@@ -184,7 +184,7 @@ class discMod(commands.Cog):
                                 prep_jail_card_tasks.append(user.remove_roles(current_role))
                             try:
                                 results = await asyncio.gather(*prep_jail_card_tasks)
-                                wanted_messageable = discord.File(fp=results[0], filename="wanted.png")
+                                wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
                             except discord.Forbidden:
                                 print(f"Skipped a role I could not remove: {current_role.name}")
                             # await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
@@ -205,7 +205,7 @@ class discMod(commands.Cog):
                                 color=0xFF0000
                             )
                             #embed.set_thumbnail(url=f"attachment://wanted.png")  # Set as thumbnail from file
-                            embed.set_image(url="attachment://wanted.png")
+                            embed.set_image(url="attachment://wanted_small.jpg")
                             # Add attachment URLs to the embed
                             if attachment_urls:
                                 embed.add_field(
