@@ -104,6 +104,7 @@ class EndImage:
 
         base_image = Image.new(mode="RGB", size=(1920, 1080))
         img = Image.open('./assets/image_generator/end_image.png')
+        print("loaded all image assets")
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
         draw_text = ImageDraw.Draw(base_image)

@@ -1,4 +1,6 @@
-from api.ddragon import get_name_resource_ranged_type_class, get_random_champ, get_name_resource_ranged_type_class_and_random_spell, get_name_resource_ranged_type_class_and_splash
+from api.ddragon import get_name_resource_ranged_type_class, get_random_champ,\
+      get_name_resource_ranged_type_class_and_random_spell, get_name_resource_ranged_type_class_and_splash,\
+      get_champion_dict
 import aiohttp
 from bs4 import BeautifulSoup
 
@@ -47,8 +49,43 @@ async def get_region(champion):
                         species.append(text)
             return regions,species 
             
+async def get_base_lodle_champ_data(champ) -> dict:
+    # champs = list((await get_champion_dict()).values())
+    # full_champs_data =[]
+    # for champ in champs:
+    print(f"Processing {champ}")
+    champ_resource_name_class = await get_name_resource_ranged_type_class(champ)
+    try:
+        gender_releasdate = await get_gender_releaseDate_per_champ(champ)
+    except IndexError as e:
+        gender_releasdate = await get_gender_releaseDate_per_champ(champ_resource_name_class['Name'])
+    try:
+        region, species = await get_region(champ_resource_name_class['Name'])
+    except Exception as e:
+        print(f'First attempt {champ_resource_name_class["Name"]} failed')
+        try:
+            spaceless_champ = champ_resource_name_class['Name'].replace(" ", "_").replace("'","%27")
+            print(f"second: {spaceless_champ}")
+            region, species = await get_region(spaceless_champ)
+        except Exception as e:
+            region, species = await get_region(champ)
+    if 'ReleaseDate__precision' in gender_releasdate:
+        del gender_releasdate['ReleaseDate__precision']
+        
+        # Convert the ReleaseDate to just the year
+    if 'ReleaseDate' in gender_releasdate:
+        # Assuming the date is in a standard format like 'YYYY-MM-DD'
+        release_date = gender_releasdate['ReleaseDate']
+        release_year = release_date.split('-')[0]  # Get the year part
+        gender_releasdate['ReleaseDate'] = release_year
+    # print("REGION ", region)
+    merged_dict = {**champ_resource_name_class, **gender_releasdate}
+    merged_dict['Region'] = region
+    merged_dict['Species'] = species
+    ## TODO: use this as a base, load it on startup, get splash and ability on the fly
+    return merged_dict
 
-async def get_loldle_champ_data(ddrag="random", mode="classic"):
+async def get_single_loldle_champ_data(ddrag="random", mode="classic"):
     # RekSai
     if ddrag=="random":
         ddrag = await get_random_champ()

@@ -9,18 +9,16 @@ from commands.utility.get_closest_word import find_closest_name
 from commands.utility.loldle import *
 from databases.betting import BettingDB
 from databases.main import MainDB
+from databases.loldle import loldleDB
 import pytz
-import asyncio
-import io
-from api.fandom import get_loldle_champ_data
-
 class PointCommands(commands.Cog):
-    def __init__(self, main_db, betting_db, g_role, bot, cashoutchannelid) -> None:
+    def __init__(self, main_db: MainDB, betting_db: BettingDB, g_role, bot, cashoutchannelid, loldle_db: loldleDB) -> None:
         self.main_db: MainDB = main_db
-        self.betting_db = betting_db
+        self.betting_db: BettingDB = betting_db
         self.g_role = g_role
         self.bot : commands.bot.Bot = bot
         self.cashoutCID = cashoutchannelid
+        self.loldle_db = loldle_db
 
 
     @commands.Cog.listener()
@@ -79,7 +77,7 @@ class PointCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def loldle(self, ctx):
+    async def loldle(self, ctx: commands.Context):
         try:
             amsterdam_tz = pytz.timezone('Europe/Amsterdam')
             today = datetime.datetime.now(amsterdam_tz).date()
@@ -92,7 +90,7 @@ class PointCommands(commands.Cog):
                 description="Points earned and attempts vary per game type below",
                 color=discord.Color.blue()
                 )
-                view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, db=self.main_db, day=today)
+                view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, main_db=self.main_db, day=today)
                 await ctx.send(embed=embed, view=view)
             else:
                 result = f"You already played a LOLDLE today <@{userid}> , use .cashout 1 to buy one"
@@ -351,7 +349,7 @@ class PointCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def leaderboard(self, ctx, *args):
+    async def leaderboard(self, ctx: commands.Context, *args):
         """
             Returns point leaderboard with pagination support
         """
@@ -387,7 +385,7 @@ class PointCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def transfer(self, ctx, *args):
+    async def transfer(self, ctx: commands.Context, *args):
         """
             Transfer your points to another player .transfer <@player> <points>
         """
@@ -426,5 +424,7 @@ async def setup(bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     betting_db = BettingDB(settings.REDISURL)
+    loldle_db = loldleDB(settings.REDISURL)
     print("adding commands...")
-    await bot.add_cog(PointCommands(main_db, betting_db, settings.GROLE, bot, settings.CASHOUTCHANNELID))
+    await bot.add_cog(PointCommands(main_db=main_db, betting_db=betting_db, g_role=settings.GROLE, 
+                                    bot=bot, cashoutchannelid=settings.CASHOUTCHANNELID, loldle_db=loldle_db))

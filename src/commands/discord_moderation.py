@@ -218,7 +218,8 @@ class discMod(commands.Cog):
 
     @commands.command()
     @jailed_check
-    async def bailout(self, ctx: commands.Context, *args):
+    async def bailout(self, ctx: commands.Context):
+        """Be able to bail yourself out using points!"""
         if ctx.message.channel.id != self.confessional:
             confessional_channel = ctx.guild.get_channel(self.confessional)
             await ctx.send(f"You can only use this command in {confessional_channel.mention}!")
@@ -254,6 +255,7 @@ class discMod(commands.Cog):
     @commands.command()
     @super_user_check
     async def destroy(self, ctx: commands.Context, *args):
+        """Harass a use whos misbehaving and not been properly punished by the strike system, use with caution."""
         mentions = ctx.message.mentions
         if len(mentions) != 1:
             await ctx.send("Mention ONE person to activate destruction mode.")

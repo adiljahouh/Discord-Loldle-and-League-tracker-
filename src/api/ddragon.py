@@ -54,7 +54,7 @@ async def get_random_num_skin_champ(champion):
 async def get_random_champ():
     champion_list = await get_champion_dict()
     return random.choice(list(champion_list.values()))    
-    
+
 async def get_name_resource_ranged_type_class(champion):
     # classic_lodle['name'] = champion
     response = await get_individual_champ_info_raw(champion)
@@ -96,6 +96,7 @@ async def get_name_resource_ranged_type_class_and_splash(champion):
     skin_num = await get_random_num_skin_champ(champion=champion)
     splash = await get_splash_art_champ(champion=champion, num=skin_num)
     return champion_info, splash
+
 
 async def champion_splash(champion):
     version = await get_latest_ddragon()
