@@ -4,6 +4,7 @@ import time
 from api.fandom import get_base_lodle_champ_data
 from api.ddragon import get_champion_dict, get_latest_ddragon
 import json
+import asyncio
 class loldleDB():
     def __init__(self, url):
         self.url = url
@@ -37,15 +38,21 @@ class loldleDB():
         return success
 
     async def populate_if_needed(self):
-        if self.is_stale("Graves"):
+        if self.is_stale("Zeri"):
             print("Loldle data outdated....")
             ddrag_version = await get_latest_ddragon()
             champs = list((await get_champion_dict(ddrag_version)).values())
-            for champ in champs:
+            batch_size = 3  # Adjust based on your system's capabilities
+            async def process_champ(champ):
                 champ_attributes = await get_base_lodle_champ_data(ddrag_version, champ)
                 champion_name = champ_attributes['Name']
                 if champion_name:
                     self.store_champion(champion_name, champ_attributes)
+
+            # Create tasks in batches
+            for i in range(0, len(champs), batch_size):
+                batch = champs[i:i + batch_size]
+                await asyncio.gather(*(process_champ(champ) for champ in batch))
         print("Population loldle data checked.")
     
     def get_champion_info(self, champion_name):
@@ -60,6 +67,9 @@ class loldleDB():
     def get_random_champion_name(self):
         self.connect()
         return self.client.randomkey()
+    def get_all_champ_keys(self):
+        self.connect()
+        return self.client.keys('*')
     def is_stale(self, champion_name, ttl=86400):
         """
         Checks if a champion's data is stale based on the `timestamp` field.

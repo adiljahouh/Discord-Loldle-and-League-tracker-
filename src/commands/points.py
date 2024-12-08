@@ -88,14 +88,14 @@ class PointCommands(commands.Cog):
                 random_champ_name = self.loldle_db.get_random_champion_name()
                 champ_info = self.loldle_db.get_champion_info(random_champ_name)
                 champ_info.pop("timestamp")
-                ddragon_list = await get_champion_ddrag_format_list(ddrag_version)
+                all_champs = self.loldle_db.get_all_champ_keys()
                 embed = discord.Embed(
                 title="Pick a Loldle type",
                 description="Points earned and attempts vary per game type below",
                 color=discord.Color.blue()
                 )
                 print("Loldle started with winning guess, ", champ_info)
-                view = loldleView(timeout=200, ctx=ctx, ddragon_list=ddragon_list, bot=self.bot, main_db=self.main_db, day=today,
+                view = loldleView(timeout=200, ctx=ctx, champ_list=all_champs, bot=self.bot, main_db=self.main_db, day=today,
                                   winning_guess_info=champ_info, loldle_db = self.loldle_db, ddrag_version=ddrag_version)
                 await ctx.send(embed=embed, view=view)
             else:

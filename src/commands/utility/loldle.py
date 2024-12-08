@@ -102,12 +102,12 @@ def compare_dicts_and_create_text(dict1, dict2)-> tuple:
 
 
 class loldleView(discord.ui.View):
-    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, ddragon_list, bot, main_db, day,
+    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, champ_list, bot, main_db, day,
                   winning_guess_info, loldle_db: loldleDB, ddrag_version):
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self.bot = bot
-        self.champ_list = ddragon_list
+        self.champ_list = champ_list
         self.correct_guess = False
         self.attempts = 0
         self.max_attempts = 10  # Set the maximum number of attempts here
@@ -125,6 +125,7 @@ class loldleView(discord.ui.View):
         msg = await self.bot.wait_for('message', check=self.check, timeout=90.0)
         champion_guess = (msg.content.replace(" ", "")).capitalize()
         score_and_ddrag_name = find_closest_name(champion_guess, self.champ_list)
+        print(score_and_ddrag_name)
         ddrag_name = score_and_ddrag_name[0]
         # await ctx.send(f"Your guess has been converted to {ddrag_name}")
         try:
