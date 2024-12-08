@@ -70,7 +70,10 @@ class loldleDB():
         """
         self.connect()
         print("Checking staleness")
-        timestamp = self.client.hget(champion_name, 'timestamp')
+        try:
+            timestamp = self.get_champion_info(champion_name)['timestamp']
+        except TypeError:
+            return True
         if timestamp:
             return (int(time.time()) - int(timestamp)) > ttl
         return True  # If no timestamp, consider the data stale    
