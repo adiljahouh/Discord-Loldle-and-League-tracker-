@@ -39,8 +39,8 @@ class loldleDB():
     async def populate_if_needed(self):
         if self.is_stale("Graves"):
             print("Loldle data outdated....")
-            champs = list((await get_champion_dict()).values())
             ddrag_version = await get_latest_ddragon()
+            champs = list((await get_champion_dict(ddrag_version)).values())
             for champ in champs:
                 champ_attributes = await get_base_lodle_champ_data(ddrag_version, champ)
                 champion_name = champ_attributes['Name']

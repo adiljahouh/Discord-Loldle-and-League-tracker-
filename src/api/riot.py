@@ -2,7 +2,7 @@ import datetime
 import aiohttp
 import asyncio
 import copy
-from api.ddragon import get_champion_dict
+from api.ddragon import get_champion_dict, get_latest_ddragon
 from api.merakia import pull_data
 from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
@@ -218,6 +218,7 @@ class riotAPI():
 
     # Method must be caught with an aiohttp.ClientResponseError
     async def get_active_game_status(self, user, tag):
+        ddrag_version = await get_latest_ddragon()
         puuid = await self.get_puuid_by_tag(user, tag)
         #account_id = await self.get_account_id(puuid)
         async with aiohttp.ClientSession() as session:
@@ -244,7 +245,7 @@ class riotAPI():
                     game_mode = game_mode_mapping[game_type]
                 else:
                     game_mode = content['gameMode']
-                champion_list = await get_champion_dict()
+                champion_list = await get_champion_dict(ddrag_version)
                 text_arr = [content['gameId'], []]
                 team_one = []
                 team_two = []

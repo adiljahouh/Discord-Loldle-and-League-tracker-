@@ -21,8 +21,8 @@ async def get_champion_dict(ddrag_version) -> dict:
                 champ_dict.update({value['key']: attribute})
             return champ_dict
         
-async def get_champion_ddrag_format_list()->list:
-    champdict = await get_champion_dict()
+async def get_champion_ddrag_format_list(ddrag_version)->list:
+    champdict = await get_champion_dict(ddrag_version)
     return list(champdict.values())
 
 async def get_individual_champ_info_raw(ddrag_version, champion):
@@ -47,8 +47,8 @@ async def get_splash_art_champ(champion, num=0):
 async def get_random_num_skin_champ(ddrag_champ_info, champion):
     return random.choice([skin["num"] for skin in  ddrag_champ_info['data'][champion]['skins']])
 
-async def get_random_champ():
-    champion_list = await get_champion_dict()
+async def get_random_champ(ddrag_version):
+    champion_list = await get_champion_dict(ddrag_version)
     return random.choice(list(champion_list.values()))    
 
 async def get_name_resource_ranged_type_class(ddrag_champ_info, champion):

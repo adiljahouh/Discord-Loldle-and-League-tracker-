@@ -1,5 +1,5 @@
 from io import BytesIO
-from api.ddragon import get_champion_dict, get_champion_splash
+from api.ddragon import get_champion_dict, get_champion_splash, get_latest_ddragon
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -91,6 +91,7 @@ class EndImage:
 
     async def get_team_image(self):
         # Define colors
+        ddrag_version = await get_latest_ddragon()
         col_red = (255, 77, 10)
         col_green = (6, 226, 191)
         col_white = (255, 255, 255)
@@ -134,7 +135,7 @@ class EndImage:
                 draw_text.text((105 + team_indx*(775-w), 390+(100*indx)+(100-h)/2), str(team[attr]), font=font_big, fill=col_white)
 
         # Bans
-        champ_list = await get_champion_dict()
+        champ_list = await get_champion_dict(ddrag_version)
         for team_indx, team in enumerate(self.teams):
             for indx, ban in enumerate(team["bans"]):
                 # No-bans should be skipped
