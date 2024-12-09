@@ -336,4 +336,4 @@ async def setup(bot):
     stalking_db = StalkingDB(settings.REDISURL)
     riot: riotAPI = riotAPI(settings.RIOTTOKEN)
     print("adding loops..")
-    await bot.add_cog(loops(bot, main_db, betting_db, stalking_db, riot, settings.CHANNELID, settings.PINGROLE))
+    await bot.add_cog(loops(bot, main_db, betting_db, stalking_db, riot, settings.LIVEGAMECHANNELID, settings.PINGROLE))

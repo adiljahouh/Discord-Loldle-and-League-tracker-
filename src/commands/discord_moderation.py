@@ -331,5 +331,5 @@ async def setup(bot):
     print("adding discord commands...")
     await bot.add_cog(discMod(main_db, settings.JAILROLE, settings.CONFESSIONALCHANNELID, bot, 
                               settings.FANBOYROLEID, settings.HATERROLEID, settings.ROLECHANNELID, 
-                              settings.CHANNELID, settings.PINGROLE, settings.LUNCHERS,
+                              settings.TOPGZONECHANNELID, settings.PINGROLE, settings.LUNCHERS,
                               settings.LEAGUERSID, settings.VARIETYID))

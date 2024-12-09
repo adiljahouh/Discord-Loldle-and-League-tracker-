@@ -19,7 +19,7 @@ The live-betting system ran into a memory leak during one of the pushes. If it o
 Containers can be ran by installing docker and docker compose.
 Default path is set to /opt/discbot/ this path contains the .env file with the follow:
 - DISCORDTOKEN: str
-- CHANNELID: int
+- TOPGZONECHANNELID: int
 - JAILROLE: int
 - RIOTTOKEN:str
 - REDISURL: str

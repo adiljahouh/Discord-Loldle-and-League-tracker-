@@ -11,7 +11,7 @@ async def main():
     settings = Settings()
     loldle_db = loldleDB(settings.REDISURL)
     await loldle_db.populate_if_needed()
-    my_bot = discBot(token=settings.DISCORDTOKEN, channel_id=settings.CHANNELID)
+    my_bot = discBot(token=settings.DISCORDTOKEN)
     my_cogs = ["commands.league", "commands.animals", "commands.points", "commands.discord_moderation", "commands.loop"]
     for cog in my_cogs:
         await add_cog(my_bot, cog)

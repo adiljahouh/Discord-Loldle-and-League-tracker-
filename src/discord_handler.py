@@ -1,11 +1,10 @@
 import discord
-from discord.ext import tasks, commands
+from discord.ext import commands
 
 
 class discBot(commands.Bot):
-    def __init__(self, token, channel_id) -> None:
+    def __init__(self, token) -> None:
         self.token = token
-        self.CHANNEL_ID = channel_id
         intents = discord.Intents.all()
         # intents.messages = True
         super().__init__(command_prefix='.', intents=intents)  # initialize the bot

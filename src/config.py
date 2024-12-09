@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DISCORDTOKEN: str
-    CHANNELID: int
+    TOPGZONECHANNELID: int
     JAILROLE: int
     RIOTTOKEN: str
     REDISURL: str
@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     LUNCHERS: int
     LEAGUERSID: int
     VARIETYID: int
+    LIVEGAMECHANNELID: int
 
 
     class Config:
