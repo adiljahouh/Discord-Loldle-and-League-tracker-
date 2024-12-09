@@ -35,8 +35,8 @@ class EndImage:
         # Get puuid to place main player in team
         print(self.data['info']['participants'])
         print("player stored ", self.name)
-        print(f"player found and cleaned {player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}")
         for player in self.data["info"]["participants"]:
+            print(f"player found and cleaned {player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}")
             if f"{player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}" == self.name.strip().lower():
                 print("found main player")
                 self.puuid = player["puuid"]
