@@ -33,10 +33,12 @@ class EndImage:
 
     def prepare_data(self):
         # Get puuid to place main player in team
+        print(self.data['info']['participants'])
+        print("player stored ", self.name)
+        print(f"player found and cleaned {player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}")
         for player in self.data["info"]["participants"]:
-            if f"{player['riotIdGameName'].lower()}#{player['riotIdTagline'].lower()}" == self.name.lower():
+            if f"{player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}" == self.name.strip().lower():
                 print("found main player")
-                print(f"{player['riotIdGameName'].lower()}#{player['riotIdTagline'].lower()}")
                 self.puuid = player["puuid"]
         player_indx = self.data["metadata"]['participants'].index(self.puuid)
         if player_indx >= 5:
