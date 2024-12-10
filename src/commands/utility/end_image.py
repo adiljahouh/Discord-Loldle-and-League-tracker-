@@ -36,8 +36,8 @@ class EndImage:
         print(self.data['info']['participants'])
         print("player stored ", self.name)
         for player in self.data["info"]["participants"]:
-            print(f"player found and cleaned {player['riotIdGameName'].replace(" ", "").lower()}#{player['riotIdTagline'].replace(" ", "").lower()}")
-            if f"{player['riotIdGameName'].replace(" ", "").lower()}#{player['riotIdTagline'].replace(" ", "").lower()}" == self.name.replace(" ", "").lower():
+            print(f"player found and cleaned {player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}")
+            if f"{player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}" == self.name.replace(' ', '').lower():
                 print("found main player")
                 self.puuid = player["puuid"]
         player_indx = self.data["metadata"]['participants'].index(self.puuid)
@@ -210,16 +210,22 @@ class EndImage:
                         print("found our hero")
                         if self.won_team_id == self.player_team_id:
                             print("putting on crown")
-                            img = Image.open('./assets/image_generator/crown.png')
-                            img = img.rotate(25)
-                            img = img.resize((75, 75))
+                            try:
+                                img = Image.open('./assets/image_generator/crown.png')
+                                img = img.rotate(25)
+                                img = img.resize((75, 75))
+                            except Exception as e:
+                                print("Something went wrong opening the crown and putting it on ", e)
                             base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
                             print("pasted and converted")
                         else:
                             print("loading donce")
-                            img = Image.open('./assets/image_generator/dunce.png')
-                            img = img.rotate(35)
-                            img = img.resize((75, 75))
+                            try:
+                                img = Image.open('./assets/image_generator/dunce.png')
+                                img = img.rotate(35)
+                                img = img.resize((75, 75))
+                            except Exception as e:
+                                print("Something went wrong opening the donce and putting it on ", e)
                             base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
                             print("pasting done")
                     # Player kda
