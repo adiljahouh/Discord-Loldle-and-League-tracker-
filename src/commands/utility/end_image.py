@@ -36,8 +36,8 @@ class EndImage:
         print(self.data['info']['participants'])
         print("player stored ", self.name)
         for player in self.data["info"]["participants"]:
-            print(f"player found and cleaned {player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}")
-            if f"{player['riotIdGameName'].strip().lower()}#{player['riotIdTagline'].strip().lower()}" == self.name.strip().lower():
+            print(f"player found and cleaned {player['riotIdGameName'].replace(" ", "").lower()}#{player['riotIdTagline'].replace(" ", "").lower()}")
+            if f"{player['riotIdGameName'].replace(" ", "").lower()}#{player['riotIdTagline'].replace(" ", "").lower()}" == self.name.replace(" ", "").lower():
                 print("found main player")
                 self.puuid = player["puuid"]
         player_indx = self.data["metadata"]['participants'].index(self.puuid)
@@ -107,7 +107,11 @@ class EndImage:
 
         base_image = Image.new(mode="RGB", size=(1920, 1080))
         img = Image.open('./assets/image_generator/end_image.png')
-        print("loaded all image assets")
+        print(f"team one has so many players :{len(self.team_one['players'])}")
+        print(f"team two has so many players :{len(self.team_one['players'])}")
+        print("\n\n\\ngoing over players\n\n\, ", self.team_one['players'])
+        print("team two \n\n\n\n")
+        print(self.team_two['players'])
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
         draw_text = ImageDraw.Draw(base_image)
@@ -209,9 +213,6 @@ class EndImage:
                             img = Image.open('./assets/image_generator/crown.png')
                             img = img.rotate(25)
                             img = img.resize((75, 75))
-                            print("rotating crown")
-                            print(f"base format: {base_image.format}")
-                            print(f"crown format: {img.format}")
                             base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
                             print("pasted and converted")
                         else:
@@ -219,9 +220,6 @@ class EndImage:
                             img = Image.open('./assets/image_generator/dunce.png')
                             img = img.rotate(35)
                             img = img.resize((75, 75))
-                            print("Donce done rotated")
-                            print(f"base format: {base_image.format}")
-                            print(f"donce format: {img.format}")
                             base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
                             print("pasting done")
                     # Player kda
