@@ -88,6 +88,7 @@ class PointCommands(commands.Cog):
                 random_champ_name = self.loldle_db.get_random_champion_name() # by ddrag format
                 champ_info = self.loldle_db.get_champion_info(random_champ_name)
                 champ_info.pop("timestamp")
+                champ_info.pop("ddrag_name")
                 all_champs = self.loldle_db.get_all_champ_keys() # concatenated keys e.g.  AurelionSol
                 embed = discord.Embed(
                 title="Pick a Loldle type",

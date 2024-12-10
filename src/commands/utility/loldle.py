@@ -131,6 +131,7 @@ class loldleView(discord.ui.View):
         try:
             champion_guess_info = self.loldle_db.get_champion_info(champion_name=ddrag_name)
             champion_guess_info.pop("timestamp")
+            champion_guess_info.pop("ddrag_name")
             is_match_and_text = compare_dicts_and_create_text(champion_guess_info, self.winning_guess_info)
             mention_and_text = is_match_and_text[1] + f"\n<@{str(self.ctx.author.id)}>"
             # await self.ctx.send(mention_and_text)
