@@ -130,6 +130,7 @@ class loldleView(discord.ui.View):
         # await ctx.send(f"Your guess has been converted to {ddrag_name}")
         try:
             champion_guess_info = self.loldle_db.get_champion_info(champion_name=ddrag_name)
+            ##exclude certain keys, self.winning_guess_info will have these keys
             champion_guess_info.pop("timestamp")
             champion_guess_info.pop("ddrag_name")
             is_match_and_text = compare_dicts_and_create_text(champion_guess_info, self.winning_guess_info)

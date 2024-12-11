@@ -87,9 +87,6 @@ class PointCommands(commands.Cog):
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                 random_champ_name = self.loldle_db.get_random_champion_name() # by ddrag format
                 champ_info: dict = self.loldle_db.get_champion_info(random_champ_name)
-                print("winning champ keys before popping", champ_info.keys())
-                champ_info.pop("timestamp")
-                champ_info.pop("ddrag_name")
                 all_champs = self.loldle_db.get_all_champ_keys() # concatenated keys e.g.  AurelionSol
                 embed = discord.Embed(
                 title="Pick a Loldle type",
