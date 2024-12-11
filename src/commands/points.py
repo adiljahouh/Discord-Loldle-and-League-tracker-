@@ -86,7 +86,8 @@ class PointCommands(commands.Cog):
             ddrag_version = await get_latest_ddragon()
             if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                 random_champ_name = self.loldle_db.get_random_champion_name() # by ddrag format
-                champ_info = self.loldle_db.get_champion_info(random_champ_name)
+                champ_info: dict = self.loldle_db.get_champion_info(random_champ_name)
+                print("winning champ keys before popping", champ_info.keys())
                 champ_info.pop("timestamp")
                 champ_info.pop("ddrag_name")
                 all_champs = self.loldle_db.get_all_champ_keys() # concatenated keys e.g.  AurelionSol
@@ -105,92 +106,6 @@ class PointCommands(commands.Cog):
                 await ctx.send(f"{result}, total points {total_points.decode()}")  
         except Exception as e:
             print(e)
-
-    # @commands.command()
-    # @role_check
-    # async def loldle(self, ctx, option="classic"):
-    #     if option.lower() not in ["classic", "ability", "splash"]:
-    #         await ctx.send("Invalid option, use .loldle <classic/ability/splash>")
-    #         return
-    #     try:
-    #         amsterdam_tz = pytz.timezone('Europe/Amsterdam')
-    #         today = datetime.datetime.now(amsterdam_tz).date()
-    #         userid = str(ctx.author.id)
-    #         last_claim = self.main_db.get_user_field(discord_id=userid, field="last_loldle")
-    #         ##
-    #         if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
-    #             ddragon_list = await get_champion_ddrag_format_list()
-    #             if option.lower() == "ability" or option.lower() == "splash":
-    #                 winning_guess_info, image = await get_loldle_champ_data(ddrag="random", mode=option.lower())
-    #                 if option.lower() =="ability":
-    #                     transformed_image = await blur_invert_image(image)
-    #                 elif option.lower() =="splash":
-    #                     transformed_image = await crop_image(image, 20)
-    #                 max_attempts = 5  # Set the maximum number of attempts here
-    #                 max_points = 2000
-    #                 status = f"Guess a champion and win {max_points} points, for each guess wrong you lose {int(max_points/max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
-    #                 await ctx.send(status)
-    #                 await ctx.send(file=discord.File(io.BytesIO(transformed_image), f"idk.png"))
-    #             else:
-    #                 max_attempts = 10  # Set the maximum number of attempts here
-    #                 max_points = 2000
-    #                 status = f"Guess a champion and win {max_points} points, for each guess wrong you lose {int(max_points/max_attempts)} points. Not replying for over 90 seconds will close the game.\n\nStart the game by guessing a champ <@{userid}>."
-    #                 winning_guess_info = await get_loldle_champ_data(ddrag="random", mode="classic")
-    #                 await ctx.send(status)
-    #             # await ctx.send(winning_guess_info)
-
-    #             correct_guess = False
-    #             attempts = 0
-
-    #             # start LODLE api call and wait for response
-    #             def check(m):
-    #                 return m.author == ctx.author and m.channel == ctx.channel
-                
-    #             while not correct_guess and attempts < max_attempts:
-    #                 attempts += 1
-    #                 try:
-    #                     msg = await self.bot.wait_for('message', check=check, timeout=90.0)
-    #                     champion_guess = (msg.content.replace(" ", "")).capitalize()
-    #                     score_and_ddrag_name = find_closest_name(champion_guess, ddragon_list)
-    #                     ddrag_name = score_and_ddrag_name[0]
-    #                     # await ctx.send(f"Your guess has been converted to {ddrag_name}")
-    #                     try:
-    #                         champion_guess_info = await get_loldle_champ_data(ddrag=ddrag_name)
-    #                         # await ctx.send(champion_guess_info)
-    #                         is_match_and_text = compare_dicts_and_create_text(champion_guess_info, winning_guess_info)
-    #                         mention_and_text = is_match_and_text[1] + f"\n<@{userid}>"
-    #                         await ctx.send(mention_and_text)
-    #                         if is_match_and_text[0]:
-    #                             correct_guess = True
-    #                     except Exception as e:
-    #                         await ctx.send(e)
-    #                 except asyncio.TimeoutError:
-    #                     await ctx.send(f'You took too long to respond, the champion was {winning_guess_info["Name"]}... Your game ended <@{userid}>.')
-    #                     self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
-    #                     await ctx.send("The correct image below:")
-    #                     await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
-    #                     return
-    #             if correct_guess:
-    #                 points =int(max_points - ((attempts-1)*(max_points/max_attempts)))
-    #                 result = f"Correct guess! You earned {points} points <@{userid}>"
-    #             else:
-    #                 points = 0
-    #                 result = f"Incorrect, the champion was {winning_guess_info['Name']}. You earned {points} points <@{userid}>"
-    #             self.main_db.increment_field(userid, "points", points)
-    #             self.main_db.set_user_field(userid, "last_loldle", today.strftime('%Y-%m-%d'))
-    #             if option.lower() == "ability" or option.lower() == "splash":
-    #                 await ctx.send("The correct image below:")
-    #                 await ctx.send(file=discord.File(io.BytesIO(image), f"correct.png"))
-    #         else:
-    #             result = f"You already played a LOLDLE today <@{userid}> , use .cashout 1 to buy one"
-    #         total_points = self.main_db.get_user_field(userid, "points")
-    #         await ctx.send(f"{result}, total points {total_points.decode()}")
-    #     except Exception as e:
-    #         await ctx.send(e)
-    #         return
-        
-
-
 
     @commands.command()
     @role_check

@@ -211,23 +211,35 @@ class EndImage:
                         if self.won_team_id == self.player_team_id:
                             print("putting on crown")
                             try:
+                                print("loading crown")
                                 img = Image.open('./assets/image_generator/crown.png')
+                                print(f"crown loaded, {img}")
                                 img = img.rotate(25)
+                                print("image rotated")
                                 img = img.resize((75, 75))
+                                print("imageresized")
+                                base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                                print("pasted and converted")
+                            except FileNotFoundError:
+                                print("FileNotFoundError: The crown image file was not found.")
+                            except OSError as e:
+                                print("OSError: Failed to open the crown image. Details:", e)
                             except Exception as e:
-                                print("Something went wrong opening the crown and putting it on ", e)
-                            base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                            print("pasted and converted")
+                                print("Something went wrong opening the crown image:", e)
                         else:
                             print("loading donce")
                             try:
                                 img = Image.open('./assets/image_generator/dunce.png')
                                 img = img.rotate(35)
                                 img = img.resize((75, 75))
+                                base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                                print("pasting done")
+                            except FileNotFoundError:
+                                print("FileNotFoundError: The dunce image file was not found.")
+                            except OSError as e:
+                                print("OSError: Failed to open the dunce image. Details:", e)
                             except Exception as e:
-                                print("Something went wrong opening the donce and putting it on ", e)
-                            base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                            print("pasting done")
+                                print("Something went wrong opening the dunce image:", e)
                     # Player kda
                     print("drawing kda")
                     _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
