@@ -10,7 +10,7 @@ from api.animals import cat_api, dog_api, duck_api, frog_api
 
 
 class AnimalCommands(commands.Cog):
-    def __init__(self, jail_role_id, player_role_id, g_role) -> None:
+    def __init__(self, jail_role_id: int, player_role_id: int, g_role: int) -> None:
         self.jail_role = jail_role_id
         self.player_role = player_role_id
         self.g_role = g_role
@@ -21,7 +21,7 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def duck(self, ctx):
+    async def duck(self, ctx: commands.Context):
         """
             Returns a duck pic or gif
         """
@@ -36,7 +36,7 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def dog(self, ctx):
+    async def dog(self, ctx: commands.Context):
         """
             Returns a dog pic
         """
@@ -51,7 +51,7 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def cat(self, ctx):
+    async def cat(self, ctx: commands.Context):
         """
             Returns a cat pic
         """
@@ -66,7 +66,7 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def frog(self, ctx):
+    async def frog(self, ctx: commands.Context):
         """
             Returns a frog pic
         """
@@ -81,7 +81,7 @@ class AnimalCommands(commands.Cog):
 
     @commands.command()
     @role_check
-    async def drog(self, ctx):
+    async def drog(self, ctx: commands.Context):
         """
             Returns a drog, who the fuck knows what that is
         """
@@ -121,7 +121,7 @@ class AnimalCommands(commands.Cog):
             await ctx.send('No valid image attached. Please attach an image using `.add image`. Links either ending in jpg/png/jpeg or embedded pictures.')
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     settings = Settings()
     print("adding animal commands...")
     await bot.add_cog(AnimalCommands(settings.JAILROLE, settings.PLAYERROLE, settings.GROLE))

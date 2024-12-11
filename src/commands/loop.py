@@ -16,14 +16,15 @@ import tracemalloc
 # Start tracing memory allocations
 
 class loops(commands.Cog):
-    def __init__(self, bot, main_db, betting_db, stalking_db, riot_api, channel_id, ping_role) -> None:
-        self.bot: commands.bot.Bot = bot
+    def __init__(self, bot: commands.Bot, main_db: MainDB, betting_db: BettingDB, 
+                 stalking_db: StalkingDB, riot_api: riotAPI, channel_id: int, ping_role_id: int) -> None:
+        self.bot = bot
         self.main_db = main_db
         self.betting_db = betting_db
         self.stalking_db = stalking_db
-        self.riot_api: riotAPI = riot_api
-        self.channel_id: int = channel_id
-        self.ping_role = ping_role
+        self.riot_api = riot_api
+        self.channel_id = channel_id
+        self.ping_role_id = ping_role_id
         self.active_message_id = 0
         # Fix the db if there is a highlighted player
         fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
@@ -169,11 +170,10 @@ class loops(commands.Cog):
             message = None
             embed = None
             async with channel.typing():
-                embed = discord.Embed(title=f":skull::skull:  {victim.upper()} IS IN GAME :skull::skull:\n"
+                embed = discord.Embed(title=f":eyes::eyes:  {victim.upper()} IS IN GAME :eyes::eyes:\n"
                                             "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                       description="HE WILL SURELY WIN, RIGHT?",
                                       color=0xFF0000)
-                # embed.set_footer(text="Made by Matthijs (Aftershock)")
                 champions = [[player[1] for player in team] for team in data[1]]
                 players = [[player[0] for player in team] for team in data[1]]
                 try:
@@ -189,7 +189,7 @@ class loops(commands.Cog):
                     try:
                         if data[2] != "Custom":
                             self.stalking_db.custom = False
-                            message = await channel.send(f"<@&{self.ping_role}>", file=picture, embed=embed)
+                            message = await channel.send(f"<@&{self.ping_role_id}>", file=picture, embed=embed)
                             self.betting_db.enable_betting()
                         else:
                             self.stalking_db.custom = True
@@ -261,17 +261,11 @@ class loops(commands.Cog):
                 match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
             except aiohttp.ClientResponseError:
                 print("Game is still in progress")
-      
                 return
             try:
-                print("match data ", match_data)
-                print(victim)
                 endIm = EndImage(match_data, victim)
-                print("created class")
                 end_image = await endIm.get_team_image()
-                print("end image", end_image)
                 end_result = endIm.get_game_result()
-                print("end result, ", end_result)
                 picture = discord.File(fp=end_image, filename="team.png")
             except Exception as e:
                 print(f"error in image: {e}")  
@@ -279,14 +273,14 @@ class loops(commands.Cog):
             self.stalking_db.change_status(victim, False)
             self.betting_db.disable_betting()
             if end_result:
-                description = "**BELIEVERS WIN!!! HE HAS DONE IT AGAIN, THE 👑**\n"
+                description = "**WINNER WINNER CHICKEN DINNER 👑**\n"
                 winners = "believers"
             else:
-                description = "**DOUBTERS WIN!!! UNLUCKY, BUT SURELY NOT HIS FAULT 💀**\n"
+                description = "**BRO HAD NO IMPACT 🔥🔥**\n"
                 winners = "doubters"
 
             message: discord.Message = await channel.fetch_message(self.active_message_id)
-            embed = discord.Embed(title=f":skull::skull:  {victim.upper()}'S GAME RESULT IS IN :skull::skull:\n\n",
+            embed = discord.Embed(title=f"{victim.upper()}'S GAME RESULT IS IN :eyes::eyes:\n\n",
                                   description=description,
                                   color=0xFF0000)
             embed.set_image(url="attachment://team.png")
@@ -329,7 +323,7 @@ class loops(commands.Cog):
             for stat in top_stats[:10]:
                 print(stat)
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     betting_db = BettingDB(settings.REDISURL)

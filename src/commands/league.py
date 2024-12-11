@@ -7,11 +7,13 @@ from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
 from databases.stalker import StalkingDB
 
-class LeagueCommands(riotAPI, commands.Cog):
-    def __init__(self, main_db, stalking_db, riot_api, player_role_id, g_role, jail_role) -> None:
+## why do i even inherit riotapi here?
+class LeagueCommands(commands.Cog):
+    def __init__(self, main_db: MainDB, stalking_db: StalkingDB, riot_api: riotAPI,
+                  player_role_id: int, g_role: int, jail_role: int) -> None:
         self.main_db = main_db
         self.stalking_db = stalking_db
-        self.riot_api: riotAPI = riot_api
+        self.riot_api= riot_api
         self.player_role = player_role_id
         self.g_role = g_role
         self.jail_role = jail_role
@@ -163,7 +165,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                 
     @commands.command()
     @role_check
-    async def rank(self, ctx, *args):
+    async def rank(self, ctx: commands.Context, *args):
 
         """ Temporary command to get the rank of a user"""
         async with ctx.typing():
@@ -207,7 +209,7 @@ class LeagueCommands(riotAPI, commands.Cog):
                     print(e)
     @commands.command()
     @role_check
-    async def clash(self, ctx, *args):
+    async def clash(self, ctx: commands.Context, *args):
         """
             Returns the opgg of all members in the same clash team as the given summoner name
         """
@@ -243,7 +245,7 @@ class LeagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @mod_check
-    async def victim(self, ctx, *args):
+    async def victim(self, ctx: commands.Context, *args):
         """
             Add or remove a stalking victim: .victim <add/remove> <ign>
         """
@@ -270,7 +272,7 @@ class LeagueCommands(riotAPI, commands.Cog):
 
     @commands.command()
     @role_check
-    async def victims(self, ctx):
+    async def victims(self, ctx: commands.Context):
         """
             Return all victims
         """
@@ -283,7 +285,7 @@ class LeagueCommands(riotAPI, commands.Cog):
         await ctx.send(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     stalking_db = StalkingDB(settings.REDISURL)

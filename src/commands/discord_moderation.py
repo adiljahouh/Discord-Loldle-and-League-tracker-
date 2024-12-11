@@ -60,9 +60,10 @@ class haterFanboyView(discord.ui.View):
 
 
 class discMod(commands.Cog):
-    def __init__(self, main_db: MainDB, jail_role_id, confessional_channel_id, bot, fanboyid, haterid, rolechannelid, main_channelid,
-                  botenthusiastid, lunchersid, leaguersid, varietyid) -> None:
-        self.bot: commands.bot.Bot = bot
+    def __init__(self, main_db: MainDB, jail_role_id: int, confessional_channel_id: int,
+                  bot: commands.Bot, fanboyid: int, haterid: int, rolechannelid: int, main_channelid: int,
+                  botenthusiastid: int, lunchersid: int, leaguersid: int, varietyid: int) -> None:
+        self.bot = bot
         self.main_db = main_db
         self.jail_role = jail_role_id
         self.confessional = confessional_channel_id
@@ -96,7 +97,7 @@ class discMod(commands.Cog):
             await channel.send(embed=embed, view=view)
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         # Your on_member_join logic here...
         
         await member.send(f"Hi, {member.mention}!\n\n" \
@@ -325,7 +326,7 @@ class discMod(commands.Cog):
             self.active_destruction_target = None
             await ctx.send("Destruction mode stopped.")
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     print("adding discord commands...")

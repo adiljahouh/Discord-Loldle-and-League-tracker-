@@ -12,11 +12,12 @@ from databases.main import MainDB
 from databases.loldle import loldleDB
 import pytz
 class PointCommands(commands.Cog):
-    def __init__(self, main_db: MainDB, betting_db: BettingDB, g_role, bot, cashoutchannelid, loldle_db: loldleDB) -> None:
-        self.main_db: MainDB = main_db
-        self.betting_db: BettingDB = betting_db
+    def __init__(self, main_db: MainDB, betting_db: BettingDB, g_role: int, bot: commands.Bot,
+                  cashoutchannelid: int, loldle_db: loldleDB) -> None:
+        self.main_db = main_db
+        self.betting_db = betting_db
         self.g_role = g_role
-        self.bot : commands.bot.Bot = bot
+        self.bot = bot
         self.cashoutCID = cashoutchannelid
         self.loldle_db = loldle_db
 
@@ -338,7 +339,7 @@ class PointCommands(commands.Cog):
             await ctx.send(e)
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     settings = Settings()
     main_db = MainDB(settings.REDISURL)
     betting_db = BettingDB(settings.REDISURL)
