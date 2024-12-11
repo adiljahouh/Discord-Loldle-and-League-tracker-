@@ -231,8 +231,7 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user, tag):
-        ddrag_version = await get_latest_ddragon()
+    async def get_active_game_status(self, user: str, tag: str, ddrag_version: str):
         puuid = await self.get_puuid_by_tag(user, tag)
         async with aiohttp.ClientSession() as session:
             async with session.get(

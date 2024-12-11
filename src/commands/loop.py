@@ -12,7 +12,7 @@ from databases.stalker import StalkingDB
 from commands.utility.end_image import EndImage
 from commands.utility.decorators import fix_highlighted_player
 import tracemalloc
-
+from api.ddragon import get_latest_ddragon
 # Start tracing memory allocations
 
 class loops(commands.Cog):
@@ -26,8 +26,15 @@ class loops(commands.Cog):
         self.channel_id = channel_id
         self.ping_role_id = ping_role_id
         self.active_message_id = 0
+        self.ddrag_version = get_latest_ddragon()
         # Fix the db if there is a highlighted player
         fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
+
+
+
+    @tasks.loop(hours=24)
+    async def refresh_ddrag(self):
+        self.ddrag_version = get_latest_ddragon()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -134,7 +141,6 @@ class loops(commands.Cog):
 
     @tasks.loop(minutes=2.0)
     async def activate_stalking(self):
-        print("Activate_stalking")
         channel_id: int = self.channel_id
         channel = self.bot.get_channel(channel_id)
         try:
@@ -152,7 +158,7 @@ class loops(commands.Cog):
                     # Small 1 second delay to not spam the requests
                     user, tag = pos_victim.split('#')
                     await asyncio.sleep(1)
-                    active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag)
+                    active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag, self.ddrag_version)
                 except aiohttp.ClientResponseError as e:
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
@@ -170,6 +176,7 @@ class loops(commands.Cog):
             message = None
             embed = None
             async with channel.typing():
+                ## TODO: man really use a better datas structure here
                 embed = discord.Embed(title=f":eyes::eyes:  {victim.upper()} IS IN GAME :eyes::eyes:\n"
                                             "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
                                       description="HE WILL SURELY WIN, RIGHT?",
