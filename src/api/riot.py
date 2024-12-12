@@ -232,6 +232,21 @@ class riotAPI():
 
     # Method must be caught with an aiohttp.ClientResponseError
     async def get_active_game_status(self, user: str, tag: str, ddrag_version: str):
+        """
+        "gameId": 7224176970,
+        "mapId": 11,
+        "gameMode": "CLASSIC",
+        "gameType": "MATCHED",
+        "gameQueueConfigId": 420,
+        "participants": [...],
+        "observers": {
+        "encryptionKey": "HLA8jsdhsKXswEoFmf+lLHqfj2WZb+/H"
+            },
+        "platformId":"EUW1",
+        "bannedChampions": []
+        "gameStartTime": 1733953725682,
+        "gameLength": 120
+        """
         puuid = await self.get_puuid_by_tag(user, tag)
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -239,6 +254,7 @@ class riotAPI():
                     params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
+                #return content
                 status = response.status
                 if status == 404:
                     return False, "User not in game", None, None
