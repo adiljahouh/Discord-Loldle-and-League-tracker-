@@ -17,7 +17,7 @@ from api.ddragon import get_latest_ddragon
 
 class loops(commands.Cog):
     def __init__(self, bot: commands.Bot, main_db: MainDB, betting_db: BettingDB, 
-                 stalking_db: StalkingDB, riot_api: riotAPI, channel_id: int, ping_role_id: int) -> None:
+                 stalking_db: StalkingDB, riot_api: riotAPI, channel_id: int, ping_role_id: int, ddrag_version: str) -> None:
         self.bot = bot
         self.main_db = main_db
         self.betting_db = betting_db
@@ -26,7 +26,7 @@ class loops(commands.Cog):
         self.channel_id = channel_id
         self.ping_role_id = ping_role_id
         self.active_message_id = 0
-        self.ddrag_version = get_latest_ddragon()
+        self.ddrag_version = ddrag_version 
         # Fix the db if there is a highlighted player
         fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
 
@@ -34,7 +34,7 @@ class loops(commands.Cog):
 
     @tasks.loop(hours=24)
     async def refresh_ddrag(self):
-        self.ddrag_version = get_latest_ddragon()
+        self.ddrag_version = await get_latest_ddragon()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -156,9 +156,12 @@ class loops(commands.Cog):
             for pos_victim in victims:
                 try:
                     # Small 1 second delay to not spam the requests
+                    print(f"Checking if {pos_victim} is in game")
                     user, tag = pos_victim.split('#')
                     await asyncio.sleep(1)
                     active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag, self.ddrag_version)
+                    if active:
+                        print(f"{pos_victim} is in game! Processing..")
                 except aiohttp.ClientResponseError as e:
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
@@ -244,11 +247,12 @@ class loops(commands.Cog):
                 print(f"Activate stalking error: {e}")
         finally:
             # Take a memory snapshot
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics("lineno")
-            print("[Top 10 Memory Stats]")
-            for stat in top_stats[:10]:
-                print(stat)
+            pass
+            # snapshot = tracemalloc.take_snapshot()
+            # top_stats = snapshot.statistics("lineno")
+            # print("[Top 10 Memory Stats]")
+            # for stat in top_stats[:10]:
+            #     print(stat)
                 
                 
     @tasks.loop(minutes=2.0)
@@ -326,11 +330,12 @@ class loops(commands.Cog):
                 print(f"End stalking error: {e}")
         finally:
             # Take a memory snapshot
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics("lineno")
-            print("[Top 10 Memory Stats]")
-            for stat in top_stats[:10]:
-                print(stat)
+            pass
+            # snapshot = tracemalloc.take_snapshot()
+            # top_stats = snapshot.statistics("lineno")
+            # print("[Top 10 Memory Stats]")
+            # for stat in top_stats[:10]:
+            #     print(stat)
 
 async def setup(bot: commands.Bot):
     settings = Settings()
@@ -338,5 +343,6 @@ async def setup(bot: commands.Bot):
     betting_db = BettingDB(settings.REDISURL)
     stalking_db = StalkingDB(settings.REDISURL)
     riot: riotAPI = riotAPI(settings.RIOTTOKEN)
+    ddrag_version = await get_latest_ddragon()
     print("adding loops..")
-    await bot.add_cog(loops(bot, main_db, betting_db, stalking_db, riot, settings.LIVEGAMECHANNELID, settings.PINGROLE))
+    await bot.add_cog(loops(bot, main_db, betting_db, stalking_db, riot, settings.LIVEGAMECHANNELID, settings.PINGROLE, ddrag_version=ddrag_version))
