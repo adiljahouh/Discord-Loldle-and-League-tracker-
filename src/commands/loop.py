@@ -263,14 +263,13 @@ class loops(commands.Cog):
         try:
             victim = self.stalking_db.get_active_user()
             ##
-            # victim = "1738#EUW" ##TODO:
+            victim = "1738#EUW" ##TODO:
             print(f"Active victim: {victim}")
             if victim is None:
-  
                 return
             
             match_id = f'EUW1_{self.stalking_db.current_game}'
-            # match_id = "EUW1_7223658854" ##TODO:
+            match_id = "EUW1_7223658854" ##TODO:
             try:
                 match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
             except aiohttp.ClientResponseError:
