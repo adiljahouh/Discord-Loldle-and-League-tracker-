@@ -292,7 +292,7 @@ class loops(commands.Cog):
                 description = "**BRO HAD NO IMPACT 🔥🔥**\n"
                 winners = "doubters"
 
-            message: discord.Message = await channel.fetch_message(self.active_message_id) #TODO
+            #message: discord.Message = await channel.fetch_message(self.active_message_id) #TODO
             embed = discord.Embed(title=f"{victim.upper()}'S GAME RESULT IS IN :eyes::eyes:\n\n",
                                   description=description,
                                   color=0xFF0000)
@@ -314,7 +314,7 @@ class loops(commands.Cog):
             if channel is not None:
                 try:
                     self.betting_db.remove_all_bets()
-                    await channel.send(embed=embed, reference=message, file=picture) 
+                    await channel.send(embed=embed, file=picture) #reference=message, 
                     print("Message sent successfully.")
                 except discord.Forbidden:
                     print("I don't have permission to send messages to that channel.")
