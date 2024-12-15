@@ -185,9 +185,10 @@ class discMod(commands.Cog):
                                 prep_jail_card_tasks.append(user.remove_roles(current_role))
                             try:
                                 results = await asyncio.gather(*prep_jail_card_tasks)
-                                wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
                             except discord.Forbidden:
                                 print(f"Skipped a role I could not remove: {current_role.name}")
+                            finally:
+                                wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
                             # await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
                             
                             strike_reasons = ""
