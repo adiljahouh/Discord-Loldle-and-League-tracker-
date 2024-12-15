@@ -258,12 +258,15 @@ class loops(commands.Cog):
         channel = self.bot.get_channel(channel_id)
         try:
             victim = self.stalking_db.get_active_user()
+            ##
+            # victim = "1738#EUW" ##TODO:
             print(f"Active victim: {victim}")
             if victim is None:
   
                 return
             
             match_id = f'EUW1_{self.stalking_db.current_game}'
+            # match_id = "EUW1_7223658854" ##TODO:
             try:
                 match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
             except aiohttp.ClientResponseError:
@@ -286,12 +289,11 @@ class loops(commands.Cog):
                 description = "**BRO HAD NO IMPACT 🔥🔥**\n"
                 winners = "doubters"
 
-            message: discord.Message = await channel.fetch_message(self.active_message_id)
+            message: discord.Message = await channel.fetch_message(self.active_message_id) #TODO
             embed = discord.Embed(title=f"{victim.upper()}'S GAME RESULT IS IN :eyes::eyes:\n\n",
                                   description=description,
                                   color=0xFF0000)
             embed.set_image(url="attachment://team.png")
-            # embed.set_footer(text="Made by Matthijs (Aftershock)")
             all_bets = self.betting_db.get_all_bets()
             for decision in all_bets.keys():
                 text = ""

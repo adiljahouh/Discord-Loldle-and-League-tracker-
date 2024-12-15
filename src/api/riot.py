@@ -300,9 +300,17 @@ class riotAPI():
                 text_arr.append(game_mode)
                 return True, text_arr, game_length, game_type
 
-    async def get_clash_players(self, encr_summoner_id):
+    async def get_clash_team_by_player_summonerID(self, encr_summoner_id):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{encr_summoner_id}",
+                                   params=self.params) as response:
+                response.raise_for_status()
+                content = await response.json()
+                return content
+            
+    async def get_clash_team_by_clash_team_id(self, team_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/teams/{team_id}",
                                    params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
@@ -311,7 +319,9 @@ class riotAPI():
     async def get_clash_opgg(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
         encrypt_summoner_id = await self.get_encrypted_summoner_id_by_puuid(puuid)
-        players = await self.get_clash_players(encrypt_summoner_id)
+        player = await self.get_clash_team_by_player_summonerID(encrypt_summoner_id)
+        if len(player) == 1:
+            clash_team_details = await self.get_clash_team_by_clash_team_id(player[0]['teamId'])
 #         players = [{
 #        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
 #        "teamId": "00000000-0000-0000-0000-000000000000",
@@ -331,7 +341,7 @@ class riotAPI():
 #    },
 # ]
         text = "https://www.op.gg/multisearch/euw?summoners="
-        for player in players:
+        for player in clash_team_details['players']:
             puuid = await self.get_puuid_by_summoner_id(player['summonerId'])
             name, tag = await self.get_name_tag_by_puuid(puuid=puuid)
             summoner = name + '#' + tag

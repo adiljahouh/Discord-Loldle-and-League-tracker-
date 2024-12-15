@@ -33,12 +33,11 @@ class EndImage:
 
     def prepare_data(self):
         # Get puuid to place main player in team
-        print(self.data['info']['participants'])
-        print("player stored ", self.name)
+        print(self.data)
         for player in self.data["info"]["participants"]:
-            print(f"player found and cleaned {player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}")
+            # print(f"player found and cleaned {player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}")
             if f"{player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}" == self.name.replace(' ', '').lower():
-                print("found main player")
+                # print("found main player")
                 self.puuid = player["puuid"]
         player_indx = self.data["metadata"]['participants'].index(self.puuid)
         if player_indx >= 5:
@@ -133,7 +132,6 @@ class EndImage:
             draw_text.text((105 + (776-w)/2, 290+(indx*100)+(100-h)/2), attr, font=font_text_middle, fill=col_white)
 
         # Show team stats
-        print("doing image teamstats")
         for team_indx, team in enumerate(self.teams):
             _, _, w, h = draw_text.textbbox((0, 0), f"{team['kills']}/{team['deaths']}/{team['assists']}", font=font_big)
             draw_text.text((105 + team_indx*(775-w), 290+(100-h)/2), f"{team['kills']}/{team['deaths']}/{team['assists']}", font=font_big, fill=col_white)
@@ -142,7 +140,6 @@ class EndImage:
                 draw_text.text((105 + team_indx*(775-w), 390+(100*indx)+(100-h)/2), str(team[attr]), font=font_big, fill=col_white)
 
         # Bans
-        print("going into bans!")
         champ_list = await get_champion_dict(ddrag_version)
         for team_indx, team in enumerate(self.teams):
             for indx, ban in enumerate(team["bans"]):
@@ -159,7 +156,6 @@ class EndImage:
                 base_image.paste(champ_image, pos, champ_image)
 
         # Min/Max stats
-        print("min max")
         min_stat = 99999999999999999999
         max_stat = -1
         for team in self.teams:
@@ -183,11 +179,9 @@ class EndImage:
                     base_image.paste(col_gray, (1665 - int(250*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 140 + (205*indx), 1855, 210 + (205*indx)))
 
         # Player names, damage numbers, player champ images, kda
-        print("damage numbers and such")
         try:
             for team_indx, team in enumerate(self.teams):
                 for indx, player in enumerate(team["players"]):
-                    print("claculating kda for player")
                     kda = f"{player['kills']}/{player['deaths']}/{player['assists']}"
                     # Player name
                     _, _, w, h = draw_text.textbbox((0, 0), str(player['name']), font=font_small)
@@ -199,49 +193,43 @@ class EndImage:
                     _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
                     draw_text.text((1090 + (635*team_indx) - (w*team_indx), 115 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
                     # Player image
-                    print("getting champ splash for player")
                     champ_image: Image = await get_champion_splash(ddrag_version, champ_list[str(player['champ_id'])])
                     champ_image: Image = champ_image.convert('RGBA')
                     pos = (960 + (775*team_indx), 55 + (205*indx))
-                    print("pasting champ image on base image")
-                    print(f"base img format: {base_image.format}")
                     base_image.paste(champ_image, pos, champ_image)
-                    if player["hero"]:
-                        print("found our hero")
-                        if self.won_team_id == self.player_team_id:
-                            print("putting on crown")
-                            try:
-                                print("loading crown")
-                                img = Image.open('./assets/image_generator/crown.png')
-                                print(f"crown loaded, {img}")
-                                img = img.rotate(25)
-                                print("image rotated")
-                                img = img.resize((75, 75))
-                                print("imageresized")
-                                base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                                print("pasted and converted")
-                            except FileNotFoundError:
-                                print("FileNotFoundError: The crown image file was not found.")
-                            except OSError as e:
-                                print("OSError: Failed to open the crown image. Details:", e)
-                            except Exception as e:
-                                print("Something went wrong opening the crown image:", e)
-                        else:
-                            print("loading donce")
-                            try:
-                                img = Image.open('./assets/image_generator/dunce.png')
-                                img = img.rotate(35)
-                                img = img.resize((75, 75))
-                                base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                                print("pasting done")
-                            except FileNotFoundError:
-                                print("FileNotFoundError: The dunce image file was not found.")
-                            except OSError as e:
-                                print("OSError: Failed to open the dunce image. Details:", e)
-                            except Exception as e:
-                                print("Something went wrong opening the dunce image:", e)
+                    # if player["hero"]:
+                    #     print("found our hero")
+                        # if self.won_team_id == self.player_team_id:
+                            # try:
+                            #     print("loading crown")
+                            #     img = Image.open('./assets/image_generator/crown.png')
+                            #     print(f"crown loaded, {img}")
+                            #     img = img.rotate(25)
+                            #     print("image rotated")
+                            #     img = img.resize((75, 75))
+                            #     print("imageresized")
+                            #     base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                            #     print("pasted and converted")
+                            # except FileNotFoundError:
+                            #     print("FileNotFoundError: The crown image file was not found.")
+                            # except OSError as e:
+                            #     print("OSError: Failed to open the crown image. Details:", e)
+                            # except Exception as e:
+                            #     print("Something went wrong opening the crown image:", e)
+                        # else:
+                            # try:
+                            #     img = Image.open('./assets/image_generator/dunce.png')
+                            #     img = img.rotate(35)
+                            #     img = img.resize((75, 75))
+                            #     base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
+                            #     print("pasting done")
+                            # except FileNotFoundError:
+                            #     print("FileNotFoundError: The dunce image file was not found.")
+                            # except OSError as e:
+                            #     print("OSError: Failed to open the dunce image. Details:", e)
+                            # except Exception as e:
+                            #     print("Something went wrong opening the dunce image:", e)
                     # Player kda
-                    print("drawing kda")
                     _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
                     draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
         except Exception as e:
