@@ -1,1 +1,4 @@
 3995feec-56b6-4165-a231-b79ddff96d70
+
+#server mute
+#randomize loldle

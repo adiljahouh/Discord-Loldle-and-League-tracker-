@@ -29,6 +29,65 @@ async def blur_invert_image(image_content):
     
     return output_stream.getvalue()
 
+# async def transform_image(image_content):
+#     """
+#     Apply random transformations such as blur, invert colors, rotate, pixelation, and noise to an image.
+#     """
+#     # Open the image from binary content
+#     image = Image.open(io.BytesIO(image_content))
+
+#     # List of transformations to apply randomly
+#     transformations = [
+#         invert_colors,
+#         apply_blur,
+#         rotate_image,
+#         apply_pixelation,
+#         add_noise
+#     ]
+    
+#     # Randomly shuffle and apply a subset of transformations
+#     random.shuffle(transformations)
+#     for transform in transformations[:random.randint(2, len(transformations))]:
+#         image = transform(image)
+    
+#     # Save the transformed image to a bytes-like object
+#     output_stream = io.BytesIO()
+#     image.save(output_stream, format="PNG")
+#     return output_stream.getvalue()
+
+# def invert_colors(image):
+#     """Invert the colors of the image."""
+#     return ImageOps.invert(image.convert("RGB"))
+
+# def apply_blur(image):
+#     """Apply a blur filter to the image."""
+#     return image.filter(ImageFilter.BLUR)
+
+# def rotate_image(image):
+#     """Rotate the image by a random angle."""
+#     rotation_angle = random.choice([90, 180, 270])
+#     return image.rotate(rotation_angle)
+
+# def apply_pixelation(image, pixel_size=10):
+#     """Apply pixelation to the image."""
+#     image = image.resize(
+#         (image.width // pixel_size, image.height // pixel_size), Image.Resampling.NEAREST
+#     )
+#     return image.resize(
+#         (image.width * pixel_size, image.height * pixel_size), Image.Resampling.NEAREST
+#     )
+
+# def add_noise(image):
+#     """Add random noise to the image."""
+#     np_image = np.array(image)
+#     noise = np.random.randint(0, 50, np_image.shape, dtype='uint8')
+#     noisy_image = np.clip(np_image + noise, 0, 255).astype('uint8')
+#     return Image.fromarray(noisy_image)
+
+
+
+
+
 async def crop_image(image_content, percentage = 10):
     # Open the image from the binary content
     image = Image.open(io.BytesIO(image_content))

@@ -2,8 +2,7 @@ import datetime
 import aiohttp
 import asyncio
 import copy
-from api.ddragon import get_champion_dict, get_latest_ddragon
-from api.merakia import pull_data
+from api.merakia import get_role_playrate_for_each_champ_id
 from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass
@@ -231,7 +230,7 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user: str, tag: str, ddrag_version: str):
+    async def get_active_game_status(self, game_name: str, tag: str, ddrag_version: str):
         """
         "gameId": 7224176970,
         "mapId": 11,
@@ -247,14 +246,14 @@ class riotAPI():
         "gameStartTime": 1733953725682,
         "gameLength": 120
         """
-        puuid = await self.get_puuid_by_tag(user, tag)
+        puuid = await self.get_puuid_by_tag(game_name, tag)
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     f"https://euw1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}",
                     params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
-                #return content
+                return content
                 status = response.status
                 if status == 404:
                     return False, "User not in game", None, None
@@ -288,7 +287,7 @@ class riotAPI():
                         team_one.append([summonerName, int(participant['championId'])])
                     else:
                         team_two.append([summonerName, int(participant['championId'])])
-                champion_roles = await pull_data()
+                champion_roles = await get_role_playrate_for_each_champ_id()
                 team_one = self.order_team(champion_roles, team_one, champion_list)
                 team_two = self.order_team(champion_roles, team_two, champion_list)
                 if team == 200:
