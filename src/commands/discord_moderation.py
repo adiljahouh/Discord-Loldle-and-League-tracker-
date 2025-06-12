@@ -144,14 +144,13 @@ class discMod(commands.Cog):
     @mod_check
     async def strike(self, ctx: commands.Context, *args):
         """Strike someone by using .strike @<user> <reason>"""
-
-        strike_quota = self.main_db.get_user_field(ctx.author.id, "strike_quota")
-        if strike_quota == 0:
-            await ctx.send("You have no strikes left...")
-            return
+        strike_quota = int(self.main_db.get_user_field(ctx.author.id, "strike_quota").decode('utf-8')) if self.main_db.get_user_field(ctx.author.id, "strike_quota") != None else None
         if strike_quota is None:
             self.main_db.set_user_field(ctx.author.id, "strike_quota", 3)
             strike_quota = 3
+        if strike_quota <= 0:
+            await ctx.send("You have no strikes left...")
+            return
         mentions = ctx.message.mentions
         if len(mentions) == 0:
             await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
@@ -182,7 +181,7 @@ class discMod(commands.Cog):
                         prep_jail_card_tasks = []
                         prep_jail_card_tasks.append(self.get_profile_pic_and_write_dead_or_alive(user, lifetime_total))
                         prep_jail_card_tasks.append(user.add_roles(jail_role))
-                        prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}"))
+                        prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strikes left."))
                         for current_role in user.roles:
                             if current_role.name == "@everyone" or current_role.name == "Server Booster" or current_role.name.lower() == "admin" or current_role.name == jail_role.name:
                                 continue

@@ -42,7 +42,7 @@ class loldleDB():
             print("Loldle data outdated....")
             ddrag_version = await get_latest_ddragon()
             champs = list((await get_champion_dict(ddrag_version)).values())
-            batch_size = 3  # Adjust based on your system's capabilities
+            batch_size = 1  # Adjust based on your system's capabilities and rate limits
             async def process_champ(champ):
                 champ_attributes = await get_base_lodle_champ_data(ddrag_version, champ)
                 # champion_name = champ_attributes['Name']

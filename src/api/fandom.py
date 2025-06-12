@@ -9,6 +9,7 @@ async def get_gender_releaseDate_per_champ(champion):
         async with session.get(f"https://lol.fandom.com/api.php?action=cargoquery&format=json&limit=50&tables=Champions&fields=Name%2CPronoun%2CReleaseDate&where=Name%3D%22{champion}%22") as response:
             response.raise_for_status()
             content = await response.json()
+            print(champion, content)
             return content['cargoquery'][0]['title']
 
 async def get_region(champion):

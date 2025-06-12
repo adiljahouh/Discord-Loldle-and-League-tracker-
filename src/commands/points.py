@@ -51,7 +51,7 @@ class PointCommands(commands.Cog):
     @commands.command()
     @role_check
     async def daily(self, ctx):
-        """ Get daily points (1000)"""
+        """ Get daily points (1000) and strikes (3) by using .daily """
         async with ctx.typing():
             try:
                 amsterdam_tz = pytz.timezone('Europe/Amsterdam')
@@ -62,14 +62,17 @@ class PointCommands(commands.Cog):
                     status = "You claim some points"
                     self.main_db.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
                     self.main_db.increment_field(userid, "points", 1000)
+                    self.main_db.increment_field(userid, "strike_quota", 3)
                 else:
-                    status = "You already claimed your points for today"
+                    status = "You already claimed your points and strikes for today"
                 points_bytes = self.main_db.get_user_field(userid, "points")
+                strikes_bytes = self.main_db.get_user_field(userid, "strike_quota")
             except Exception as e:
                 await ctx.send(e)
                 return
             points = points_bytes.decode('utf-8')
-            message = f'Total points: {points}'
+            strikes = strikes_bytes.decode('utf-8') if strikes_bytes else "0" 
+            message = f'Total points: {points}, Total strikes: {strikes}'
             embed = discord.Embed(title=f"{status}\n\n",
                                   description=f"{message}",
                                   color=0xFF0000)
