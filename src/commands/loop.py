@@ -247,12 +247,11 @@ class loops(commands.Cog):
                 print(f"Activate stalking error: {e}")
         finally:
             # Take a memory snapshot
-            pass
-            # snapshot = tracemalloc.take_snapshot()
-            # top_stats = snapshot.statistics("lineno")
-            # print("[Top 10 Memory Stats]")
-            # for stat in top_stats[:10]:
-            #     print(stat)
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics("lineno")
+            print("[Top 10 Memory Stats]")
+            for stat in top_stats[:10]:
+                print(stat)
                 
                 
     @tasks.loop(minutes=2.0)
@@ -330,12 +329,11 @@ class loops(commands.Cog):
                 print(f"End stalking error: {e}")
         finally:
             # Take a memory snapshot
-            pass
-            # snapshot = tracemalloc.take_snapshot()
-            # top_stats = snapshot.statistics("lineno")
-            # print("[Top 10 Memory Stats]")
-            # for stat in top_stats[:10]:
-            #     print(stat)
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics("lineno")
+            print("[Top 10 Memory Stats]")
+            for stat in top_stats[:10]:
+                print(stat)
 
 async def setup(bot: commands.Bot):
     settings = Settings()
