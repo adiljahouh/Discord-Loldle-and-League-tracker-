@@ -152,15 +152,16 @@ class PointCommands(commands.Cog):
                 new_points = self.main_db.get_user_field(userid, "points")
                 await ctx.send(f"You are able to play a lodle again <@{userid}>, total points {new_points.decode()}")
                 pass
-            elif option == "2":
+            elif option == "2": # strike bought
                 cost = [i for i in cashout_options.keys()][int(option)-1]
                 if int(total_points.decode()) >= int(cost):
                     self.main_db.increment_field(userid, "strike_quota", 1)
-                    self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
-                    await ctx.send(f"<@{userid}> bought a strike, total points {total_points.decode()}")
+                    new_points = self.main_db.decrement_field(discord_id=userid, field="points", amount=int(cost))
+                    await ctx.send(f"<@{userid}> bought a strike, total points {new_points.decode()}")
                 else:
-                    await ctx.send("not enough points to buy a strike")
+                    await ctx.send(f"not enough points to buy a strike, total points {total_points.decode()}")
                     return
+                
             else:
                 if option.isdigit():
                     try:
