@@ -144,86 +144,91 @@ class discMod(commands.Cog):
     @mod_check
     async def strike(self, ctx: commands.Context, *args):
         """Strike someone by using .strike @<user> <reason>"""
+
+        strike_quota = self.main_db.get_user_field(ctx.author.id, "strike_quota")
+        if strike_quota == 0:
+            await ctx.send("You have no strikes left...")
+            return
+        if strike_quota is None:
+            self.main_db.set_user_field(ctx.author.id, "strike_quota", 3)
+            strike_quota = 3
         mentions = ctx.message.mentions
+        if len(mentions) == 0:
+            await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
+            return
         attachments = ctx.message.attachments  # Get attachments
         attachment_urls = [attachment.url for attachment in attachments]
         # from the command text remove all @'s to filter out the reason
         strike_reasoning = [arg for arg in args if not any(str(mention.id) in arg for mention in mentions)]
-        if len(strike_reasoning) == 0:
-            # if no reason is provided
-            strike_reasoning.append("No reason mentioned")
+        strike_quota_post_strike = self.main_db.decrement_field(ctx.author.id, "strike_quota", 1)
+        for mention in mentions:
+            # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
+            if self.main_db.check_user_existence(mention.id) == 1:
+                total = self.main_db.increment_field(mention.id, "strikes", 1)
+                lifetime_total = self.main_db.increment_field(mention.id, "lifetime_strikes", 1)
+                
+                # Prepare reason and attachments string
+                reason = ' '.join(strike_reasoning) if len(strike_reasoning) > 0 else "No reason provided"
+                attachments_str = ', '.join(attachment_urls) if attachment_urls else ""
+                strike_details = f"{reason} {attachments_str}"
 
-
-        if len(mentions) == 0:
-            await ctx.send("Mention someone to strike e.g. .add strike <@319921436519038977> for being a BOTTOM G")
-        else:
-            for mention in mentions:
-                # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
-                if self.main_db.check_user_existence(mention.id) == 1:
-                    total = self.main_db.increment_field(mention.id, "strikes", 1)
-                    lifetime_total = self.main_db.increment_field(mention.id, "lifetime_strikes", 1)
-                    
-                    # Prepare reason and attachments string
-                    reason = ' '.join(strike_reasoning)
-                    attachments_str = ', '.join(attachment_urls) if attachment_urls else ""
-                    strike_details = f"{reason} {attachments_str}"
-
-                    success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
-                    if total >= 3:
-                        success = self.main_db.set_user_field(mention.id, "strikes", 0)
-                        if success == 0:
-                            user: discord.Member = ctx.guild.get_member(mention.id)
-                            jail_role = ctx.guild.get_role(self.jail_role)
-                            self.jailed_users[user.name] = user.roles
-                            prep_jail_card_tasks = []
-                            prep_jail_card_tasks.append(self.get_profile_pic_and_write_dead_or_alive(user, lifetime_total))
-                            prep_jail_card_tasks.append(user.add_roles(jail_role))
-                            prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}"))
-                            for current_role in user.roles:
-                                if current_role.name == "@everyone" or current_role.name == "Server Booster" or current_role.name.lower() == "admin" or current_role.name == jail_role.name:
-                                    continue
-                                prep_jail_card_tasks.append(user.remove_roles(current_role))
+                success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
+                if total >= 3:
+                    success = self.main_db.set_user_field(mention.id, "strikes", 0)
+                    if success == 0:
+                        user: discord.Member = ctx.guild.get_member(mention.id)
+                        jail_role = ctx.guild.get_role(self.jail_role)
+                        self.jailed_users[user.name] = user.roles
+                        prep_jail_card_tasks = []
+                        prep_jail_card_tasks.append(self.get_profile_pic_and_write_dead_or_alive(user, lifetime_total))
+                        prep_jail_card_tasks.append(user.add_roles(jail_role))
+                        prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}"))
+                        for current_role in user.roles:
+                            if current_role.name == "@everyone" or current_role.name == "Server Booster" or current_role.name.lower() == "admin" or current_role.name == jail_role.name:
+                                continue
+                            prep_jail_card_tasks.append(user.remove_roles(current_role))
+                        try:
+                            results = await asyncio.gather(*prep_jail_card_tasks)
+                            wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
+                        except discord.Forbidden:
+                            print(f"Skipped a role I could not remove: {current_role.name}")
+                            # wanted_messageable = discord.File(filename="wanted_small.jpg")
+                        # await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
+                        
+                        strike_reasons = ""
+                        for strike in range(1, 4):
                             try:
-                                results = await asyncio.gather(*prep_jail_card_tasks)
-                                wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
-                            except discord.Forbidden:
-                                print(f"Skipped a role I could not remove: {current_role.name}")
-                                # wanted_messageable = discord.File(filename="wanted_small.jpg")
-                            # await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
-                            
-                            strike_reasons = ""
-                            for strike in range(1, 4):
-                                try:
-                                    reason = self.main_db.get_user_field(mention.id, f"strike_{strike}")
-                                    strike_reasons += f"Strike {strike}: {reason.decode('utf8')}\n"
-                                except Exception as e:
-                                    pass
-                            
-                            # await user.add_roles(jail_role)
-                            channel = self.bot.get_channel(self.confessional)
-                            embed = discord.Embed(
-                                title=f"You have been jailed for the following violations\n\n",
-                                description=f"<@{mention.id}>\n\n{strike_reasons}",
-                                color=0xFF0000
+                                reason = self.main_db.get_user_field(mention.id, f"strike_{strike}")
+                                strike_reasons += f"Strike {strike}: {reason.decode('utf8')}\n"
+                            except Exception as e:
+                                pass
+                        
+                        # await user.add_roles(jail_role)
+                        channel = self.bot.get_channel(self.confessional)
+                        embed = discord.Embed(
+                            title=f"You have been jailed for the following violations\n\n",
+                            description=f"<@{mention.id}>\n\n{strike_reasons}",
+                            color=0xFF0000
+                        )
+                        embed.set_image(url="attachment://wanted_small.jpg")
+                        # Add attachment URLs to the embed
+                        if attachment_urls:
+                            embed.add_field(
+                                name="Attachments",
+                                value='\n'.join(attachment_urls),
+                                inline=False
                             )
-                            #embed.set_thumbnail(url=f"attachment://wanted.png")  # Set as thumbnail from file
-                            embed.set_image(url="attachment://wanted_small.jpg")
-                            # Add attachment URLs to the embed
-                            if attachment_urls:
-                                embed.add_field(
-                                    name="Attachments",
-                                    value='\n'.join(attachment_urls),
-                                    inline=False
-                                )
 
-                            await channel.send(embed=embed, file=wanted_messageable)
-                        else:
-                            await ctx.send(f"Couldn't reset your strikes, contact an admin")
+                        await channel.send(embed=embed, file=wanted_messageable)
                     else:
-                        await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {strike_details}\n TOTAL COUNT: {total}")
+                        await ctx.send(f"Couldn't reset your strikes, contact an admin")
                 else:
-                    await ctx.send(
-                        f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>")
+                    await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {strike_details}\nTOTAL COUNT: {total}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strikes left.")
+            else:
+                await ctx.send(
+                    f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>. <@{ctx.author.id}> you lost a strike for trying to strike an unregistered user, you now have {strike_quota_post_strike} strikes left.")
+
+
     
 
     @commands.command()
