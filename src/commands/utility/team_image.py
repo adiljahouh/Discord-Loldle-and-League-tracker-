@@ -16,13 +16,13 @@ class imageCreator():
     def get_players(self):
         return self.players
 
-    async def get_team_image(self):
+    async def get_team_image(self, img: Image, myFont) -> BytesIO:
         base_image = Image.new(mode="RGB", size=(1100, 1020))
-        img = Image.open('./assets/image_generator/team_background.png')
+        # img = Image.open('./assets/image_generator/team_background.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
         ddrag_version = await get_latest_ddragon()
-        myFont = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
+        # myFont = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
         draw_text = ImageDraw.Draw(base_image)
         for team_num, team in enumerate(self.champions):
             for champ_num, champ in enumerate(team):

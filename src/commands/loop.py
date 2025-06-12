@@ -14,6 +14,7 @@ from commands.utility.decorators import fix_highlighted_player
 import tracemalloc
 from api.ddragon import get_latest_ddragon
 # Start tracing memory allocations
+from PIL import Image, ImageFont
 
 class loops(commands.Cog):
     def __init__(self, bot: commands.Bot, main_db: MainDB, betting_db: BettingDB, 
@@ -26,7 +27,9 @@ class loops(commands.Cog):
         self.channel_id = channel_id
         self.ping_role_id = ping_role_id
         self.active_message_id = 0
-        self.ddrag_version = ddrag_version 
+        self.ddrag_version = ddrag_version
+        self.background_image = Image.open('./assets/image_generator/team_background.png') 
+        self.end_image_font = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
         # Fix the db if there is a highlighted player
         fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
 
@@ -188,7 +191,7 @@ class loops(commands.Cog):
                 players = [[player[0] for player in team] for team in data[1]]
                 try:
                     image_creator: imageCreator = imageCreator(champions, players, data[2])
-                    img = await image_creator.get_team_image()
+                    img = await image_creator.get_team_image(self.background_image, self.end_image_font)
                 except aiohttp.ClientResponseError as e:
                     print("Failed to get images for image creator with exception: ", e)
                     return
@@ -247,6 +250,7 @@ class loops(commands.Cog):
                 print(f"Activate stalking error: {e}")
         finally:
             # Take a memory snapshot
+            img.close()
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics("lineno")
             print("[Top 10 Memory Stats]")
@@ -277,6 +281,7 @@ class loops(commands.Cog):
                 return
             try:
                 endIm = EndImage(match_data, victim)
+                # TODO: end image stop loading everything on every endimage and closet eh data.
                 end_image = await endIm.get_team_image()
                 end_result = endIm.get_game_result()
                 picture = discord.File(fp=end_image, filename="team.png")
@@ -329,6 +334,7 @@ class loops(commands.Cog):
                 print(f"End stalking error: {e}")
         finally:
             # Take a memory snapshot
+            end_image.close()
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics("lineno")
             print("[Top 10 Memory Stats]")
