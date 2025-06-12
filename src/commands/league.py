@@ -62,7 +62,7 @@ class LeagueCommands(commands.Cog):
                 except Exception as ex:
                     print(ex)
                 response = f"**Discord ID**: {discord_userid}\
-            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user['strikes']}\n**Points:** {user['points']}"
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user['strikes']}\n**Points:** {user['points']}\n**Strike Quota:** {user['strike_quota']}"
             try:
                 g_role = ctx.guild.get_role(self.g_role)
                 await ctx.author.add_roles(g_role)
@@ -261,6 +261,10 @@ class LeagueCommands(commands.Cog):
                 await ctx.send("Use .stalk <add/remove> <ign#tag>")
                 return
             if args[0] == "add":
+                total_users = self.stalking_db.get_all_users()
+                if len(total_users) >= 5:
+                    await ctx.send("You can only stalk 5 users at a time, remove one first")
+                    return
                 self.stalking_db.store_user(summoner)
                 embed = discord.Embed(title=f"Victim added: {summoner}",
                                       color=0xFF0000)
