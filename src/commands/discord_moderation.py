@@ -149,7 +149,7 @@ class discMod(commands.Cog):
             self.main_db.set_user_field(ctx.author.id, "strike_quota", 3)
             strike_quota = 3
         if strike_quota <= 0:
-            await ctx.send("You have no strikes left...")
+            await ctx.send("You have no strikes/honors left...")
             return
         mentions = ctx.message.mentions
         if len(mentions) == 0:
@@ -164,7 +164,7 @@ class discMod(commands.Cog):
             # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
             if self.main_db.check_user_existence(mention.id) != 1:
                 await ctx.send(
-                    f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>. <@{ctx.author.id}> you lost a strike for trying to strike an unregistered user, you now have {strike_quota_post_strike} strike(s) left.")
+                    f"You cannot strike <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>. <@{ctx.author.id}> you lost a strike/honor for trying to strike an unregistered user, you now have {strike_quota_post_strike} strike(s)/honor(s) left.")
                 return
                 
             total = self.main_db.increment_field(mention.id, "strikes", 1)
@@ -177,7 +177,7 @@ class discMod(commands.Cog):
 
             success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
             if total < 3:
-                 await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {strike_details}\nTOTAL COUNT: {total}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strike(s) left.")
+                 await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {strike_details}\nTOTAL COUNT: {total}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strike(s)/honor(s) left.")
                  return
             success = self.main_db.set_user_field(mention.id, "strikes", 0)
             if success != 0:
@@ -190,7 +190,7 @@ class discMod(commands.Cog):
             prep_jail_card_tasks = []
             prep_jail_card_tasks.append(self.get_profile_pic_and_write_dead_or_alive(user, lifetime_total))
             prep_jail_card_tasks.append(user.add_roles(jail_role))
-            prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strikes left."))
+            prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strikes/honors left."))
             for current_role in user.roles:
                 if current_role.name == "@everyone" or current_role.name == "Server Booster" or current_role.name.lower() == "admin" or current_role.name == jail_role.name:
                     continue
@@ -333,6 +333,50 @@ class discMod(commands.Cog):
         else:
             self.active_destruction_target = None
             await ctx.send("Destruction mode stopped.")
+
+    @commands.command()
+    @role_check
+    @mod_check
+    async def honor(self, ctx: commands.Context, *args):
+        """honor someone by using .honor @<user> <reason>"""
+        strike_quota = int(
+            self.main_db.get_user_field(ctx.author.id, "strike_quota").decode('utf-8')) if self.main_db.get_user_field(
+            ctx.author.id, "strike_quota") != None else None
+        if strike_quota is None:
+            self.main_db.set_user_field(ctx.author.id, "strike_quota", 3)
+            strike_quota = 3
+        if strike_quota <= 0:
+            await ctx.send("You have no strikes/honors left...")
+            return
+
+        mentions = ctx.message.mentions
+        attachments = ctx.message.attachments  # Get attachments
+        attachment_urls = [attachment.url for attachment in attachments]
+        # from the command text remove all @'s to filter out the reason
+        honor_reasoning = [arg for arg in args if not any(str(mention.id) in arg for mention in mentions)]
+        strike_quota_post_strike = self.main_db.decrement_field(ctx.author.id, "strike_quota", 1)
+
+        if len(honor_reasoning) == 0:
+            # if no reason is provided
+            honor_reasoning.append("No reason mentioned")
+
+        if len(mentions) == 0:
+            await ctx.send("Mention someone to honor e.g. .add honor <@319921436519038977> for being a BOTTOM G")
+        else:
+            for mention in mentions:
+                # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
+                if self.main_db.check_user_existence(mention.id) == 1:
+                    total_honors = self.main_db.increment_field(mention.id, "total_honors", 1)
+
+                    # Prepare reason and attachments string
+                    reason = ' '.join(honor_reasoning)
+                    attachments_str = ', '.join(attachment_urls) if attachment_urls else ""
+                    honor_details = f"{reason} {attachments_str}"
+
+                    await ctx.send(f"You were honored <@{mention.id}> for {honor_details}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strike(s)/honor(s) left.")
+                else:
+                    await ctx.send(
+                        f"You cannot honor <@{mention.id}> because (s)he has not registered yet, <@{mention.id}> please use .register <your_league_name>. <@{ctx.author.id}> you lost a strike/honor for trying to honor an unregistered user, you now have {strike_quota_post_strike} strike(s)/honor(s) left.")
 
 async def setup(bot: commands.Bot):
     settings = Settings()

@@ -58,11 +58,24 @@ class PointCommands(commands.Cog):
                 today = datetime.datetime.now(amsterdam_tz).date()
                 userid = str(ctx.author.id)
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_claim")
+                total_honors = self.main_db.get_user_field(discord_id=userid, field="total_honors").decode('utf-8')
+                most_honored = self.main_db.get_top_3_total_honor_users()
+                top_honor_ids = [user[0] for user in most_honored]
+                top_honor_honors = [user[1] for user in most_honored]
+                # print(most_honored)
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "You claim some points"
                     self.main_db.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
                     self.main_db.increment_field(userid, "points", 1000)
-                    self.main_db.increment_field(userid, "strike_quota", 3)
+                    if (len(most_honored) > 0):
+                        if (int(total_honors) == top_honor_honors[0]):
+                            self.main_db.increment_field(userid, "strike_quota", 10)
+                        elif userid in top_honor_ids:
+                            self.main_db.increment_field(userid, "strike_quota", 5)
+                        else:
+                            self.main_db.increment_field(userid, "strike_quota", 3)
+                    else:
+                        self.main_db.increment_field(userid, "strike_quota", 3)
                 else:
                     status = "You already claimed your points and strikes for today"
                 points_bytes = self.main_db.get_user_field(userid, "points")

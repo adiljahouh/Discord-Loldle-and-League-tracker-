@@ -14,7 +14,7 @@ class MainDB():
         except ConnectionError:
             print("Cant connect to host")
 
-    def store_user(self, discord_id, riot_user, puuid, author_discord_tag, strikes=0, points=500, strike_1="", strike_2="", strike_3="", total_strikes=0, strike_quota=3) -> None:
+    def store_user(self, discord_id, riot_user, puuid, author_discord_tag, strikes=0, points=500, strike_1="", strike_2="", strike_3="", total_strikes=0, strike_quota=3, total_honors = 0) -> None:
         self.connect()
         self.client.hset(discord_id, "riot_user", riot_user)
         self.client.hset(discord_id, "puuid", puuid)
@@ -22,6 +22,7 @@ class MainDB():
         self.client.hset(discord_id, "strikes", strikes) # strike count on user
         self.client.hset(discord_id, "lifetime_strikes", total_strikes) # life_time strike count
         self.client.hset(discord_id, "points", points)
+        self.client.hset(discord_id, "total_honors", total_honors)
         self.client.hset(discord_id, "strike_1", strike_1)
         self.client.hset(discord_id, "strike_2", strike_2)
         self.client.hset(discord_id, "strike_3", strike_3)
@@ -89,3 +90,66 @@ class MainDB():
         self.connect()
         neg_amount = -int(amount)
         return self.client.hincrby(discord_id, field, str(neg_amount))
+
+    def get_top_3_total_honor_users(self) -> list[tuple[str, int]]:
+        """
+        Retrieves the top 3 users based on their 'total_honors' field,
+        considering ties for the third position.
+
+        Returns:
+            A list of tuples, where each tuple contains the discord_id (str)
+            and the total_honors (int) of a user, sorted in descending order
+            of total_honors. If multiple users share the same total_honors
+            value as the 3rd ranked user, all of them are included.
+            Returns an empty list if no users are found or no 'total_honors' data exists.
+        """
+        self.connect()
+        all_users = self.get_all_users()
+
+        honor_data = []
+        for user_key_bytes in all_users:
+            discord_id = user_key_bytes.decode('utf-8')
+            total_honors_bytes = self.client.hget(discord_id, "total_honors")
+
+            if total_honors_bytes is not None:
+                try:
+                    total_honors = int(total_honors_bytes.decode('utf-8'))
+                    if total_honors > 0:
+                        honor_data.append((discord_id, total_honors))
+                except ValueError:
+                    # Handle cases where total_honors might not be a valid integer
+                    print(f"Warning: total_honors for user {discord_id} is not a valid integer: {total_honors_bytes}")
+                    pass
+
+        # Sort the users by total_honors in descending order
+        honor_data.sort(key=lambda x: x[1], reverse=True)
+
+        if not honor_data:
+            return []
+
+        top_users = []
+        # Add the first two users if they exist
+        if len(honor_data) >= 1:
+            top_users.append(honor_data[0])
+        if len(honor_data) >= 2:
+            top_users.append(honor_data[1])
+
+        # Find the threshold for the 3rd position
+        third_place_score = -1  # Initialize with a value lower than any possible honor
+        if len(honor_data) >= 3:
+            third_place_score = honor_data[2][1]
+
+        # Add users from the 3rd position onwards as long as their score matches the third_place_score
+        for i in range(2, len(honor_data)):
+            if honor_data[i][1] == third_place_score:
+                top_users.append(honor_data[i])
+            elif honor_data[i][1] < third_place_score and third_place_score != -1:
+                # If we've passed the third place score (and it's not the initial -1), stop
+                break
+            elif third_place_score == -1 and i < 3:  # To handle cases with less than 3 unique scores
+                top_users.append(honor_data[i])
+            elif third_place_score == -1 and i >= 3:  # If there are fewer than 3 unique scores, and we've already added what's there, stop
+                break
+
+        return top_users
+
