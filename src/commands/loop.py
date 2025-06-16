@@ -31,7 +31,6 @@ class loops(commands.Cog):
         self.background_image = Image.open('./assets/image_generator/team_background.png') 
         self.end_image_font = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
         # Fix the db if there is a highlighted player
-        fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
 
 
 
@@ -41,11 +40,10 @@ class loops(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.tracemalloc_started = False
-        
+        fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
+        self.stalking_db.clear_active_user()
         # Start tracing memory usage
         tracemalloc.start()
-        self.tracemalloc_started = True
         print("Tracemalloc started in cog initialization.")
         self.activate_stalking.start()
         self.end_stalking.start()
@@ -138,16 +136,17 @@ class loops(commands.Cog):
         embed.add_field(name="Top Damage Taken Past 5 Games", value=leaderboard_text)
         await channel.send(embed=embed)
 
-    @tasks.loop(minutes=2.0)
+    @tasks.loop(minutes=1)
     async def activate_stalking(self):
+        print("Activating stalking...")
         try:
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics("lineno")
             print("[Top 10 Memory Stats activate_stalking]")
             for stat in top_stats[:10]:
                 print(stat)
-            # Check if a user is currently getting stalked
             channel_id: int = self.channel_id
+            img = None
             channel = self.bot.get_channel(channel_id)
             if self.stalking_db.get_active_user() is not None:      
                 return
@@ -157,6 +156,7 @@ class loops(commands.Cog):
             active = False
             data = None
             victim = ""
+            print(f"Victims: {victims}")
             for pos_victim in victims:
                 try:
                     # Small 1 second delay to not spam the requests
@@ -237,25 +237,22 @@ class loops(commands.Cog):
                     if decision == "believers":
                         embed.add_field(name='\u200b', value='\u200b')
                 try:
-                    # embed.set_footer(text="Made by Matthijs (Aftershock)")
                     await message.edit(embed=embed)
                     print("Starting message updated.")
                 except Exception as e:
                     print(f"Failed to update message: {e}")
         # Send the error in Discord
         except Exception as e:
-            try:
-                await channel.send(f"Activate stalking error: {e}")
-                print(f"Activate stalking error: {e}")
-            except Exception as e:
-                print(f"Activate stalking error: {e}")
+            print(f"Activate stalking error: {e}")
         finally:
             # Take a memory snapshot
-            img.close()
+            if img:
+                img.close()
                 
                 
-    @tasks.loop(minutes=2.0)
+    @tasks.loop(minutes=1)
     async def end_stalking(self):
+        print("Ending stalking...")
         try:
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics("lineno")
@@ -264,12 +261,12 @@ class loops(commands.Cog):
                 print(stat)
             channel_id: int = self.channel_id
             channel = self.bot.get_channel(channel_id)
+            end_image = None
             victim = self.stalking_db.get_active_user()
             ##
             # victim = "1738#EUW" ##TODO:
             print(f"Active victim: {victim}")
             if victim is None:
-  
                 return
             
             match_id = f'EUW1_{self.stalking_db.current_game}'
@@ -327,19 +324,11 @@ class loops(commands.Cog):
                     print("Failed to send the message.")
         # Send the error in Discord
         except Exception as e:
-            try:
-                await channel.send(f"End stalking error: {e}")
-                print(f"End stalking error: {e}")
-            except Exception as e:
-                print(f"End stalking error: {e}")
+            print(f"End stalking error: {e}")
         finally:
             # Take a memory snapshot
-            end_image.close()
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics("lineno")
-            print("[Top 10 Memory Stats]")
-            for stat in top_stats[:10]:
-                print(stat)
+            if end_image:
+                end_image.close()
 
 async def setup(bot: commands.Bot):
     settings = Settings()

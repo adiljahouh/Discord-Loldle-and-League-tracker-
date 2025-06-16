@@ -51,3 +51,9 @@ class StalkingDB():
             if self.get_user_status(client):
                 return client
         return None
+    def clear_active_user(self):
+        self.connect()
+        clients = self.client.keys('*')
+        clients_deco = [str(client.decode('utf-8')) for client in clients]
+        for client in clients_deco:
+            self.change_status(client, False)

@@ -61,8 +61,11 @@ class PointCommands(commands.Cog):
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "You claim some points"
                     self.main_db.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
+                    current_strikes_bytes = self.main_db.get_user_field(userid, "strike_quota")
+                    current_strikes = current_strikes_bytes.decode('utf-8') if current_strikes_bytes else "0"
+                    if int(current_strikes) < 3:
+                        self.main_db.increment_field(userid, "strike_quota", 3)
                     self.main_db.increment_field(userid, "points", 1000)
-                    self.main_db.increment_field(userid, "strike_quota", 3)
                 else:
                     status = "You already claimed your points and strikes for today"
                 points_bytes = self.main_db.get_user_field(userid, "points")
@@ -72,7 +75,7 @@ class PointCommands(commands.Cog):
                 return
             points = points_bytes.decode('utf-8')
             strikes = strikes_bytes.decode('utf-8') if strikes_bytes else "0" 
-            message = f'Total points: {points}, Total strikes: {strikes}'
+            message = f'Total points: {points}\nTotal strikes: {strikes}'
             embed = discord.Embed(title=f"{status}\n\n",
                                   description=f"{message}",
                                   color=0xFF0000)
