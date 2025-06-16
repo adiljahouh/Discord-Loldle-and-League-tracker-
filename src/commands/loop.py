@@ -49,10 +49,6 @@ class loops(commands.Cog):
         print("Tracemalloc started in cog initialization.")
         self.activate_stalking.start()
         self.end_stalking.start()
-        # await asyncio.sleep(900)
-        # self.leaderboard.start()
-        # await asyncio.sleep(1800)  # 1800
-        # self.send_message.start()
 
     @tasks.loop(hours=24)
     async def send_message(self):
@@ -144,10 +140,15 @@ class loops(commands.Cog):
 
     @tasks.loop(minutes=2.0)
     async def activate_stalking(self):
-        channel_id: int = self.channel_id
-        channel = self.bot.get_channel(channel_id)
         try:
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics("lineno")
+            print("[Top 10 Memory Stats activate_stalking]")
+            for stat in top_stats[:10]:
+                print(stat)
             # Check if a user is currently getting stalked
+            channel_id: int = self.channel_id
+            channel = self.bot.get_channel(channel_id)
             if self.stalking_db.get_active_user() is not None:      
                 return
             victims = self.stalking_db.get_all_users()
@@ -251,19 +252,18 @@ class loops(commands.Cog):
         finally:
             # Take a memory snapshot
             img.close()
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics("lineno")
-            print("[Top 10 Memory Stats]")
-            for stat in top_stats[:10]:
-                print(stat)
                 
                 
     @tasks.loop(minutes=2.0)
     async def end_stalking(self):
-        print("End stalking")
-        channel_id: int = self.channel_id
-        channel = self.bot.get_channel(channel_id)
         try:
+            snapshot = tracemalloc.take_snapshot()
+            top_stats = snapshot.statistics("lineno")
+            print("[Top 10 Memory Stats end_stalking]")
+            for stat in top_stats[:10]:
+                print(stat)
+            channel_id: int = self.channel_id
+            channel = self.bot.get_channel(channel_id)
             victim = self.stalking_db.get_active_user()
             ##
             # victim = "1738#EUW" ##TODO:
