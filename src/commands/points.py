@@ -64,7 +64,8 @@ class PointCommands(commands.Cog):
                     current_strikes_bytes = self.main_db.get_user_field(userid, "strike_quota")
                     current_strikes = current_strikes_bytes.decode('utf-8') if current_strikes_bytes else "0"
                     if int(current_strikes) < 3:
-                        self.main_db.increment_field(userid, "strike_quota", 3)
+                        incr_by = 3 - int(current_strikes)
+                        self.main_db.increment_field(userid, "strike_quota", incr_by)
                     self.main_db.increment_field(userid, "points", 1000)
                 else:
                     status = "You already claimed your points and strikes for today"
