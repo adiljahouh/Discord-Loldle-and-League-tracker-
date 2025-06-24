@@ -30,8 +30,8 @@ class LeagueCommands(commands.Cog):
             if has_jail_role:
                 await ctx.send("HAHAHAHAHAHAH LOL!!! CONFESS YOUR SINS TO THE JUDGES")
                 return
-            print("register")
             riot_name = "".join(args)
+            print("registering user", riot_name)
             if len(riot_name) == 0 or '#' not in riot_name:
                 await ctx.send("Specify a riot user and tag (e.g. .register mocro#zpr)")
                 return
@@ -52,7 +52,7 @@ class LeagueCommands(commands.Cog):
                 print("doesnt exists")
                 self.main_db.store_user(discord_userid, riot_name, puuid, author_discord_tag)
                 response = f"**Discord ID**: {discord_userid}\
-                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500"
+                \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** 0\n**Points:** 500\n**Strike Quota:** 3"
             else:
                 print("exists")
                 try:
@@ -60,9 +60,9 @@ class LeagueCommands(commands.Cog):
                     self.main_db.set_user_field(discord_userid, "puuid", puuid)
                     user :dict = self.main_db.get_user(discord_userid)
                 except Exception as ex:
-                    print(ex)
+                    print("Error while updating user", ex)
                 response = f"**Discord ID**: {discord_userid}\
-            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user['strikes']}\n**Points:** {user['points']}\n**Strike Quota:** {user['strike_quota']}"
+            \n**Discord Tag:** {author_discord_tag}\n**Riot User:** {riot_name}\n**Strikes:** {user.get('strikes', 0)}\n**Points:** {user.get('points', 0)}\n**Strike Quota:** {user.get('strike_quota', 3)}"
             try:
                 g_role = ctx.guild.get_role(self.g_role)
                 await ctx.author.add_roles(g_role)
