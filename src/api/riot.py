@@ -67,9 +67,9 @@ class riotAPI():
                 return content
 
             
-    async def get_soloq_info_by_encrypted_id(self, encr_summoner_id):
+    async def get_player_account_info_by_puuid(self, puuid):
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-summoner/{encr_summoner_id}",
+            async with session.get(f"https://euw1.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}",
                                     params=self.params) as response:
                 response.raise_for_status()
                 content: dict = await response.json()

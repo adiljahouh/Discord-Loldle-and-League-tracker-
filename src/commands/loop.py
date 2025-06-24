@@ -46,7 +46,7 @@ class loops(commands.Cog):
         tracemalloc.start()
         print("Tracemalloc started in cog initialization.")
         self.activate_stalking.start()
-        self.end_stalking.start()
+        self.end_stalking.start() # this loop should only start when were stalking
 
     @tasks.loop(hours=24)
     async def send_message(self):

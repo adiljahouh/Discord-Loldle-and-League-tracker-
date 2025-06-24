@@ -173,20 +173,16 @@ class LeagueCommands(commands.Cog):
                 # if we pass a name
                 if len(args) != 0:
                     riot_name: str = "".join(args)
-                    if '#' in riot_name:
-                        # get puuid from test#100
-                        user, tag = riot_name.split('#')
-                        print(user, tag)
-                        puuid = await self.riot_api.get_puuid_by_tag(user, tag)
-                    else:
+                    if '#' not in riot_name:
                         await ctx.send("You didnt include a tag seperated by #, such as Mocro#zpr")
+                        return
+                    user, tag = riot_name.split('#')
+                    print(user, tag)
+                    puuid = await self.riot_api.get_puuid_by_tag(user, tag)
                 # if we dont pass a name
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid").decode('utf-8')
-                
-                # still in use but useless
-                id = await self.riot_api.get_encrypted_summoner_id_by_puuid(puuid)
-                soloq_info = await self.riot_api.get_soloq_info_by_encrypted_id(id)
+                soloq_info = await self.riot_api.get_player_account_info_by_puuid(puuid)
                 if soloq_info is None:
                     await ctx.send("User apparently doesnt play SOLOQ")
                     return
@@ -200,7 +196,7 @@ class LeagueCommands(commands.Cog):
                 return
             finally:
                 try:
-                    print(soloq_info)
+                    print("sending soloq info")
                     picture = discord.File(fp=f"./assets/ranks/{soloq_info['tier'].upper()}.png", filename=f"{soloq_info['tier'].upper()}.png")
                     embed = discord.Embed(title=f"SOLODUO {soloq_info['tier']} {soloq_info['rank']} {soloq_info['leaguePoints']} LP\n",
                                         description=f"{message}",
