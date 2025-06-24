@@ -57,7 +57,7 @@ class riotAPI():
         revisionDate	long	Date summoner was last modified specified as epoch milliseconds. The following events will update this timestamp: profile icon change, playing the tutorial or advanced tutorial, finishing a game, summoner name change
         id	string	Encrypted summoner ID. Max length 63 characters.
         puuid	string	Encrypted PUUID. Exact length of 78 characters.
-        summonerLevel	long	Summoner level associated with the summon
+        summonerLevel	long	Summoner level associated with the summon NOT USED
         """
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}",
@@ -66,17 +66,6 @@ class riotAPI():
                 content: dict = await response.json()
                 return content
 
-
-    async def get_encrypted_summoner_id_by_puuid(self, puuid):
-        return (await self.get_summoner_values_by_puuid(puuid))['id']
-    
-    async def get_puuid_by_summoner_id(self, enc_summoner_id):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/summoner/v4/summoners/{enc_summoner_id}",
-                                   params=self.params) as response:
-                response.raise_for_status()
-                content: dict = await response.json()
-                return content['puuid']
             
     async def get_soloq_info_by_encrypted_id(self, encr_summoner_id):
         async with aiohttp.ClientSession() as session:
@@ -300,9 +289,18 @@ class riotAPI():
                 text_arr.append(game_mode)
                 return True, text_arr, game_length, game_type
 
-    async def get_clash_team_by_player_summonerID(self, encr_summoner_id):
+    async def get_clash_team_by_puuid(self, puuid):
+        """
+        This endpoint returns a list of active Clash players for a given PUUID. 
+        If a summoner registers for multiple tournaments at the same time (e.g., Saturday and Sunday) then both registrations would appear in this list.
+        Return value: List[PlayerDto]
+        puuid	string	Encrypted PUUID. Exact length of 78 characters.
+        teamId	string	Encrypted team ID. Max length 63 characters.
+        position	string	Position of the player in the team. Possible values: TOP, JUNGLE, MIDDLE, BOTTOM, UTILITY
+        role	string	Role of the player in the team. Possible values: CAPTAIN, MEMBER
+        """
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-summoner/{encr_summoner_id}",
+            async with session.get(f"https://euw1.api.riotgames.com/lol/clash/v1/players/by-puuid/{puuid}",
                                    params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
@@ -318,10 +316,10 @@ class riotAPI():
 
     async def get_clash_opgg(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
-        encrypt_summoner_id = await self.get_encrypted_summoner_id_by_puuid(puuid)
-        player = await self.get_clash_team_by_player_summonerID(encrypt_summoner_id)
-        if len(player) == 1:
-            clash_team_details = await self.get_clash_team_by_clash_team_id(player[0]['teamId'])
+        teams = await self.get_clash_team_by_puuid(puuid)
+        team_opggs = []
+        for team in teams:
+            clash_team_details = await self.get_clash_team_by_clash_team_id(team[0]['teamId'])
 #         players = [{
 #        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
 #        "teamId": "00000000-0000-0000-0000-000000000000",
@@ -340,15 +338,15 @@ class riotAPI():
 #        "role": "CAPTAIN"
 #    },
 # ]
-        text = "https://www.op.gg/multisearch/euw?summoners="
-        for player in clash_team_details['players']:
-            puuid = await self.get_puuid_by_summoner_id(player['summonerId'])
-            name, tag = await self.get_name_tag_by_puuid(puuid=puuid)
-            summoner = name + '#' + tag
-            summoner_cleaned = summoner.replace(" ", "").lower()
-            summoner_cleaned = summoner_cleaned.replace("#", "%23")
-            text += f"{summoner_cleaned},"
-        return text[:-1]
+            text = "https://www.op.gg/multisearch/euw?summoners="
+            for player in clash_team_details['players']:
+                name, tag = await self.get_name_tag_by_puuid(puuid=player['puuid'])
+                summoner = name + '#' + tag
+                summoner_cleaned = summoner.replace(" ", "").lower()
+                summoner_cleaned = summoner_cleaned.replace("#", "%23")
+                text += f"{summoner_cleaned},"
+            team_opggs.append(text[:-1])
+        return team_opggs
 
     def order_team(self, champion_roles, team, champion_list):
         champions = [combo[1] for combo in team]

@@ -183,6 +183,8 @@ class LeagueCommands(commands.Cog):
                 # if we dont pass a name
                 else:
                     puuid = self.main_db.get_user_field(str(ctx.author.id), "puuid").decode('utf-8')
+                
+                # still in use but useless
                 id = await self.riot_api.get_encrypted_summoner_id_by_puuid(puuid)
                 soloq_info = await self.riot_api.get_soloq_info_by_encrypted_id(id)
                 if soloq_info is None:
@@ -224,7 +226,7 @@ class LeagueCommands(commands.Cog):
             try:
                 if len(args) != 0:
                     opgg = await self.riot_api.get_clash_opgg(user=user, tag=tag)
-                    message = opgg
+                    message = ",".join(opgg)
                     embed = True
                 else:
                     message = "Please provide a valid summoner name: .clash <summoner name>"
