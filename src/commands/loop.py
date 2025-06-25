@@ -138,12 +138,6 @@ class loops(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def activate_stalking(self):
-        print("Activating stalking...")
-        snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics("lineno")
-        print("[Top 10 Memory Stats activate_stalking]")
-        for stat in top_stats[:10]:
-            print(stat)
         try:
             channel_id: int = self.channel_id
             img = None
@@ -252,11 +246,6 @@ class loops(commands.Cog):
     async def end_stalking(self):
         print("Ending stalking...")
         try:
-            snapshot = tracemalloc.take_snapshot()
-            top_stats = snapshot.statistics("lineno")
-            print("[Top 10 Memory Stats end_stalking]")
-            for stat in top_stats[:10]:
-                print(stat)
             channel_id: int = self.channel_id
             channel = self.bot.get_channel(channel_id)
             end_image = None
@@ -322,7 +311,9 @@ class loops(commands.Cog):
                     print("Failed to send the message.")
         # Send the error in Discord
         except Exception as e:
-            print(f"End stalking error: {e}")
+            print(f"End stalking error: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
             # Take a memory snapshot
             if end_image:
