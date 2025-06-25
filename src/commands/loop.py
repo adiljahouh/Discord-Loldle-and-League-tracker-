@@ -151,7 +151,6 @@ class loops(commands.Cog):
             if self.stalking_db.get_active_user() is not None:      
                 return
             victims = self.stalking_db.get_all_users()
-            print(f"Stalking victims of length: {len(victims)}")
             found = False
             active = False
             data = None
@@ -170,10 +169,7 @@ class loops(commands.Cog):
                     continue
                 # If game was already highlighted, dont show it again and look for another active game
                 # or if game is too far gone or isnt ranked dont track
-                if game_length > 600 or game_type != 420:
-                    print(f"Continuing, gametype {game_type} or gamelength {game_length} incorrect")
-                    continue
-                if active and self.stalking_db.current_game != data[0]:
+                if active and self.stalking_db.current_game != data[0] and game_type == 420 and game_length <= 600:
                     victim = pos_victim
                     found = True
                     break
