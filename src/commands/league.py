@@ -245,23 +245,17 @@ class LeagueCommands(commands.Cog):
     @mod_check
     async def victim(self, ctx: commands.Context, *args):
         """
-            Add or remove a stalking victim: .victim <add/remove> <ign>
+            Add or remove a player from the game stalker: .victim <add/remove> <ign>
         """
         async with ctx.typing():
-            if len(args) < 2:
-                await ctx.send("Use .stalk <add/remove> <ign#tag>")
-                return
-            elif args[0] != "add" and args[0] != "remove":
-                await ctx.send("Use .stalk <add/remove> <ign#tag>")
+            if len(args) < 2 or (args[0] not in ["add", "remove"]) or ('#' not in summoner and args[0] == "add"):
+                await ctx.send("Use .victim <add/remove> <ign#tag>")
                 return
             summoner = " ".join(args[1:]).lower()
-            if '#' not in summoner and args[0] == "add": # bit silly but this is to enable removing junk
-                await ctx.send("Use .stalk <add/remove> <ign#tag>")
-                return
             if args[0] == "add":
                 total_users = self.stalking_db.get_all_users()
-                if len(total_users) >= 5:
-                    await ctx.send("You can only stalk 5 users at a time, remove one first")
+                if len(total_users) >= 3:
+                    await ctx.send("You can only stalk 3 users at a time, remove one first")
                     return
                 self.stalking_db.store_user(summoner)
                 embed = discord.Embed(title=f"Victim added: {summoner}",
