@@ -3,7 +3,7 @@ import aiohttp
 import asyncio
 import copy
 from api.ddragon import get_champion_dict, get_latest_ddragon
-from api.merakia import pull_data
+from api.merakia import get_role_playrate_for_each_champ_id
 from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass
@@ -277,7 +277,7 @@ class riotAPI():
                         team_one.append([summonerName, int(participant['championId'])])
                     else:
                         team_two.append([summonerName, int(participant['championId'])])
-                champion_roles = await pull_data()
+                champion_roles = await get_role_playrate_for_each_champ_id()
                 team_one = self.order_team(champion_roles, team_one, champion_list)
                 team_two = self.order_team(champion_roles, team_two, champion_list)
                 if team == 200:

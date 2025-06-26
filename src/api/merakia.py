@@ -1,7 +1,7 @@
 import aiohttp
 
 
-async def pull_data():
+async def get_role_playrate_for_each_champ_id():
     async with aiohttp.ClientSession() as session:
         async with session.get("http://cdn.merakianalytics.com/riot/lol/resources/latest/en-US/championrates.json") as response:
             response.raise_for_status()

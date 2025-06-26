@@ -15,7 +15,8 @@ import tracemalloc
 from api.ddragon import get_latest_ddragon
 # Start tracing memory allocations
 from PIL import Image, ImageFont
-
+from api.types import ActiveGameData, Player, Team
+from typing import Dict, List
 class loops(commands.Cog):
     def __init__(self, bot: commands.Bot, main_db: MainDB, betting_db: BettingDB, 
                  stalking_db: StalkingDB, riot_api: riotAPI, channel_id: int, ping_role_id: int, ddrag_version: str) -> None:
@@ -135,6 +136,43 @@ class loops(commands.Cog):
         embed = discord.Embed(title="💪🏽TOPPEST G's💪🏽\n\n", description=f"{description}", color=0xFF0000)
         embed.add_field(name="Top Damage Taken Past 5 Games", value=leaderboard_text)
         await channel.send(embed=embed)
+
+    async def parse_active_game_data(self, active_game_info) -> ActiveGameData:
+            """
+                Parsing the data to my BaseModel, this could be done within the model
+                but for readability sake i like to do it here
+            """
+            game_mode_mapping = {
+                0: "Custom",
+                400: "Normal",
+                420: "Ranked Solo/Duo",
+                430: "Blind Pick",
+                440: "Ranked Flex",
+                450: "ARAM",
+                700: "Clash"
+            }
+            teams_dict: Dict[int, List[Player]] = {100: [], 200: []}
+            for participant in active_game_info['participants']:
+                game_name = participant['riotId'].lower().split('#')[0]
+
+                player = Player(
+                    summoner_name=game_name,
+                    champion_id=participant['championId'],
+                    role= participant['role']
+                )
+                teams_dict[participant['teamId']].append(player)
+            team_model = [Team(
+                            team_id=team_id,
+                            players=players) 
+                            for team_id, players in teams_dict.items()]
+            
+            active_game_data = ActiveGameData(
+                                    game_length=active_game_info['gameLength'],
+                                    game_type=game_mode_mapping[active_game_info['gameQueueConfigId']],
+                                    game_id=active_game_info['gameId'],
+                                    teams=team_model
+                                    )
+            return active_game_data
 
     @tasks.loop(minutes=1)
     async def activate_stalking(self):
