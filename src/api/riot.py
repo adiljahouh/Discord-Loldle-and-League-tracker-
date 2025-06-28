@@ -220,21 +220,9 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user: str, tag: str, ddrag_version: str):
+    async def get_active_game_data(self, user: str, tag: str):
         """
-        "gameId": 7224176970,
-        "mapId": 11,
-        "gameMode": "CLASSIC",
-        "gameType": "MATCHED",
-        "gameQueueConfigId": 420,
-        "participants": [...],
-        "observers": {
-        "encryptionKey": "HLA8jsdhsKXswEoFmf+lLHqfj2WZb+/H"
-            },
-        "platformId":"EUW1",
-        "bannedChampions": []
-        "gameStartTime": 1733953725682,
-        "gameLength": 120
+           See active_game_example.json for the response structure.
         """
         puuid = await self.get_puuid_by_tag(user, tag)
         async with aiohttp.ClientSession() as session:
@@ -243,51 +231,51 @@ class riotAPI():
                     params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
-                #return content
-                status = response.status
-                if status == 404:
-                    return False, "User not in game", None, None
-                game_mode_mapping = {
-                    0: "Custom",
-                    400: "Normal",
-                    420: "Ranked Solo/Duo",
-                    430: "Blind Pick",
-                    440: "Ranked Flex",
-                    450: "ARAM",
-                    700: "Clash"
-                }
-                game_length = int(content['gameLength'])
-                game_type = int(content['gameQueueConfigId'])
-                if game_type in game_mode_mapping:
-                    game_mode = game_mode_mapping[game_type]
-                else:
-                    game_mode = content['gameMode']
-                champion_list = await get_champion_dict(ddrag_version)
-                text_arr = [content['gameId'], []]
-                team_one = []
-                team_two = []
-                team = 0
-                for participant in content['participants']:
-                    riotid = participant['riotId'].lower()
-                    part_name, par_tag = riotid.split('#')
-                    if user.lower() == part_name:
-                        team = participant['teamId']
-                    summonerName = part_name
-                    if participant['teamId'] == 100:
-                        team_one.append([summonerName, int(participant['championId'])])
-                    else:
-                        team_two.append([summonerName, int(participant['championId'])])
-                champion_roles = await get_role_playrate_for_each_champ_id()
-                team_one = self.order_team(champion_roles, team_one, champion_list)
-                team_two = self.order_team(champion_roles, team_two, champion_list)
-                if team == 200:
-                    text_arr[1].append(team_two)
-                    text_arr[1].append(team_one)
-                else:
-                    text_arr[1].append(team_one)
-                    text_arr[1].append(team_two)
-                text_arr.append(game_mode)
-                return True, text_arr, game_length, game_type
+                return content
+                # status = response.status
+                # if status == 404:
+                #     return False, "User not in game", None, None
+                # game_mode_mapping = {
+                #     0: "Custom",
+                #     400: "Normal",
+                #     420: "Ranked Solo/Duo",
+                #     430: "Blind Pick",
+                #     440: "Ranked Flex",
+                #     450: "ARAM",
+                #     700: "Clash"
+                # }
+                # game_length = int(content['gameLength'])
+                # game_type = int(content['gameQueueConfigId'])
+                # if game_type in game_mode_mapping:
+                #     game_mode = game_mode_mapping[game_type]
+                # else:
+                #     game_mode = content['gameMode']
+                # champion_list = await get_champion_dict(ddrag_version)
+                # text_arr = [content['gameId'], []]
+                # team_one = []
+                # team_two = []
+                # team = 0
+                # for participant in content['participants']:
+                #     riotid = participant['riotId'].lower()
+                #     part_name, par_tag = riotid.split('#')
+                #     if user.lower() == part_name:
+                #         team = participant['teamId']
+                #     summonerName = part_name
+                #     if participant['teamId'] == 100:
+                #         team_one.append([summonerName, int(participant['championId'])])
+                #     else:
+                #         team_two.append([summonerName, int(participant['championId'])])
+                # champion_roles = await get_role_playrate_for_each_champ_id()
+                # team_one = self.order_team(champion_roles, team_one, champion_list)
+                # team_two = self.order_team(champion_roles, team_two, champion_list)
+                # if team == 200:
+                #     text_arr[1].append(team_two)
+                #     text_arr[1].append(team_one)
+                # else:
+                #     text_arr[1].append(team_one)
+                #     text_arr[1].append(team_two)
+                # text_arr.append(game_mode)
+                # return True, text_arr, game_length, game_type
 
     async def get_clash_team_by_puuid(self, puuid):
         """

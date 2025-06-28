@@ -173,40 +173,35 @@ class loops(commands.Cog):
                                     teams=team_model
                                     )
             return active_game_data
-
-    @tasks.loop(minutes=1)
+    
     async def activate_stalking(self):
+        if self.stalking_db.get_active_user():   
+            return # if someone is being tracked
+        channel_id: int = self.channel_id
+        channel = self.bot.get_channel(channel_id)
         try:
-            channel_id: int = self.channel_id
-            img = None
-            channel = self.bot.get_channel(channel_id)
-            if self.stalking_db.get_active_user() is not None:      
-                return
-            victims = self.stalking_db.get_all_users()
-            found = False
-            active = False
-            data = None
-            victim = ""
-            print(f"Victims: {victims}")
-            for pos_victim in victims:
+            possible_victims = self.stalking_db.get_all_users()
+            print(f"Stalking victims: {possible_victims}")
+            victim = None
+            for pos_victim in possible_victims:
                 try:
-                    # Small 1 second delay to not spam the requests
                     print(f"Checking if {pos_victim} is in game")
-                    user, tag = pos_victim.split('#')
+                    game_name, tag_line = pos_victim.split('#')
                     await asyncio.sleep(1)
-                    active, data, game_length, game_type = await self.riot_api.get_active_game_status(user, tag, self.ddrag_version)
-                    if active:
-                        print(f"{pos_victim} is in game! Processing..")
+                    # active, data, game_length, game_type = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
+                    active_game_info = await self.riot_api.get_active_game_data(game_name, tag_line)
+                    game_track_data: ActiveGameData = self.parse_active_game_data(active_game_info)
                 except aiohttp.ClientResponseError as e:
                     continue
-                # If game was already highlighted, dont show it again and look for another active game
-                # or if game is too far gone or isnt ranked dont track
-                if active and self.stalking_db.current_game != data[0] and game_type == 420 and game_length <= 600:
-                    victim = pos_victim
-                    found = True
-                    break
-            if not found:
-                print("No active user was found")
+                if (game_track_data.game_length > 600 
+                    or game_track_data.game_id != 420 
+                    or self.stalking_db.current_game == game_track_data.game_id):
+                    print(f"Continuing, gametype {game_track_data.game_id}, gamelength {game_track_data.game_length} incorrect or game_id already being tracked")
+                    continue
+                victim = pos_victim
+                break
+            if not victim:
+                print("No victims we")
                 return
             message = None
             embed = None
