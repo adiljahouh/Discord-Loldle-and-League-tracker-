@@ -261,7 +261,8 @@ class riotAPI():
                 if game_type in game_mode_mapping:
                     game_mode = game_mode_mapping[game_type]
                 else:
-                    game_mode = content['gameMode']
+                    return False, "User not in valid game", None, None
+                
                 champion_list = await get_champion_dict(ddrag_version)
                 text_arr = [content['gameId'], []]
                 team_one = []
