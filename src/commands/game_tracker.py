@@ -13,8 +13,7 @@ from commands.utility.end_image import EndImage
 from commands.utility.decorators import fix_highlighted_player
 import tracemalloc
 from api.ddragon import get_latest_ddragon
-from api.ddragon import get_champion_dict
-from api.merakia import get_role_playrate_for_each_champ_id
+import traceback
 from src.commands.utility.types import *
 
 # from commands.utility.get_roles import get_roles
@@ -91,7 +90,7 @@ class loops(commands.Cog):
                                         teams=team_model
                                         )
             except Exception as e:
-                raise ParseActiveGameData(f"Failed to parse active game data: {e}")
+                raise ParseActiveGameData(f"Failed to parse active game data: {type(e).__name__}: {e}")
             return active_game_data
 
     @tasks.loop(minutes=2.0)
@@ -181,11 +180,7 @@ class loops(commands.Cog):
                     print(f"Failed to update message: {e}")
         # Send the error in Discord
         except Exception as e:
-            try:
-                #await channel.send(f"Activate stalking error: {e}")
-                print(f"Activate stalking error: {e}")
-            except Exception as e:
-                print(f"Activate stalking error: {e}")
+            print(f"Activate stalking error: {e}")
         finally:
             # Take a memory snapshot
             pass
