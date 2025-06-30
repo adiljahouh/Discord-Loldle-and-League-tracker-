@@ -16,9 +16,9 @@ from api.ddragon import get_latest_ddragon
 import traceback
 from src.commands.utility.types import *
 
-# from commands.utility.get_roles import get_roles
 class ParseActiveGameData(Exception): pass
-
+class NoValidVictimFound(Exception): pass
+class MessageSendError(Exception): pass
         
 class loops(commands.Cog):
     def __init__(self, bot: commands.Bot, main_db: MainDB, betting_db: BettingDB, 
@@ -52,7 +52,25 @@ class loops(commands.Cog):
         self.activate_stalking.start()
         self.end_stalking.start()
 
+    async def send_betting_message(self, channel: discord.TextChannel, victim: str, game_data: ActiveGameData) -> discord.Message:
+        try:
+            image_creator = imageCreator(game_data, self.ddrag_version)
+            img = await image_creator.get_team_image()
+            picture = discord.File(fp=img, filename="team.png")
 
+            embed = discord.Embed(
+                title=f":eyes::eyes:  {victim.upper()} IS IN GAME :eyes::eyes:\n\nYOU HAVE 10 MINUTES TO PREDICT!!!",
+                description="HE WILL SURELY WIN, RIGHT?",
+                color=0xFF0000
+            )
+            embed.set_image(url="attachment://team.png")
+
+            return await channel.send(f"<@&{self.ping_role_id}>", file=picture, embed=embed)
+        except aiohttp.ClientResponseError as e:
+            raise MessageSendError(f"Image creation or send failed: {type(e).__name__}: {e}")
+        except discord.HTTPException as e:
+            raise MessageSendError(f"Discord send failed: {type(e).__name__}: {e}")
+        
     async def parse_active_game_data(self, active_game_info) -> ActiveGameData:
             """
                 Parsing the data to my BaseModel, this could be done within the model
@@ -92,103 +110,84 @@ class loops(commands.Cog):
             except Exception as e:
                 raise ParseActiveGameData(f"Failed to parse active game data: {type(e).__name__}: {e}")
             return active_game_data
+    
+    async def find_valid_victim(self) -> tuple[str, ActiveGameData]:
+        for victim_riotid_and_tag in self.stalking_db.get_all_users():
+            try:
+                game_name, tag_line = victim_riotid_and_tag.split('#')
+                await asyncio.sleep(1)
+                active_game_info = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
+                game_track_data = await self.parse_active_game_data(active_game_info)
 
+                if game_track_data.game_length > 600 or game_track_data.game_type != 'Ranked Solo/Duo' or self.stalking_db.current_game == game_track_data.game_id:
+                    continue  # Skip if game is too long, not ranked, or already being tracked
+
+                return victim_riotid_and_tag, game_track_data
+
+            except (aiohttp.ClientResponseError, ParseActiveGameData):
+                continue  # just skip this victim
+
+        raise NoValidVictimFound("No valid victims found.")
+    
     @tasks.loop(minutes=2.0)
     async def activate_stalking(self):
-        channel_id: int = self.channel_id
-        channel = self.bot.get_channel(channel_id)
+        channel: discord.TextChannel = self.bot.get_channel(self.channel_id)
+        if not channel:
+            print("Channel not found.")
+            return
+        if self.stalking_db.get_active_user():   
+            return # if someone is being tracked
         try:
-            if self.stalking_db.get_active_user():   
-                return # if someone is being tracked
-            possible_victims = self.stalking_db.get_all_users()
-            print(f"Stalking victims of length: {len(possible_victims)}")
-            victim = None
-            for pos_victim in possible_victims:
-                try:
-                    # Small 1 second delay to not spam the requests
-                    print(f"Checking if {pos_victim} is in game")
-                    game_name, tag_line = pos_victim.split('#')
-                    await asyncio.sleep(1)
-                    # active, data, game_length, game_type = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
-                    active_game_info = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
-                    game_track_data: ActiveGameData = self.parse_active_game_data(active_game_info)
-                except aiohttp.ClientResponseError as e:
-                    continue
+            victim, game_data = await self.find_valid_victim()
+        except NoValidVictimFound:
+            print("No valid victims found.")
+            return
+        except aiohttp.ClientResponseError as e:
+            print(f"Riot API error: {type(e).__name__}: {e}")
+            print(traceback.format_exc())
+            return
+        except ParseActiveGameData as e:
+            print(f"Error parsing game data: {type(e).__name__}: {e}")
+            print(traceback.format_exc())
+            return
 
-                # If game was already highlighted, dont show it again and look for another active game
-                # or if game is too far gone or isnt ranked dont track
-                if game_track_data.game_length > 600 or game_track_data.game_id != 420 or self.stalking_db.current_game == game_track_data.game_id:
-                    print(f"Continuing, gametype {game_track_data.game_id}, gamelength {game_track_data.game_length} incorrect or game_id already being tracked")
-                    continue
-                victim = pos_victim
-                break
-            if not victim:
-                print("No victims we")
-                return
-            message = None
-            embed = None
+        # Send initial betting image and message
+        try:
             async with channel.typing():
-                ## TODO: man really use a better datas structure here
-                embed = discord.Embed(title=f":eyes::eyes:  {victim.upper()} IS IN GAME :eyes::eyes:\n"
-                                            "YOU HAVE 10 MINUTES TO PREDICT!!!\n\n",
-                                      description="HE WILL SURELY WIN, RIGHT?",
-                                      color=0xFF0000)
-                try:
-                    image_creator: imageCreator = imageCreator(game_track_data, self.ddrag_version)
-                    img = await image_creator.get_team_image()
-                except aiohttp.ClientResponseError as e:
-                    print("Failed to get images for image creator with exception: ", e)
-                    return
-                picture = discord.File(fp=img, filename="team.png")
-                embed.set_image(url="attachment://team.png")
+                message = await self.send_betting_message(channel, victim, game_data)
+        except MessageSendError as e:
+            print(f"Failed to send betting message: {e}")
+            return
 
-                if channel is not None:
-                    try:
-                        message = await channel.send(f"<@&{self.ping_role_id}>", file=picture, embed=embed)
-                        self.betting_db.enable_betting()
-                        print("Message sent successfully.")
-                    except Exception as e:
-                        print(e)
-                        return
-            self.stalking_db.current_game = data[0]
-            # Only when there is no custom game we lock the highlighted player
-            # Otherwise, we just show the game screen and continue with our lives
-            self.stalking_db.change_status(victim, True)
-            self.active_message_id = message.id
-            await asyncio.sleep(self.betting_db.betting_time)
-            # Send betting is no longer available
-            try:
-                embed_bet = discord.Embed(title="Betting is no longer enabled",
-                                      color=0xFF0000)
-                await channel.send(embed=embed_bet)
-            except Exception as e:
-                print(f"Betting no longer enabled message failed: {e}")
+        self.betting_db.enable_betting()
+        self.stalking_db.current_game = game_data.game_id
+        self.stalking_db.change_status(victim, True)
+        self.active_message_id = message.id
+
+        # Wait for the betting time
+        await asyncio.sleep(self.betting_db.betting_time)
+
+        # Disable betting message
+        try:
+            await channel.send(embed=discord.Embed(title="Betting is no longer enabled", color=0xFF0000))
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Failed to send 'betting disabled' message: {type(e).__name__}: {e}")
+
+        # Update original message with betting results
+        try:
             async with channel.typing():
+                embed = message.embeds[0]
                 all_bets = self.betting_db.get_all_bets()
-                for decision in all_bets.keys():
-                    text = ""
-                    for discord_user in all_bets[decision]:
-                        text += f"{discord_user['name']} **{discord_user['amount']}**\n"
+                for decision in all_bets:
+                    text = "\n".join(f"{u['name']} **{u['amount']}**" for u in all_bets[decision])
                     embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
                     if decision == "believers":
                         embed.add_field(name='\u200b', value='\u200b')
-                try:
-                    # embed.set_footer(text="Made by Matthijs (Aftershock)")
-                    await message.edit(embed=embed)
-                    print("Starting message updated.")
-                except Exception as e:
-                    print(f"Failed to update message: {e}")
-        # Send the error in Discord
+                await message.edit(embed=embed)
+                print("Message updated with bets.")
         except Exception as e:
-            print(f"Activate stalking error: {e}")
-        finally:
-            # Take a memory snapshot
-            pass
-            # snapshot = tracemalloc.take_snapshot()
-            # top_stats = snapshot.statistics("lineno")
-            # print("[Top 10 Memory Stats]")
-            # for stat in top_stats[:10]:
-            #     print(stat)
+            print(f"Failed to update message with bets: {type(e).__name__}: {e}")
                 
                 
     @tasks.loop(minutes=2.0)
@@ -264,13 +263,7 @@ class loops(commands.Cog):
             except Exception as e:
                 print(f"End stalking error: {e}")
         finally:
-            # Take a memory snapshot
             pass
-            # snapshot = tracemalloc.take_snapshot()
-            # top_stats = snapshot.statistics("lineno")
-            # print("[Top 10 Memory Stats]")
-            # for stat in top_stats[:10]:
-            #     print(stat)
 
 async def setup(bot: commands.Bot):
     settings = Settings()
