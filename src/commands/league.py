@@ -242,7 +242,7 @@ class LeagueCommands(commands.Cog):
                     await ctx.send(message)
 
     @commands.command()
-    @mod_check
+    @super_user_check
     async def victim(self, ctx: commands.Context, *args):
         """
             Add or remove a player from the game stalker: .victim <add/remove> <ign>
