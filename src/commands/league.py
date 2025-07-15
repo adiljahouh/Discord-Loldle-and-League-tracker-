@@ -7,7 +7,7 @@ from commands.utility.decorators import role_check, mod_check, super_user_check
 from databases.main import MainDB
 from databases.stalker import StalkingDB
 
-## why do i even inherit riotapi here?
+
 class LeagueCommands(commands.Cog):
     def __init__(self, main_db: MainDB, stalking_db: StalkingDB, riot_api: riotAPI,
                   player_role_id: int, g_role: int, jail_role: int) -> None:

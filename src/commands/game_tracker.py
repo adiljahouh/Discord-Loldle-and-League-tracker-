@@ -12,13 +12,15 @@ from databases.stalker import StalkingDB
 from commands.utility.end_image import EndImage
 from commands.utility.decorators import fix_highlighted_player
 import tracemalloc
-from api.ddragon import get_latest_ddragon
+from api.ddragon import get_latest_ddragon, get_champion_dict
+from api.merakia import get_role_playrate_for_each_champ_id
 import traceback
-from src.commands.utility.types import *
-
+from commands.utility.types import *
+from commands.utility.get_roles import order_team
 class ParseActiveGameData(Exception): pass
 class NoValidVictimFound(Exception): pass
 class MessageSendError(Exception): pass
+class UpdateBettingResultsMessageError(Exception): pass
         
 class loops(commands.Cog):
     def __init__(self, bot: commands.Bot, main_db: MainDB, betting_db: BettingDB, 
@@ -31,7 +33,9 @@ class loops(commands.Cog):
         self.channel_id = channel_id
         self.ping_role_id = ping_role_id
         self.active_message_id = 0
-        self.ddrag_version = ddrag_version 
+        self.ddrag_version = ddrag_version
+        self.all_champions = None # set in on_ready
+        self.champion_all_roles_playrate = None # set in on_ready
         # Fix the db if there is a highlighted player
         fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
 
@@ -43,12 +47,9 @@ class loops(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.tracemalloc_started = False
-        
-        # Start tracing memory usage
-        tracemalloc.start()
-        self.tracemalloc_started = True
-        print("Tracemalloc started in cog initialization.")
+        self.all_champions = await get_champion_dict(self.ddrag_version)
+        # dict of champion_id: {role: playrate}
+        self.champion_all_roles_playrate = await get_role_playrate_for_each_champ_id()
         self.activate_stalking.start()
         self.end_stalking.start()
 
@@ -89,18 +90,19 @@ class loops(commands.Cog):
                 teams_dict: Dict[int, List[Player]] = {100: [], 200: []}
                 for participant in active_game_info['participants']:
                     game_name = participant['riotId'].lower().split('#')[0]
-
+                    print(participant)
                     player = Player(
                         summoner_name=game_name,
                         champion_id=participant['championId'],
-                        role= participant['role']
+                        order=0  # Default order is 0, can be set later
                     )
+
                     teams_dict[participant['teamId']].append(player)
                 team_model = [Team(
                                 team_id=team_id,
                                 players=players) 
                                 for team_id, players in teams_dict.items()]
-                
+                team_model = order_team(self.champion_all_roles_playrate, team_model, self.all_champions)
                 active_game_data = ActiveGameData(
                                         game_length=active_game_info['gameLength'],
                                         game_type=game_mode_mapping[active_game_info['gameQueueConfigId']],
@@ -108,6 +110,7 @@ class loops(commands.Cog):
                                         teams=team_model
                                         )
             except Exception as e:
+                print(traceback.format_exc())
                 raise ParseActiveGameData(f"Failed to parse active game data: {type(e).__name__}: {e}")
             return active_game_data
     
@@ -116,9 +119,10 @@ class loops(commands.Cog):
             try:
                 game_name, tag_line = victim_riotid_and_tag.split('#')
                 await asyncio.sleep(1)
-                active_game_info = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
-                game_track_data = await self.parse_active_game_data(active_game_info)
-
+                print(f"Checking {game_name}#{tag_line} for active game...")
+                raw_active_game_info = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
+                print(f"Active game info for {victim_riotid_and_tag}: {raw_active_game_info}")
+                game_track_data = await self.parse_active_game_data(raw_active_game_info)
                 if game_track_data.game_length > 600 or game_track_data.game_type != 'Ranked Solo/Duo' or self.stalking_db.current_game == game_track_data.game_id:
                     continue  # Skip if game is too long, not ranked, or already being tracked
 
@@ -127,8 +131,26 @@ class loops(commands.Cog):
             except (aiohttp.ClientResponseError, ParseActiveGameData):
                 continue  # just skip this victim
 
-        raise NoValidVictimFound("No valid victims found.")
+        raise NoValidVictimFound("No valid victims found (not in game).")
     
+    async def update_betting_results_message(self, message: discord.Message):
+        try:
+            embed = message.embeds[0]  # use the existing embed
+            all_bets = self.betting_db.get_all_bets()
+
+            for decision, users in all_bets.items():
+                text = "\n".join(f"{user['name']} **{user['amount']}**" for user in users)
+                embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
+
+                # Add spacing between columns
+                if decision == "believers":
+                    embed.add_field(name='\u200b', value='\u200b')
+
+            await message.edit(embed=embed)
+            print("Message updated with bets.")
+        except Exception as e:
+            raise UpdateBettingResultsMessageError(f"Failed to update betting results message: {type(e).__name__}: {e}") 
+
     @tasks.loop(minutes=2.0)
     async def activate_stalking(self):
         channel: discord.TextChannel = self.bot.get_channel(self.channel_id)
@@ -139,24 +161,16 @@ class loops(commands.Cog):
             return # if someone is being tracked
         try:
             victim, game_data = await self.find_valid_victim()
-        except NoValidVictimFound:
-            print("No valid victims found.")
+        except (NoValidVictimFound, aiohttp.ClientResponseError, ParseActiveGameData) as e:
+            print(f"{type(e).__name__}: {e}")
+            # print(traceback.format_exc())
             return
-        except aiohttp.ClientResponseError as e:
-            print(f"Riot API error: {type(e).__name__}: {e}")
-            print(traceback.format_exc())
-            return
-        except ParseActiveGameData as e:
-            print(f"Error parsing game data: {type(e).__name__}: {e}")
-            print(traceback.format_exc())
-            return
-
         # Send initial betting image and message
         try:
             async with channel.typing():
                 message = await self.send_betting_message(channel, victim, game_data)
         except MessageSendError as e:
-            print(f"Failed to send betting message: {e}")
+            print(f"Failed to send betting message: {type(e).__name__}: {e}")
             return
 
         self.betting_db.enable_betting()
@@ -166,40 +180,24 @@ class loops(commands.Cog):
 
         # Wait for the betting time
         await asyncio.sleep(self.betting_db.betting_time)
-
-        # Disable betting message
-        try:
-            await channel.send(embed=discord.Embed(title="Betting is no longer enabled", color=0xFF0000))
-        except Exception as e:
-            print(traceback.format_exc())
-            print(f"Failed to send 'betting disabled' message: {type(e).__name__}: {e}")
-
-        # Update original message with betting results
         try:
             async with channel.typing():
-                embed = message.embeds[0]
-                all_bets = self.betting_db.get_all_bets()
-                for decision in all_bets:
-                    text = "\n".join(f"{u['name']} **{u['amount']}**" for u in all_bets[decision])
-                    embed.add_field(name=f"**{decision.upper()}**", value=text, inline=True)
-                    if decision == "believers":
-                        embed.add_field(name='\u200b', value='\u200b')
-                await message.edit(embed=embed)
-                print("Message updated with bets.")
-        except Exception as e:
+                self.update_betting_results_message(message)
+                await channel.send(embed=discord.Embed(title="Betting is no longer enabled", color=0xFF0000))
+        except UpdateBettingResultsMessageError as e:
+            # print(traceback.format_exc())
             print(f"Failed to update message with bets: {type(e).__name__}: {e}")
-                
+        except Exception as e:
+            # print(traceback.format_exc())
+            print(f"Failed to send 'betting disabled' message: {type(e).__name__}: {e}")         
                 
     @tasks.loop(minutes=2.0)
     async def end_stalking(self):
-        print("End stalking")
-        channel_id: int = self.channel_id
-        channel = self.bot.get_channel(channel_id)
+        channel: discord.TextChannel = self.bot.get_channel(self.channel_id)
         try:
             victim = self.stalking_db.get_active_user()
-            ##
-            victim = "1738#EUW" ##TODO:
-            print(f"Active victim: {victim}")
+            #victim = "1738#EUW" ##TODO:
+            print(f"Active victim end stalker: {victim}")
             if victim is None:
                 return
             
@@ -216,7 +214,7 @@ class loops(commands.Cog):
                 end_result = endIm.get_game_result()
                 picture = discord.File(fp=end_image, filename="team.png")
             except Exception as e:
-                print(f"error in image: {e}")  
+                print(f"error in image:  {type(e).__name__}: {e}")  
                 return
             self.stalking_db.change_status(victim, False)
             self.betting_db.disable_betting()
@@ -257,13 +255,8 @@ class loops(commands.Cog):
                     print("Failed to send the message.")
         # Send the error in Discord
         except Exception as e:
-            try:
-                await channel.send(f"End stalking error: {e}")
-                print(f"End stalking error: {e}")
-            except Exception as e:
-                print(f"End stalking error: {e}")
-        finally:
-            pass
+            print(traceback.format_exc())
+            print(f"End stalking error: {type(e).__name__}: {e}")
 
 async def setup(bot: commands.Bot):
     settings = Settings()

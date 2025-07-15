@@ -3,7 +3,7 @@ import aiohttp
 import asyncio
 import copy
 from api.merakia import get_role_playrate_for_each_champ_id
-from commands.utility.get_roles import get_roles
+# from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error
@@ -349,13 +349,3 @@ class riotAPI():
             text += f"{summoner_cleaned},"
         return text[:-1]
 
-    def order_team(self, champion_roles, team, champion_list):
-        champions = [combo[1] for combo in team]
-        roles = get_roles(champion_roles, champions)
-        team_order = []
-        for pos in roles:
-            for combo in team:
-                if combo[1] == pos:
-                    team_order.append([combo[0], champion_list[str(combo[1])]])
-                    break
-        return team_order

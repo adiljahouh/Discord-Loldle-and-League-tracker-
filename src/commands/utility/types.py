@@ -1,14 +1,19 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict
 class Player(BaseModel):
-    summoner_name: str = Field(..., alias='summonerName')
+    summoner_name: str = Field(..., alias='riotId')
     champion_id: int = Field(..., alias='championId')
-
+    order: int = 0 # Default order is 0, can be set later
+    model_config = {
+        "populate_by_name": True
+    }
 class Team(BaseModel):
     team_id: int = Field(..., alias='teamId')
-    role: str = Field(..., alias='role')
+    # role: str = Field(..., alias='role')
     players: List[Player]
-
+    model_config = {
+        "populate_by_name": True
+    }
 class ActiveGameData(BaseModel):
 
     game_length: int = Field(..., alias='gameLength')
@@ -17,5 +22,6 @@ class ActiveGameData(BaseModel):
     # victim_team_id: int = Field(..., alias='teamId')
     teams: List[Team]
 
-    class Config:
-        allow_population_by_field_name = True  # allows using field names as keys
+    model_config = {
+        "populate_by_name": True
+    }

@@ -1,7 +1,7 @@
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 from api.ddragon import get_champion_splash, get_latest_ddragon
-from src.commands.utility.types import *
+from commands.utility.types import *
 
 class imageCreator():
 
