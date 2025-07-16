@@ -17,7 +17,6 @@ class imageCreator():
         base_image.paste(img, (0, 0), img)
         myFont = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
         draw_text = ImageDraw.Draw(base_image)
-        print("ding1")
         for team_index, team in enumerate(self.game_track_data.teams):
             for player_index, player in enumerate(team.players):
                 try:
@@ -37,7 +36,6 @@ class imageCreator():
         _, _, w, h = draw_text.textbbox((0, 0), bet_text_lower, font=myFont)
         draw_text.text(((1100 - w) / 2, 955 + (50 - h) / 2), bet_text_lower, font=myFont, fill=(255, 255, 255))
         myFont = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 50)
-        print("ding3")
         _, _, w, h = draw_text.textbbox((0, 0), self.game_track_data.game_type, font=myFont)
         draw_text.text(((1100 - w) / 2, (100 - h) / 2), self.game_track_data.game_type, font=myFont, fill=(255, 255, 255))
         return self.img_to_bytes(base_image)

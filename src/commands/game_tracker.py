@@ -10,7 +10,6 @@ from databases.betting import BettingDB
 from databases.main import MainDB
 from databases.stalker import StalkingDB
 from commands.utility.end_image import EndImage
-from commands.utility.decorators import fix_highlighted_player
 import tracemalloc
 from api.ddragon import get_latest_ddragon, get_champion_dict
 from api.merakia import get_role_playrate_for_each_champ_id
@@ -37,8 +36,19 @@ class loops(commands.Cog):
         self.all_champions = None # set in on_ready
         self.champion_all_roles_playrate = None # set in on_ready
         # Fix the db if there is a highlighted player
-        fix_highlighted_player(self.main_db, self.betting_db, self.stalking_db)
+        self.fix_highlighted_player()
 
+    def fix_highlighted_player(self):
+        active = self.stalking_db.get_active_user()
+        if active is None:
+            return
+        self.stalking_db.change_status(active, False)
+        all_bets = self.betting_db.get_all_bets()
+        for decision in all_bets.keys():
+            for user in all_bets[decision]:
+                self.main_db.increment_field(user['discord_id'], "points", int(user['amount']))
+                print(f"Refunding: {user['discord_id']}, {int(user['amount'])}")
+        self.betting_db.remove_all_bets()
 
 
     @tasks.loop(hours=24)
@@ -58,7 +68,6 @@ class loops(commands.Cog):
             image_creator = imageCreator(game_data, self.ddrag_version)
             print(f"Creating team image for {victim}...")
             img = await image_creator.get_team_image()
-            print(img)
             picture = discord.File(fp=img, filename="team.png")
 
             embed = discord.Embed(
@@ -89,6 +98,8 @@ class loops(commands.Cog):
                     450: "ARAM",
                     700: "Clash"
                 }
+                if int(active_game_info['gameQueueConfigId']) not in game_mode_mapping:
+                    raise ParseActiveGameData(f"Unsupported game mode: {active_game_info['gameQueueConfigId']}")
                 teams_dict: Dict[int, List[Player]] = {100: [], 200: []}
                 for participant in active_game_info['participants']:
                     game_name = participant['riotId'].lower().split('#')[0]
@@ -124,7 +135,7 @@ class loops(commands.Cog):
                 print(f"Checking {game_name}#{tag_line} for active game...")
                 raw_active_game_info = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
                 game_track_data = await self.parse_active_game_data(raw_active_game_info)
-                if game_track_data.game_length > 60000 or game_track_data.game_type != 'Ranked Solo/Duo' or self.stalking_db.current_game == game_track_data.game_id:
+                if game_track_data.game_length > 600 or game_track_data.game_type != 'Ranked Solo/Duo' or self.stalking_db.current_game == game_track_data.game_id:
                     print(f"Skipping {victim_riotid_and_tag} - game too long, not ranked, or already being tracked.")
                     continue  # Skip if game is too long, not ranked, or already being tracked
 
@@ -186,7 +197,7 @@ class loops(commands.Cog):
         try:
             async with channel.typing():
                 self.update_betting_results_message(message)
-                await channel.send(embed=discord.Embed(title="Betting is no longer enabled", color=0xFF0000))
+                #await channel.send(embed=discord.Embed(title="Betting is no longer enabled", color=0xFF0000))
         except UpdateBettingResultsMessageError as e:
             # print(traceback.format_exc())
             print(f"Failed to update message with bets: {type(e).__name__}: {e}")
@@ -199,13 +210,10 @@ class loops(commands.Cog):
         channel: discord.TextChannel = self.bot.get_channel(self.channel_id)
         try:
             victim = self.stalking_db.get_active_user()
-            #victim = "1738#EUW" ##TODO:
-            print(f"Active victim end stalker: {victim}")
             if victim is None:
                 return
             
             match_id = f'EUW1_{self.stalking_db.current_game}'
-            match_id = "EUW1_7223658854" ##TODO:
             try:
                 match_data = await self.riot_api.get_full_match_details_by_matchID(match_id)
             except aiohttp.ClientResponseError:
