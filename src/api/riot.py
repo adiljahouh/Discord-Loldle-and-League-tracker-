@@ -2,9 +2,8 @@ import datetime
 import aiohttp
 import asyncio
 import copy
-from api.ddragon import get_champion_dict, get_latest_ddragon
 from api.merakia import get_role_playrate_for_each_champ_id
-from commands.utility.get_roles import get_roles
+# from commands.utility.get_roles import get_roles
 class PlayerMissingError(Exception):
     pass
 # Raise the custom error
@@ -220,7 +219,7 @@ class riotAPI():
         return player_details
 
     # Method must be caught with an aiohttp.ClientResponseError
-    async def get_active_game_status(self, user: str, tag: str, ddrag_version: str):
+    async def get_active_game_status(self, game_name: str, tag: str, ddrag_version: str):
         """
         "gameId": 7224176970,
         "mapId": 11,
@@ -236,14 +235,14 @@ class riotAPI():
         "gameStartTime": 1733953725682,
         "gameLength": 120
         """
-        puuid = await self.get_puuid_by_tag(user, tag)
+        puuid = await self.get_puuid_by_tag(game_name, tag)
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     f"https://euw1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}",
                     params=self.params) as response:
                 response.raise_for_status()
                 content = await response.json()
-                #return content
+                return content
                 status = response.status
                 if status == 404:
                     return False, "User not in game", None, None
@@ -339,15 +338,15 @@ class riotAPI():
 #        "role": "CAPTAIN"
 #    },
 # ]
-            text = "https://www.op.gg/multisearch/euw?summoners="
-            for player in clash_team_details['players']:
-                name, tag = await self.get_name_tag_by_puuid(puuid=player['puuid'])
-                summoner = name + '#' + tag
-                summoner_cleaned = summoner.replace(" ", "").lower()
-                summoner_cleaned = summoner_cleaned.replace("#", "%23")
-                text += f"{summoner_cleaned},"
-            team_opggs.append(text[:-1])
-        return team_opggs
+        text = "https://www.op.gg/multisearch/euw?summoners="
+        for player in clash_team_details['players']:
+            puuid = await self.get_puuid_by_summoner_id(player['summonerId'])
+            name, tag = await self.get_name_tag_by_puuid(puuid=puuid)
+            summoner = name + '#' + tag
+            summoner_cleaned = summoner.replace(" ", "").lower()
+            summoner_cleaned = summoner_cleaned.replace("#", "%23")
+            text += f"{summoner_cleaned},"
+        return text[:-1]
 
     def order_team(self, champion_roles, team, champion_list):
         champions = [combo[1] for combo in team]

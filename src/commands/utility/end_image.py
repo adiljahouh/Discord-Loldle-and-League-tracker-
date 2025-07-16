@@ -21,7 +21,7 @@ class EndImage:
 
     def __init__(self, data, name):
         self.data = data
-        self.name = name
+        self.name: str = name
         self.puuid = 0
         self.player_team_id = 100
         self.won_team_id = 100
@@ -33,7 +33,7 @@ class EndImage:
 
     def prepare_data(self):
         # Get puuid to place main player in team
-        print(self.data)
+        # print(self.data)
         for player in self.data["info"]["participants"]:
             # print(f"player found and cleaned {player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}")
             if f"{player['riotIdGameName'].replace(' ', '').lower()}#{player['riotIdTagline'].replace(' ', '').lower()}" == self.name.replace(' ', '').lower():
@@ -90,9 +90,8 @@ class EndImage:
                                 "hero": hero
                                 })
 
-    async def get_team_image(self):
+    async def get_team_image(self, ddrag_version):
         # Define colors
-        ddrag_version = await get_latest_ddragon()
         col_red = (255, 77, 10)
         col_green = (6, 226, 191)
         col_white = (255, 255, 255)
@@ -105,14 +104,11 @@ class EndImage:
         font_text_middle = ImageFont.truetype('./assets/image_generator/nimbussannovt.ttf', 35)
 
         base_image = Image.new(mode="RGB", size=(1920, 1080))
-        img = Image.open('./assets/image_generator/end_image.png')
-        print(f"team one has so many players :{len(self.team_one['players'])}")
-        print(f"team two has so many players :{len(self.team_one['players'])}")
-        print("\n\n\\ngoing over players\n\n\, ", self.team_one['players'])
-        print("team two \n\n\n\n")
-        print(self.team_two['players'])
-        img = img.convert('RGBA')
-        base_image.paste(img, (0, 0), img)
+
+        with Image.open('./assets/image_generator/end_image.png') as img:
+            img = img.convert('RGBA')
+            base_image.paste(img, (0, 0), img)
+
         draw_text = ImageDraw.Draw(base_image)
 
         result = "LOST"
@@ -120,10 +116,11 @@ class EndImage:
         if self.player_team_id == self.won_team_id:
             result = "WON"
             color = col_green
-        # Show gameresult
-        _, _, w, h = draw_text.textbbox((0, 0), f"{self.name.upper()} {result}", font=font_xll)
-        draw_text.text((105+(775-w)/2, (243-h)/2), f"{self.name.upper()} {result}", font=font_xll, fill=color)
-        # Show gametime
+        # Show game result
+        print(self.name.split('#')[0])
+        _, _, w, h = draw_text.textbbox((0, 0), f"{self.name.split('#')[0].upper()} {result}", font=font_xll)
+        draw_text.text((105+(775-w)/2, (243-h)/2), f"{self.name.split('#')[0].upper()} {result}", font=font_xll, fill=color)
+        # Show game time
         _, _, w, h = draw_text.textbbox((0, 0), f"Gametime {self.game_time}", font=font_text_middle)
         draw_text.text((105+(775-w)/2, 180+(134-h)/2), f"Gametime {self.game_time}", font=font_text_middle, fill=col_white)
         # Show middle text
@@ -146,31 +143,28 @@ class EndImage:
                 # No-bans should be skipped
                 if str(ban) == "-1":
                     continue
-                champ_image: Image = await get_champion_splash(ddrag_version, champ_list[str(ban)])
-                champ_image: Image = champ_image.convert('RGBA')
-                if team_indx == 0:
-                    pos = (110 + (65*indx), 913)
-                else:
-                    pos = (825 - (65*indx), 913)
-                champ_image = champ_image.resize((55, 55))
-                base_image.paste(champ_image, pos, champ_image)
+                with await get_champion_splash(ddrag_version, champ_list[str(ban)]) as champ_image:
+                    champ_image = champ_image.convert('RGBA')
+                    if team_indx == 0:
+                        pos = (110 + (65*indx), 913)
+                    else:
+                        pos = (825 - (65*indx), 913)
+                    champ_image = champ_image.resize((55, 55))
+                    base_image.paste(champ_image, pos, champ_image)
 
         # Min/Max stats
-        min_stat = 99999999999999999999
-        max_stat = -1
+        min_stat = float('inf')
+        max_stat = float('-inf')
         for team in self.teams:
             for player in team['players']:
                 stats = [player['damage_dealt'], player['damage_taken']]
-                lowest = min(stats)
-                highest = max(stats)
-                if lowest < min_stat:
-                    min_stat = lowest
-                if highest > max_stat:
-                    max_stat = highest
+                min_stat = min(min_stat, *stats)
+                max_stat = max(max_stat, *stats)
 
         # Draw damage graph
         for team_indx, team in enumerate(self.teams):
             for indx, player in enumerate(team["players"]):
+                # Draw dealt damage
                 if team_indx == 0:
                     base_image.paste(col_green, (960, 30 + (205*indx), 1150 + int(250*(player['damage_dealt'] - min_stat)/(max_stat - min_stat)), 100 + (205*indx)))
                     base_image.paste(col_gray, (960, 140 + (205*indx), 1150 + int(250*(player['damage_taken'] - min_stat)/(max_stat - min_stat)), 210 + (205*indx)))
@@ -193,48 +187,18 @@ class EndImage:
                     _, _, w, h = draw_text.textbbox((0, 0), str(player['damage_taken']), font=font_small)
                     draw_text.text((1090 + (635*team_indx) - (w*team_indx), 115 + (205*indx) + (120-h)/2), str(player['damage_taken']), font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
                     # Player image
-                    champ_image: Image = await get_champion_splash(ddrag_version, champ_list[str(player['champ_id'])])
-                    champ_image: Image = champ_image.convert('RGBA')
-                    pos = (960 + (775*team_indx), 55 + (205*indx))
-                    base_image.paste(champ_image, pos, champ_image)
-                    # if player["hero"]:
-                    #     print("found our hero")
-                        # if self.won_team_id == self.player_team_id:
-                            # try:
-                            #     print("loading crown")
-                            #     img = Image.open('./assets/image_generator/crown.png')
-                            #     print(f"crown loaded, {img}")
-                            #     img = img.rotate(25)
-                            #     print("image rotated")
-                            #     img = img.resize((75, 75))
-                            #     print("imageresized")
-                            #     base_image.paste(img.convert('RGB'), (920 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                            #     print("pasted and converted")
-                            # except FileNotFoundError:
-                            #     print("FileNotFoundError: The crown image file was not found.")
-                            # except OSError as e:
-                            #     print("OSError: Failed to open the crown image. Details:", e)
-                            # except Exception as e:
-                            #     print("Something went wrong opening the crown image:", e)
-                        # else:
-                            # try:
-                            #     img = Image.open('./assets/image_generator/dunce.png')
-                            #     img = img.rotate(35)
-                            #     img = img.resize((75, 75))
-                            #     base_image.paste(img.convert('RGB'), (925 + (775*team_indx), 15 + (205*indx)), img.convert('RGBA'))
-                            #     print("pasting done")
-                            # except FileNotFoundError:
-                            #     print("FileNotFoundError: The dunce image file was not found.")
-                            # except OSError as e:
-                            #     print("OSError: Failed to open the dunce image. Details:", e)
-                            # except Exception as e:
-                            #     print("Something went wrong opening the dunce image:", e)
+                    with await get_champion_splash(ddrag_version, champ_list[str(player['champ_id'])]) as champ_image:
+                        champ_image = champ_image.convert('RGBA')
+                        pos = (960 + (775*team_indx), 55 + (205*indx))
+                        base_image.paste(champ_image, pos, champ_image)
                     # Player kda
                     _, _, w, h = draw_text.textbbox((0, 0), kda, font=font_small)
                     draw_text.text((960 + (775*team_indx) + (120-w)/2, 180 + (205*indx)), kda, font=font_small, fill=col_white, stroke_width=2, stroke_fill=col_black)
         except Exception as e:
             print(e)
+
         return img_to_bytes(base_image)
+
 
     def get_game_result(self):
         return self.player_team_id == self.won_team_id
