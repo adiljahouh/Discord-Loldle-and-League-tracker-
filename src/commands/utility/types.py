@@ -3,7 +3,8 @@ from typing import List, Dict
 class Player(BaseModel):
     summoner_name: str = Field(..., alias='riotId')
     champion_id: int = Field(..., alias='championId')
-    order: int = 0 # Default order is 0, can be set later
+    champ_name: str
+    # order: int = 0 # Default order is 0, can be set later
     model_config = {
         "populate_by_name": True
     }

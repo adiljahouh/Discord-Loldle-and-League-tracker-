@@ -87,18 +87,22 @@ def get_positions(champion_ids_to_play_rates, team_champion_ids: List[int], top=
             break
     return best_pos
 
-def order_team(champion_ids_to_play_rates, teams: list[Team], all_champions):
+def order_team(champion_ids_to_play_rates, teams: list[Team]):
     for team in teams:
         team_champion_ids = [player.champion_id for player in team.players]
-        roles = get_optimal_roles_for_team(champion_ids_to_play_rates, team_champion_ids)
-        print(f"Roles for team {team.team_id}: {roles}")
-        team_order = []
-        for pos in roles:
+        # [12, 34, 56, 78, 90] for example
+        sorted_champ_ids = get_optimal_roles_for_team(champion_ids_to_play_rates, team_champion_ids)
+        # print(f"Roles for team {team.team_id}: {sorted_champ_ids}")
+
+        # In-place sort of team.players
+        sorted_players = []
+        for sorted_champ_id in sorted_champ_ids:
             for player in team.players:
-                if player.champion_id == pos:
-                    team_order.append([player.summoner_name, all_champions[str(player.champion_id)]['name']])
+                if player.champion_id == sorted_champ_id:
+                    sorted_players.append(player)
                     break
-    return team_order
+        team.players[:] = sorted_players  # mutate in-place
+    return teams
 
 def quickperm(a):
     N = len(a)

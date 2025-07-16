@@ -56,7 +56,9 @@ class loops(commands.Cog):
     async def send_betting_message(self, channel: discord.TextChannel, victim: str, game_data: ActiveGameData) -> discord.Message:
         try:
             image_creator = imageCreator(game_data, self.ddrag_version)
+            print(f"Creating team image for {victim}...")
             img = await image_creator.get_team_image()
+            print(img)
             picture = discord.File(fp=img, filename="team.png")
 
             embed = discord.Embed(
@@ -90,19 +92,19 @@ class loops(commands.Cog):
                 teams_dict: Dict[int, List[Player]] = {100: [], 200: []}
                 for participant in active_game_info['participants']:
                     game_name = participant['riotId'].lower().split('#')[0]
-                    print(participant)
                     player = Player(
                         summoner_name=game_name,
                         champion_id=participant['championId'],
-                        order=0  # Default order is 0, can be set later
-                    )
+                        champ_name=self.all_champions[str(participant['championId'])]
+                        )
 
                     teams_dict[participant['teamId']].append(player)
                 team_model = [Team(
                                 team_id=team_id,
                                 players=players) 
                                 for team_id, players in teams_dict.items()]
-                team_model = order_team(self.champion_all_roles_playrate, team_model, self.all_champions)
+                team_model = order_team(self.champion_all_roles_playrate, team_model)
+                #print(f"Ordered teams: {team_model}")
                 active_game_data = ActiveGameData(
                                         game_length=active_game_info['gameLength'],
                                         game_type=game_mode_mapping[active_game_info['gameQueueConfigId']],
@@ -121,9 +123,9 @@ class loops(commands.Cog):
                 await asyncio.sleep(1)
                 print(f"Checking {game_name}#{tag_line} for active game...")
                 raw_active_game_info = await self.riot_api.get_active_game_status(game_name, tag_line, self.ddrag_version)
-                print(f"Active game info for {victim_riotid_and_tag}: {raw_active_game_info}")
                 game_track_data = await self.parse_active_game_data(raw_active_game_info)
-                if game_track_data.game_length > 600 or game_track_data.game_type != 'Ranked Solo/Duo' or self.stalking_db.current_game == game_track_data.game_id:
+                if game_track_data.game_length > 60000 or game_track_data.game_type != 'Ranked Solo/Duo' or self.stalking_db.current_game == game_track_data.game_id:
+                    print(f"Skipping {victim_riotid_and_tag} - game too long, not ranked, or already being tracked.")
                     continue  # Skip if game is too long, not ranked, or already being tracked
 
                 return victim_riotid_and_tag, game_track_data
@@ -170,6 +172,7 @@ class loops(commands.Cog):
             async with channel.typing():
                 message = await self.send_betting_message(channel, victim, game_data)
         except MessageSendError as e:
+            print(traceback.format_exc())
             print(f"Failed to send betting message: {type(e).__name__}: {e}")
             return
 
