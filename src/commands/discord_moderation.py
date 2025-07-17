@@ -178,11 +178,11 @@ class discMod(commands.Cog):
             success = self.main_db.set_user_field(mention.id, f"strike_{total}", strike_details)
             if total < 3:
                  await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> for {strike_details}\nTOTAL COUNT: {total}\n\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strike(s) left.")
-                 return
+                 continue
             success = self.main_db.set_user_field(mention.id, "strikes", 0)
             if success != 0:
                 await ctx.send(f"Couldn't reset your strikes, contact an admin")
-                return
+                continue
             
             user: discord.Member = ctx.guild.get_member(mention.id)
             jail_role = ctx.guild.get_role(self.jail_role)
