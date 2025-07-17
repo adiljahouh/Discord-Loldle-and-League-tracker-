@@ -16,7 +16,8 @@ async def main():
     loldle_db = loldleDB(settings.REDISURL)
     await loldle_db.populate_if_needed()
     my_bot = discBot(token=settings.DISCORDTOKEN)
-    my_cogs = ["commands.league", "commands.animals", "commands.points", "commands.discord_moderation", "commands.game_tracker"]
+    my_cogs = ["commands.league", "commands.animals", "commands.points", "commands.discord_moderation", 
+               "commands.game_tracker", "commands.leaderboard"]
     for cog in my_cogs:
         await add_cog(my_bot, cog)
     await my_bot.start_bot()
