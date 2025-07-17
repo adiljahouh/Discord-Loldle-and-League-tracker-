@@ -350,11 +350,15 @@ class discMod(commands.Cog):
             return
 
         mentions = ctx.message.mentions
+        if len(mentions) > strike_quota:
+            await ctx.send(f"You can only honor up to {strike_quota} people at a time, as you do not have enough strikes.")
+            return
+        
         attachments = ctx.message.attachments  # Get attachments
         attachment_urls = [attachment.url for attachment in attachments]
         # from the command text remove all @'s to filter out the reason
         honor_reasoning = [arg for arg in args if not any(str(mention.id) in arg for mention in mentions)]
-        strike_quota_post_strike = self.main_db.decrement_field(ctx.author.id, "strike_quota", 1)
+        strike_quota_post_strike = self.main_db.decrement_field(ctx.author.id, "strike_quota", len(mentions))
 
         if len(honor_reasoning) == 0:
             # if no reason is provided
@@ -364,6 +368,9 @@ class discMod(commands.Cog):
             await ctx.send("Mention someone to honor e.g. .add honor <@319921436519038977> for being a BOTTOM G")
         else:
             for mention in mentions:
+                if mention.id == ctx.author.id:
+                    await ctx.send("You cannot honor yourself..")
+                    return
                 # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
                 if self.main_db.check_user_existence(mention.id) == 1:
                     total_honors = self.main_db.increment_field(mention.id, "total_honors", 1)
