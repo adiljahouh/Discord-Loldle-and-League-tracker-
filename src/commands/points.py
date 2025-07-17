@@ -59,7 +59,7 @@ class PointCommands(commands.Cog):
                 userid = str(ctx.author.id)
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_claim")
                 # total_honors = self.main_db.get_user_field(discord_id=userid, field="total_honors").decode('utf-8')
-                # most_honored = self.main_db.get_top_3_total_honor_users()
+                # most_honored = self.main_db.get_most_honorable(top=3)
                 # top_honor_ids = [user[0] for user in most_honored]
                 # top_honor_honors = [user[1] for user in most_honored]
                 # print(most_honored)
@@ -73,7 +73,7 @@ class PointCommands(commands.Cog):
                         self.main_db.increment_field(userid, "strike_quota", incr_by)
                     self.main_db.increment_field(userid, "points", 1000)
                 else:
-                    status = "You already claimed your points and strikes for today"
+                    status = "You already claimed your points and strikes/honors for today"
                 points_bytes = self.main_db.get_user_field(userid, "points")
                 strikes_bytes = self.main_db.get_user_field(userid, "strike_quota")
             except Exception as e:
@@ -81,7 +81,7 @@ class PointCommands(commands.Cog):
                 return
             points = points_bytes.decode('utf-8')
             strikes = strikes_bytes.decode('utf-8') if strikes_bytes else "0" 
-            message = f'Total points: {points}\nTotal strikes: {strikes}'
+            message = f'Total points: {points}\nTotal strikes/honors: {strikes}'
             embed = discord.Embed(title=f"{status}\n\n",
                                   description=f"{message}",
                                   color=0xFF0000)
@@ -294,11 +294,11 @@ class PointCommands(commands.Cog):
         """
             Returns point leaderboard with pagination support
         """
+        leaderboard = None
+        page_number = 1
+        page_size = 10
         try:
             print("Leaderboard command")
-            leaderboard = None
-            page_number = 1
-            page_size = 10
             if len(args) == 0:
                 leaderboard = self.main_db.get_all_users_sorted_by_field("points", True, 0, page_size)
             else:

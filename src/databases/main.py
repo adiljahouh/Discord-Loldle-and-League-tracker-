@@ -1,6 +1,6 @@
 import redis
 from redis.exceptions import ConnectionError
-
+from typing import List, Tuple
 
 class MainDB():
     def __init__(self, url) -> None:
@@ -64,16 +64,15 @@ class MainDB():
         self.connect()
         return self.client.keys('*')
     
-    def get_all_users_sorted_by_field(self, field, desc, start, number) -> list[str, int]:
+    def get_all_users_sorted_by_field(self, field, desc, start, number) -> list[tuple[str, int]]:
         # Does only work if the field stores somes kind of integer :)
         self.connect()
-        # for i in self.get_all_users():
-        #     print(i.decode('utf-8'))
-        #     print("points",  self.get_user_field(i.decode('utf-8'), "points"))
-        combo = [[user.decode('utf-8'), self.get_user_field(user.decode('utf-8'), field)] for user in self.get_all_users()]
-        combo = [[user[0], int(user[1].decode('utf-8'))] for user in combo if user[1] is not None]
-        combo.sort(key=lambda x: x[1], reverse=desc)
-        return combo[start:start+number]
+        user_field_combo = [(user.decode('utf-8'), self.get_user_field(user.decode('utf-8'), field)) 
+                            for user in self.get_all_users()]
+        user_field_combo = [(username, int(raw_val.decode('utf-8'))) 
+                            for username, raw_val in user_field_combo if raw_val is not None]
+        user_field_combo.sort(key=lambda x: x[1], reverse=desc)
+        return user_field_combo[start:start+number]
 
     def check_user_existence(self, discord_id):
         self.connect()
@@ -88,9 +87,9 @@ class MainDB():
         neg_amount = -int(amount)
         return self.client.hincrby(discord_id, field, str(neg_amount))
 
-    def get_top_3_total_honor_users(self) -> list[tuple[str, int]]:
+    def get_most_honorable(self, top=3) -> list[tuple[str, int]]:
         """
-        Retrieves the top 3 users based on their 'total_honors' field,
+        Retrieves the top amount of users based on their 'total_honors' field,
         considering ties for the third position.
 
         Returns:
@@ -101,52 +100,21 @@ class MainDB():
             Returns an empty list if no users are found or no 'total_honors' data exists.
         """
         self.connect()
-        all_users = self.get_all_users()
+        all_users = self.get_all_users()                   # list of user keys (bytes)
+        user_count = len(all_users)
 
-        honor_data = []
-        for user_key_bytes in all_users:
-            discord_id = user_key_bytes.decode('utf-8')
-            total_honors_bytes = self.client.hget(discord_id, "total_honors")
+        users_to_honors = self.get_all_users_sorted_by_field(
+            field="total_honors",
+            desc=True,
+            start=0,
+            number=user_count
+        )  # -> list[tuple[str, int]]
 
-            if total_honors_bytes is not None:
-                try:
-                    total_honors = int(total_honors_bytes.decode('utf-8'))
-                    if total_honors > 0:
-                        honor_data.append((discord_id, total_honors))
-                except ValueError:
-                    # Handle cases where total_honors might not be a valid integer
-                    print(f"Warning: total_honors for user {discord_id} is not a valid integer: {total_honors_bytes}")
-                    pass
-
-        # Sort the users by total_honors in descending order
-        honor_data.sort(key=lambda x: x[1], reverse=True)
-
-        if not honor_data:
+        if not users_to_honors:
             return []
 
-        top_users = []
-        # Add the first two users if they exist
-        if len(honor_data) >= 1:
-            top_users.append(honor_data[0])
-        if len(honor_data) >= 2:
-            top_users.append(honor_data[1])
+        cutoff_index = min(top, len(users_to_honors)) - 1
+        cutoff_score = users_to_honors[cutoff_index][1]
 
-        # Find the threshold for the 3rd position
-        third_place_score = -1  # Initialize with a value lower than any possible honor
-        if len(honor_data) >= 3:
-            third_place_score = honor_data[2][1]
-
-        # Add users from the 3rd position onwards as long as their score matches the third_place_score
-        for i in range(2, len(honor_data)):
-            if honor_data[i][1] == third_place_score:
-                top_users.append(honor_data[i])
-            elif honor_data[i][1] < third_place_score and third_place_score != -1:
-                # If we've passed the third place score (and it's not the initial -1), stop
-                break
-            elif third_place_score == -1 and i < 3:  # To handle cases with less than 3 unique scores
-                top_users.append(honor_data[i])
-            elif third_place_score == -1 and i >= 3:  # If there are fewer than 3 unique scores, and we've already added what's there, stop
-                break
-
-        return top_users
-
+        honorable = [(user, honor) for user, honor in users_to_honors if honor >= cutoff_score]
+        return honorable
