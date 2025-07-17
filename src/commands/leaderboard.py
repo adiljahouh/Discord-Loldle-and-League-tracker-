@@ -16,7 +16,7 @@ class PagerView(View):
         # mapping of command categories to Redis fields and embed titles
         self.category_map = {
             "points":      ("points", "Biggest gambling addicts 🃏"),
-            "strikes":     ("total_strikes",   "Most strikes 👮‍♂️"),
+            "strikes":     ("lifetime_strikes",   "Most strikes 👮‍♂️"),
             "honors":      ("total_honors",    "Top honors 🏅"),
         }
 

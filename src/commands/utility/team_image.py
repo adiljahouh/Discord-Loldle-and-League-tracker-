@@ -12,7 +12,7 @@ class imageCreator():
     async def get_team_image(self):
         ## context manager
         base_image = Image.new(mode="RGB", size=(1100, 1020))
-        # img = Image.open('./assets/image_generator/team_background.png')
+        img = Image.open('./assets/image_generator/team_background.png')
         img = img.convert('RGBA')
         base_image.paste(img, (0, 0), img)
         myFont = ImageFont.truetype('./assets/image_generator/Gidole-Regular.ttf', 37)
@@ -20,11 +20,13 @@ class imageCreator():
         for team_index, team in enumerate(self.game_track_data.teams):
             for player_index, player in enumerate(team.players):
                 try:
+                    print(f"Adding champion image for {player.champ_name}")
                     champ_image: Image.Image = await get_champion_splash(self.ddrag_version, player.champ_name)
                     champ_image = champ_image.convert('RGBA')
                     position = (70 + (520 * team_index), 110 + (170 * player_index))
                     base_image.paste(champ_image, position, champ_image)
                     position = (position[0] + 130, position[1] + 40)
+
                     draw_text.text(position, player.summoner_name, fill=(255, 255, 255), font=myFont)
                 except Exception as e:
                     print(traceback.format_exc())
