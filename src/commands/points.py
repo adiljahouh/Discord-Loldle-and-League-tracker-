@@ -59,17 +59,19 @@ class PointCommands(commands.Cog):
                 userid = str(ctx.author.id)
                 last_claim = self.main_db.get_user_field(discord_id=userid, field="last_claim")
                 # total_honors = self.main_db.get_user_field(discord_id=userid, field="total_honors").decode('utf-8')
-                # most_honored = self.main_db.get_most_honorable(top=3)
-                # top_honor_ids = [user[0] for user in most_honored]
+                most_honored = self.main_db.get_most_honorable(top=3)
+                print(f"Most honored: {most_honored}")
+                top_honor_ids = [user[0] for user in most_honored]
                 # top_honor_honors = [user[1] for user in most_honored]
+                target = 5 if userid in top_honor_ids else 3
                 # print(most_honored)
                 if last_claim is None or last_claim.decode('utf-8') != str(today.strftime('%Y-%m-%d')):
                     status = "You claim some points"
                     self.main_db.set_user_field(userid, "last_claim", today.strftime('%Y-%m-%d'))
                     current_strikes_bytes = self.main_db.get_user_field(userid, "strike_quota")
                     current_strikes = current_strikes_bytes.decode('utf-8') if current_strikes_bytes else "0"
-                    if int(current_strikes) < 3:
-                        incr_by = 3 - int(current_strikes)
+                    if int(current_strikes) < target:
+                        incr_by = target - int(current_strikes)
                         self.main_db.increment_field(userid, "strike_quota", incr_by)
                     self.main_db.increment_field(userid, "points", 1000)
                 else:
