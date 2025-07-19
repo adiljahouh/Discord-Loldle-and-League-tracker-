@@ -243,53 +243,8 @@ class riotAPI():
                 response.raise_for_status()
                 content = await response.json()
                 return content
-                status = response.status
-                if status == 404:
-                    return False, "User not in game", None, None
-                game_mode_mapping = {
-                    0: "Custom",
-                    400: "Normal",
-                    420: "Ranked Solo/Duo",
-                    430: "Blind Pick",
-                    440: "Ranked Flex",
-                    450: "ARAM",
-                    700: "Clash"
-                }
-                game_length = int(content['gameLength'])
-                game_type = int(content['gameQueueConfigId'])
-                if game_type in game_mode_mapping:
-                    game_mode = game_mode_mapping[game_type]
-                else:
-                    return False, "User not in valid game", None, None
-                
-                champion_list = await get_champion_dict(ddrag_version)
-                text_arr = [content['gameId'], []]
-                team_one = []
-                team_two = []
-                team = 0
-                for participant in content['participants']:
-                    riotid = participant['riotId'].lower()
-                    part_name, par_tag = riotid.split('#')
-                    if user.lower() == part_name:
-                        team = participant['teamId']
-                    summonerName = part_name
-                    if participant['teamId'] == 100:
-                        team_one.append([summonerName, int(participant['championId'])])
-                    else:
-                        team_two.append([summonerName, int(participant['championId'])])
-                champion_roles = await get_role_playrate_for_each_champ_id()
-                team_one = self.order_team(champion_roles, team_one, champion_list)
-                team_two = self.order_team(champion_roles, team_two, champion_list)
-                if team == 200:
-                    text_arr[1].append(team_two)
-                    text_arr[1].append(team_one)
-                else:
-                    text_arr[1].append(team_one)
-                    text_arr[1].append(team_two)
-                text_arr.append(game_mode)
-                return True, text_arr, game_length, game_type
-
-    async def get_clash_team_by_puuid(self, puuid):
+            
+    async def get_clash_team_details_by_puuid(self, puuid):
         """
         This endpoint returns a list of active Clash players for a given PUUID. 
         If a summoner registers for multiple tournaments at the same time (e.g., Saturday and Sunday) then both registrations would appear in this list.
@@ -316,45 +271,15 @@ class riotAPI():
 
     async def get_clash_opgg(self, user, tag):
         puuid = await self.get_puuid_by_tag(user, tag)
-        teams = await self.get_clash_team_by_puuid(puuid)
-        team_opggs = []
-        for team in teams:
-            clash_team_details = await self.get_clash_team_by_clash_team_id(team[0]['teamId'])
-#         players = [{
-#        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
-#        "teamId": "00000000-0000-0000-0000-000000000000",
-#        "position": "JUNGLE",
-#        "role": "CAPTAIN"
-#    },
-# {
-#        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
-#        "teamId": "00000000-0000-0000-0000-000000000000",
-#        "position": "TOP",
-#        "role": "CAPTAIN"
-#    },{
-#        "summonerId": "eTHpWLOwMMnX3AIlunwwm2K8DVYWgQTjHMDZNk8X4LaS-qE",
-#        "teamId": "00000000-0000-0000-0000-000000000000",
-#        "position": "FILL",
-#        "role": "CAPTAIN"
-#    },
-# ]
+        team_details: list = await self.get_clash_team_details_by_puuid(puuid)
+        clash_team_details = await self.get_clash_team_by_clash_team_id(team_details[0]['teamId'])
         text = "https://www.op.gg/multisearch/euw?summoners="
-        for player in clash_team_details['players']:
-            puuid = await self.get_puuid_by_summoner_id(player['summonerId'])
+        for player in clash_team_details.get('players', []):
+            puuid = player.get('puuid', '')
             name, tag = await self.get_name_tag_by_puuid(puuid=puuid)
             summoner = name + '#' + tag
             summoner_cleaned = summoner.replace(" ", "").lower()
             summoner_cleaned = summoner_cleaned.replace("#", "%23")
             text += f"{summoner_cleaned},"
-        return text[:-1]
-
-    def order_team(self, champion_roles, team, champion_list):
-        champions = [combo[1] for combo in team]
-        roles = get_roles(champion_roles, champions)
-        team_order = []
-        for pos in roles:
-            for combo in team:
-                if combo[1] == pos:
-                    team_order.append([combo[0], champion_list[str(combo[1])]])
-                    break
-        return team_order
+        print("text\n",text)
+        return text[:-1]  # Remove the last comma

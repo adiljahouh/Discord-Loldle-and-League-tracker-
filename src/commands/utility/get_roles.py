@@ -86,62 +86,6 @@ def get_positions(champion_ids_to_play_rates, team_champion_ids: List[int], top=
         if best_metric > 0.0:
             break
     return best_pos
-# def get_positions(champion_positions, composition: List[int], top=None, jungle=None, middle=None, bottom=None, utility=None):
-#     # Check the types in `composition` and the other input types
-#     for i, champion in enumerate(composition):
-#         if not isinstance(champion, int):
-#             raise ValueError("The composition must be a list of champion IDs.")
-#     if (top is not None and not isinstance(top, int)) or \
-#             (jungle is not None and not isinstance(jungle, int)) or \
-#             (middle is not None and not isinstance(middle, int)) or \
-#             (bottom is not None and not isinstance(bottom, int)) or \
-#             (utility is not None and not isinstance(utility, int)):
-#         raise ValueError("The composition must be a list of champion IDs.")
-
-#     if None not in (top, jungle, middle, bottom, utility):
-#         raise ValueError("The composition was predefined by the kwargs.")
-
-#     comp_perm = quickperm(composition)
-#     perms = []
-#     for perm in comp_perm:
-#         pos = {
-#             "TOP": perm[0],
-#             "JUNGLE": perm[1],
-#             "MIDDLE": perm[2],
-#             "BOTTOM": perm[3],
-#             "UTILITY": perm[4]
-#         }
-#         perms.append(pos)
-
-#     best_pos = {}
-#     best_metric = -float('inf')
-#     for punish in [True, False]:
-#         for perm in perms:
-#             metric = calculate_metric(champion_positions, perm, punish)
-#             if metric > best_metric:
-#                 best_pos = perm
-#                 best_metric = metric
-#         print(best_metric)
-#         if best_metric > 0.0:
-#             break
-#     return best_pos
-
-def order_team(champion_ids_to_play_rates, teams: list[Team]):
-    for team in teams:
-        team_champion_ids = [player.champion_id for player in team.players]
-        # [12, 34, 56, 78, 90] for example
-        sorted_champ_ids = get_optimal_roles_for_team(champion_ids_to_play_rates, team_champion_ids)
-        # print(f"Roles for team {team.team_id}: {sorted_champ_ids}")
-
-        # In-place sort of team.players
-        sorted_players = []
-        for sorted_champ_id in sorted_champ_ids:
-            for player in team.players:
-                if player.champion_id == sorted_champ_id:
-                    sorted_players.append(player)
-                    break
-        team.players[:] = sorted_players  # mutate in-place
-    return teams
 
 def order_team(champion_ids_to_play_rates, teams: list[Team]):
     for team in teams:

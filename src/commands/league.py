@@ -221,8 +221,7 @@ class LeagueCommands(commands.Cog):
             embed = False
             try:
                 if len(args) != 0:
-                    opgg = await self.riot_api.get_clash_opgg(user=user, tag=tag)
-                    message = ",".join(opgg)
+                    message = await self.riot_api.get_clash_opgg(user=user, tag=tag)
                     embed = True
                 else:
                     message = "Please provide a valid summoner name: .clash <summoner name>"
