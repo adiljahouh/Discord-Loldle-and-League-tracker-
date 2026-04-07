@@ -7,6 +7,7 @@ from api.ddragon import get_random_skin_splash, get_random_spell
 from commands.utility.get_closest_word import find_closest_name
 import asyncio
 from databases.loldle import loldleDB
+from databases.main import MainDB
 
 import discord.ext
 champ_base_data = {}
@@ -161,7 +162,7 @@ def compare_dicts_and_create_text(dict1, dict2)-> tuple:
 
 
 class loldleView(discord.ui.View):
-    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, champ_list, bot, main_db, day,
+    def __init__(self, *, timeout = 200, ctx: discord.ext.commands.Context, champ_list, bot: discord.ext.commands.bot, main_db: MainDB, day,
                   winning_guess_info, loldle_db: loldleDB, ddrag_version):
         super().__init__(timeout=timeout)
         self.ctx = ctx
@@ -181,20 +182,17 @@ class loldleView(discord.ui.View):
         return m.author == self.ctx.author and m.channel == self.ctx.channel
     
     async def compare_result(self):
-        msg = await self.bot.wait_for('message', check=self.check, timeout=90.0)
+        msg: discord.Message = await self.bot.wait_for('message', check=self.check, timeout=90.0)
         champion_guess = (msg.content.replace(" ", "")).capitalize()
         score_and_ddrag_name = find_closest_name(champion_guess, self.champ_list)
         print(score_and_ddrag_name)
         ddrag_name = score_and_ddrag_name[0]
-        # await ctx.send(f"Your guess has been converted to {ddrag_name}")
         try:
             champion_guess_info = self.loldle_db.get_champion_info(champion_name=ddrag_name)
             ##exclude certain keys, self.winning_guess_info will have these keys
             champion_guess_info.pop("timestamp")
             champion_guess_info.pop("ddrag_name")
             is_match_and_text = compare_dicts_and_create_text(champion_guess_info, self.winning_guess_info)
-            mention_and_text = is_match_and_text[1] + f"\n<@{str(self.ctx.author.id)}>"
-            # await self.ctx.send(mention_and_text)
             await msg.reply(is_match_and_text[1])
             if is_match_and_text[0]:
                 self.correct_guess = True

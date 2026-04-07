@@ -142,7 +142,7 @@ class discMod(commands.Cog):
     @commands.command()
     @role_check
     @mod_check
-    async def strike(self, ctx: commands.Context, *args):
+    async def strike(self, ctx: commands.Context):
         """Strike someone by using .strike @<user> <reason>"""
         strike_quota = int(self.main_db.get_user_field(ctx.author.id, "strike_quota").decode('utf-8')) if self.main_db.get_user_field(ctx.author.id, "strike_quota") != None else None
         if strike_quota is None:
@@ -157,8 +157,15 @@ class discMod(commands.Cog):
             return
         attachments = ctx.message.attachments  # Get attachments
         attachment_urls = [attachment.url for attachment in attachments]
-        # from the command text remove all @'s to filter out the reason
-        strike_reasoning = [arg for arg in args if not any(str(mention.id) in arg for mention in mentions)]
+        # Get reason from raw content, preserving quotes
+        raw_content = ctx.message.content
+        print(f"Raw content: {raw_content}")
+        reason_content = raw_content
+        for mention in mentions:
+            reason_content = reason_content.replace(mention.mention, '')
+        parts = reason_content.split(maxsplit=1)
+        reason_content = parts[1].strip() if len(parts) > 1 else ""
+        print(f"Reason: {reason_content}")
         strike_quota_post_strike = self.main_db.decrement_field(ctx.author.id, "strike_quota", 1)
         for mention in mentions:
             # filtered_args = [arg for arg in list(args) if str(mention.id) not in arg]
@@ -171,7 +178,7 @@ class discMod(commands.Cog):
             lifetime_total = self.main_db.increment_field(mention.id, "lifetime_strikes", 1)
             
             # Prepare reason and attachments string
-            reason = ' '.join(strike_reasoning) if len(strike_reasoning) > 0 else "No reason provided"
+            reason = reason_content if reason_content else "No reason provided"
             attachments_str = ', '.join(attachment_urls) if attachment_urls else ""
             strike_details = f"{reason} {attachments_str}"
 
@@ -186,21 +193,18 @@ class discMod(commands.Cog):
             
             user: discord.Member = ctx.guild.get_member(mention.id)
             jail_role = ctx.guild.get_role(self.jail_role)
-            self.jailed_users[user.name] = user.roles
+            bot_top_role = ctx.guild.me.top_role
+            self.jailed_users[user.name] = [r for r in user.roles if r < bot_top_role]
             prep_jail_card_tasks = []
             prep_jail_card_tasks.append(self.get_profile_pic_and_write_dead_or_alive(user, lifetime_total))
             prep_jail_card_tasks.append(user.add_roles(jail_role))
             prep_jail_card_tasks.append(ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}\n<@{ctx.author.id}> you now have {strike_quota_post_strike} strikes/honors left."))
             for current_role in user.roles:
-                if current_role.name == "@everyone" or current_role.name == "Server Booster" or current_role.name.lower() == "admin" or current_role.name == jail_role.name:
+                if current_role.name == "@everyone" or current_role.name == "Server Booster" or current_role.name.lower() == "admin" or current_role.name == jail_role.name or current_role >= bot_top_role:
                     continue
                 prep_jail_card_tasks.append(user.remove_roles(current_role))
-            try:
-                results = await asyncio.gather(*prep_jail_card_tasks)
-                wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
-            except discord.Forbidden:
-                print(f"Skipped a role I could not remove: {current_role.name}")
-                # wanted_messageable = discord.File(filename="wanted_small.jpg")
+            results = await asyncio.gather(*prep_jail_card_tasks, return_exceptions=True)
+            wanted_messageable = discord.File(fp=results[0], filename="wanted_small.jpg")
             # await ctx.send(f"YOU EARNED A STRIKE <@{mention.id}> BRINGING YOU TO {total} STRIKES WHICH MEANS YOU'RE OUT , WELCOME TO MAXIMUM SECURITY JAIL {jail_role.mention}")
             
             strike_reasons = ""
